@@ -1,0 +1,17 @@
+/data
+/out
+/temp
+/build
+/dist
+*.pyc
+*.log
+*.out
+*.temp
+*.model
+*.swp
+*.swo
+*.egg-info
+.coverage
+.python-version
+.nfs*
+.tmp
