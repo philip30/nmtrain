@@ -15,3 +15,6 @@
 .python-version
 .nfs*
 .tmp
+.git
+*.pyproj
+.vs
