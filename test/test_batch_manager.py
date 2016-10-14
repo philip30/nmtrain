@@ -1,10 +1,10 @@
 import nmtrain
-import random
+import numpy
 import unittest
 
 class TestBatchManager(unittest.TestCase):
   def setUp(self):
-    random.seed(17)
+    numpy.random.seed(17)
     self.manager = nmtrain.BatchManager()
 
   def test_load_batch_data(self):
@@ -37,15 +37,16 @@ class TestBatchManager(unittest.TestCase):
     self.manager.load(data, n_items = 1)
     self.manager.shuffle()
     batches = self.manager
-    self.assertEqual(batches[0].data[0], "1st")
-    self.assertEqual(batches[1].data[0], "3rd")
-    self.assertEqual(batches[2].data[0], "2nd")
+
+    self.assertEqual(batches[0].data[0], "5th")
+    self.assertEqual(batches[1].data[0], "1st")
+    self.assertEqual(batches[2].data[0], "3rd")
     self.assertEqual(batches[3].data[0], "4th")
-    self.assertEqual(batches[4].data[0], "5th")
+    self.assertEqual(batches[4].data[0], "2nd")
 
   def test_iter(self):
     data = ["1st", "2nd", "3rd", "4th", "5th"]
-    expected = ["1st", "3rd", "2nd", "4th", "5th"]
+    expected = ["5th", "1st", "3rd", "4th", "2nd"]
     self.manager.load(data, n_items = 1)
     self.manager.shuffle()
     for i, batch in enumerate(self.manager):
@@ -77,6 +78,8 @@ class TestBatchManager(unittest.TestCase):
           return 4
         else:
           return 5
+      def transform_corpus(self, corpus):
+        pass
     data = ["1st", "2nd", "3rd", "4th", "5th"]
     expected = [1, 2, 3, 4, 5]
     self.manager.load(data, n_items=1, data_transformer=TransformInteger())

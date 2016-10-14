@@ -1,4 +1,7 @@
-import random
+import numpy
+
+import nmtrain
+import nmtrain.data.transformer as transformer
 
 class Batch(object):
   """ Class to represent batch """
@@ -11,10 +14,6 @@ class BatchManager(object):
       the index by looking it in the map.
   """
   
-  class IdentityTransformer:
-    def transform(self, data):
-      return data
-  
   def __init__(self):
     # Hold the batch indexes
     self.batch_indexes    = []
@@ -23,7 +22,8 @@ class BatchManager(object):
 
   # stream  : data stream
   # n_items : number of items in batch
-  def load(self, stream, n_items, data_transformer = IdentityTransformer()):
+  def load(self, stream, n_items=1, 
+           data_transformer = transformer.IdentityTransformer()):
     assert(n_items >= 1)
    
     partial_batch = lambda: None
@@ -48,12 +48,14 @@ class BatchManager(object):
     
     if len(partial_batch.data) != 0:
       new_batch()
+
+    data_transformer.transform_corpus(self.batch_map)
   
   def arrange(self, indexes):
     self.batch_indexes = indexes
 
   def shuffle(self):
-    random.shuffle(self.batch_indexes)
+    numpy.random.shuffle(self.batch_indexes)
   
   # Operators
   def __len__(self):

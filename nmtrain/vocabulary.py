@@ -15,6 +15,7 @@ class Vocabulary(object):
   def __init__(self, add_unk=False, add_eos=False, add_stuff=False):
     self.word_to_id = {}
     self.id_to_word = {}
+    self.rare_words = set()
     
     if add_unk:
       self.add_word(UNK)
@@ -32,8 +33,7 @@ class Vocabulary(object):
   def set_word(self, word, word_id):
     self.word_to_id[word]    = word_id
     self.id_to_word[word_id] = word
-
-  # Public
+    
   def sentence(self, word_ids, append_eos = True):
     ret = []
     for word_id in word_ids:
@@ -43,14 +43,30 @@ class Vocabulary(object):
       ret = ret[:ret.index(EOS)]
     return " ".join(ret)
 
-  def parse_sentence(self, words):
-    return tuple(self[word] for word in words)
+  def parse_sentence(self, words, ignore_rare=True):
+    return tuple(self.parse_word(word, ignore_rare) for word in words)
 
   def word(self, word_id):
     return self.id_to_word.get(word_id, UNK)
 
-  def parse_word(self, word):
-    return self[word]
+  def parse_word(self, word, ignore_rare=True):
+    if word not in self:
+      return self.unk_id()
+    else:
+      word_id = self[word]
+      if ignore_rare and word_id in self.rare_words:
+        word_id = self.unk_id()
+      return word_id
+
+  def set_rare_word(self, word_id):
+    """ Mark that this word_id is a rare word.
+        Normally this rare words will not be included in training due to its low frequency.
+        Every word that is parsed there after will be marked as UNK.
+        Note:
+          The word still in vocabulary, just it is marked as rare.
+    """
+    self.rare_words.add(word_id)
+    return self.unk_id()
 
   def unk_id(self): return self[UNK]
   def eos_id(self): return self[EOS]

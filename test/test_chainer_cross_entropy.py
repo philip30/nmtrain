@@ -32,7 +32,7 @@ class TestCrossEntropy(unittest.TestCase):
   def check_forward(self, x_data, t_data, use_cudnn=True):
     x = functions.softmax(chainer.Variable(x_data))
     t = chainer.Variable(t_data)
-    loss = nmtrain.chainer.cross_entropy(
+    loss = nmtrain.chner.cross_entropy(
       x, t, use_cudnn=use_cudnn, cache_score=self.cache_score)
     self.assertEqual(loss.data.shape, ())
     self.assertEqual(loss.data.dtype, numpy.float32)
@@ -75,7 +75,7 @@ class TestCrossEntropy(unittest.TestCase):
   def check_backward(self, x_data, t_data, use_cudnn=True):
     x_data = functions.softmax(chainer.Variable(x_data)).data
     gradient_check.check_backward(
-      nmtrain.chainer.CrossEntropy(
+      nmtrain.chner.CrossEntropy(
           use_cudnn=use_cudnn, cache_score=self.cache_score),
       (x_data, t_data), None, eps=0.01, atol=self.backward_atol)
 
@@ -118,10 +118,10 @@ class TestCrossEntropyValueCheck(unittest.TestCase):
 
     if self.valid:
       # Check if it throws nothing
-      nmtrain.chainer.cross_entropy(x, t, use_cudnn)
+      nmtrain.chner.cross_entropy(x, t, use_cudnn)
     else:
       with self.assertRaises(ValueError):
-        nmtrain.chainer.cross_entropy(x, t, use_cudnn)
+        nmtrain.chner.cross_entropy(x, t, use_cudnn)
 
   def test_value_check_cpu(self):
     self.check_value_check(self.x, self.t, False)
