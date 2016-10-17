@@ -11,6 +11,7 @@ class TestInitGpu(unittest.TestCase):
     importlib.reload(chainer)
     importlib.reload(environment)
 
+  @unittest.skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected")
   def test_gpu0(self):
     environment.init_gpu(0)
     self.assertEqual(environment.array_module(), chainer.cuda.cupy)
@@ -20,11 +21,14 @@ class TestInitGpu(unittest.TestCase):
     self.assertEqual(environment.array_module(), numpy)
 
   def test_nogpu(self):
-    cupy = getattr(chainer.cuda, "cupy")
-    delattr(chainer.cuda, "cupy")
+    cupy = None
+    if hasattr(chainer.cuda, "cupy"):
+      cupy = getattr(chainer.cuda, "cupy")
+      delattr(chainer.cuda, "cupy")
     environment.init_gpu(0)
     self.assertEqual(environment.array_module(), numpy)
-    setattr(chainer.cuda, "cupy", cupy)
+    if cupy is not None:
+      setattr(chainer.cuda, "cupy", cupy)
 
   def test_premature_call(self):
     temp = sys.stderr
@@ -41,20 +45,20 @@ class TestRandom(unittest.TestCase):
     importlib.reload(environment)
     importlib.reload(numpy)
     importlib.reload(chainer)
-    
     # Do not change this seed
     self.seed = 11
 
   def test_random_cpu(self):
     environment.init_gpu(-1)
     environment.init_random(self.seed)
-    self.assertAlmostEqual(float(environment.array_module().random.random()), 
+    self.assertAlmostEqual(float(environment.array_module().random.random()),
                            0.1802696888767692)
 
+  @unittest.skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected.")
   def test_random_gpu(self):
     environment.init_gpu(0)
     environment.init_random(self.seed)
-    self.assertAlmostEqual(float(environment.array_module().random.random()), 
+    self.assertAlmostEqual(float(environment.array_module().random.random()),
                            0.5405254640354904)
     # TODO(philip30):
     # Seems that the cuda.cupy.random draws from a different distribution than

@@ -40,7 +40,7 @@ class TestLinearInterpolation(unittest.TestCase):
     def test_forward_cpu(self):
         self.check_forward(self.x1, self.x2)
 
-    @attr.gpu
+    @skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected.")
     @condition.retry(3)
     def test_forward_gpu(self):
         self.link.to_gpu()
@@ -53,7 +53,7 @@ class TestLinearInterpolation(unittest.TestCase):
     def test_backward_cpu(self):
         self.check_backward(self.x1, self.x2, self.gy)
 
-    @attr.gpu
+    @skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected.")
     @condition.retry(3)
     def test_backward_gpu(self):
         self.link.to_gpu()

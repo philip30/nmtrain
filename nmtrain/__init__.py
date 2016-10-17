@@ -1,5 +1,6 @@
-from nmtrain import chner, vocabulary
-from nmtrain import data, evals, models
+import nmtrain.enum
+import nmtrain.vocabulary
+import nmtrain.chner
 
 from nmtrain.batch import BatchManager, Batch
 from nmtrain.vocabulary import Vocabulary
