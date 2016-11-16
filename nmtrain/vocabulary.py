@@ -16,7 +16,7 @@ class Vocabulary(object):
     self.word_to_id = {}
     self.id_to_word = {}
     self.rare_words = set()
-    
+
     if add_unk:
       self.add_word(UNK)
     if add_eos:
@@ -33,7 +33,7 @@ class Vocabulary(object):
   def set_word(self, word, word_id):
     self.word_to_id[word]    = word_id
     self.id_to_word[word_id] = word
-    
+
   def sentence(self, word_ids, append_eos = True):
     ret = []
     for word_id in word_ids:
@@ -74,7 +74,7 @@ class Vocabulary(object):
   def unk(self): return UNK
   def eos(self): return EOS
   def stuff(self): return STUFF
-  
+
   # Operators
   def __getitem__(self, word):
     return self.word_to_id[word]

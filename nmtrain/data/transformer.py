@@ -4,15 +4,15 @@ import nmtrain
 from . import analyzer
 
 class IdentityTransformer(object):
-  def transform(self, data, load_mode=nmtrain.enum.DataMode.TRAIN):
+  def transform(self, data, load_mode=nmtrain.enumeration.DataMode.TRAIN):
     return data
 
   def transform_corpus(self, corpus_data):
     return
 
 class NMTDataTransformer(object):
-  def __init__(self, data_type=nmtrain.enum.DataMode.TRAIN,
-               vocab=nmtrain.vocabulary.Vocabulary(),
+  def __init__(self, data_type=nmtrain.enumeration.DataMode.TRAIN,
+               vocab=nmtrain.Vocabulary(),
                data_analyzer=analyzer.StandardAnalyzer(),
                unk_freq_threshold=1):
     self.vocab = vocab
@@ -26,14 +26,16 @@ class NMTDataTransformer(object):
     """
     sentence = []
     for word in data.strip().split():
-      if self.data_type == nmtrain.enum.DataMode.TRAIN:
-        sentence.append(self.vocab.add_word(word))
+      if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
+        word_id = self.vocab.add_word(word)
+        sentence.append(word_id)
+        self.data_analyzer.add_word_count(word_id)
       else:
         sentence.append(self.vocab.parse_word(word))
     return sentence
-    
+
   def transform_corpus(self, corpus):
-    """ Called after all data is being transformed. 
+    """ Called after all data is being transformed.
         Transform further according to the corpus analysis.
 
         The transformation includes:
@@ -42,20 +44,17 @@ class NMTDataTransformer(object):
           3. Transform it into imutable numpy array.
     """
     for batch_id, batch_data in corpus.items():
-      max_length = max([len(batch) for batch in batch_data])
+      max_length = max([len(sentence) for sentence in batch_data])
       for sentence_id, sentence in enumerate(batch_data):
         # First if it is train model the unknown word for freq < threshold
-        if self.data_type == nmtrain.enum.DataMode.TRAIN:
+        if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
           for i, word_id in enumerate(sentence):
-            if self.data_analyzer.word_count[self.vocab.word(word_id)] < self.unk_freq_threshold:
+            if self.data_analyzer.word_count[word_id] < self.unk_freq_threshold:
               sentence[i] = self.vocab.set_rare_word(word_id)
         # Stuff it so they have a square batch
         for _ in range(max_length - len(sentence)):
           sentence.append(self.vocab.stuff_id())
         # Add the end of word at the end
         sentence.append(self.vocab.eos_id())
-        # Overwrite the existing
-        batch_data[sentence_id] = sentence
-      batch_data = numpy.array(batch_data, dtype=numpy.int)
-      corpus[batch_id] = batch_data
+      corpus[batch_id].data = numpy.array(batch_data.data, dtype=numpy.int32).transpose()
     return corpus

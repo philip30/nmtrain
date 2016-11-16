@@ -2,23 +2,29 @@ import chainer
 import numpy
 
 import nmtrain
-import nmtrain.enum
 
 # Environment Variables
 xp = None
 verbosity = 0
-run_mode = nmtrain.enum.RunMode.TRAIN
+run_mode = nmtrain.enumeration.RunMode.TRAIN
+gpu = -1
+
+def init(args, run_mode):
+  init_gpu(args.gpu)
+  init_random(args.seed)
+  init_verbosity(args.verbosity)
 
 # Environment Functions
 def init_gpu(gpu_num):
   global xp
-  if not hasattr(chainer.cuda, "cupy"):
-    gpu_num = -1
-  if gpu_num >= 0:
-    xp = chainer.cuda.cupy
-    chainer.cuda.get_device(gpu_num).use()
-  else:
-    xp = numpy
+  xp = numpy
+  if hasattr(chainer.cuda, "cupy"):
+    if gpu_num >= 0:
+      gpu = gpu_num
+      xp = chainer.cuda.cupy
+      chainer.cuda.get_device(gpu_num).use()
+    else:
+      xp = numpy
   return gpu_num
 
 def init_random(seed):
@@ -40,4 +46,18 @@ def array_module():
   return xp
 
 def is_train():
-  return run_mode == nmtrain.enum.RunMode.TRAIN
+  return run_mode == nmtrain.enumeration.RunMode.TRAIN
+
+def set_runmode(mode):
+  global run_mode
+  run_mode = mode
+
+def set_train():
+  set_runmode(nmtrain.enumeration.RunMode.TRAIN)
+
+def set_test():
+  set_runmode(nmtrain.enumeration.RunMode.TEST)
+
+def use_gpu():
+  global gpu
+  return gpu >= 0

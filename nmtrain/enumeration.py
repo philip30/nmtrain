@@ -1,5 +1,3 @@
-import unittest
-
 class RunMode:
   TRAIN = 0
   TEST  = 1

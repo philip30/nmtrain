@@ -31,7 +31,7 @@ class TestBatchManager(unittest.TestCase):
     self.assertEqual(batches[1].data[0], "3rd")
     self.assertEqual(batches[1].data[1], "4th")
     self.assertEqual(batches[2].data[0], "5th")
-  
+
   def test_shuffle(self):
     data = ["1st", "2nd", "3rd", "4th", "5th"]
     self.manager.load(data, n_items = 1)
@@ -59,12 +59,12 @@ class TestBatchManager(unittest.TestCase):
     self.manager.arrange([4, 0, 1, 3, 2])
     for i, batch in enumerate(self.manager):
       self.assertEqual(batch.data[0], expected[i])
-  
+
   def test_even_data(self):
     data = ["1st", "2nd", "3rd", "4th"]
     self.manager.load(data, n_items = 2)
     self.assertEqual(len(self.manager), 2)
-  
+
   def test_transform_integer(self):
     class TransformInteger:
       def transform(self, s):

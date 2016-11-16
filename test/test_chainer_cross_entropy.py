@@ -5,7 +5,7 @@ import numpy
 import six
 
 import chainer
-import nmtrain
+import nmtrain.chner
 from chainer import cuda
 from chainer import functions
 from chainer import gradient_check
