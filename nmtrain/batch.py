@@ -1,6 +1,7 @@
 import numpy
 
 import nmtrain
+import nmtrain.data.analyzer
 import nmtrain.data.transformer as transformer
 
 class Batch(object):
@@ -25,6 +26,8 @@ class BatchManager(object):
     self.batch_indexes    = []
     # Mapping from id -> batch
     self.batch_map  = {}
+    # Analyzer
+    self.analyzer   = nmtrain.data.analyzer.StandardAnalyzer()
 
   # stream  : data stream
   # n_items : number of items in batch

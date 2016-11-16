@@ -57,20 +57,28 @@ class NmtrainModel:
 
 class TrainingState(object):
   def __init__(self):
-    self.finished_epoch = 0
-    self.perplexities   = []
-    self.bleu_scores    = []
-    self.time_spent     = []
-    self.batch_indexes  = None
+    self.finished_epoch   = 0
+    self.perplexities     = []
+    self.dev_perplexities = []
+    self.bleu_scores      = []
+    self.time_spent       = []
+    self.wps              = []
+    self.batch_indexes    = None
 
   def ppl(self):
     return self.perplexities[-1]
+
+  def dev_ppl(self):
+    return self.dev_perplexities[-1]
 
   def bleu(self):
     return self.bleu_scores[-1]
 
   def last_time(self):
     return self.time_spent[-1]
+
+  def wps(self):
+    retirm self.wps[-1]
 
   def time(self):
     return sum(self.time_spent)

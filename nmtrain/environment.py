@@ -58,6 +58,10 @@ def set_train():
 def set_test():
   set_runmode(nmtrain.enumeration.RunMode.TEST)
 
+def Variable(data):
+  volatile = chainer.OFF if is_train else chainer.ON
+  return chainer.Variable(data, volatile=volatile)
+
 def use_gpu():
   global gpu
   return gpu >= 0

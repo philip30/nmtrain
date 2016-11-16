@@ -37,12 +37,15 @@ class BLEU(object):
     # Calculate brevity penalty
     if hyp_length < ref_length:
       self.brevity_penalty= math.exp(1 - (ref_length / hyp_length))
-    
+
     # Calculate score
-    self.score = math.exp(sum(map(math.log, self.precisions)) /
+    if any(x < 1e-6 for x in self.precisions):
+      self.score = 0.0
+    else:
+      self.score = math.exp(sum(map(math.log, self.precisions)) /
         len(self.precisions)) * self.brevity_penalty
- 
-  def score(self):
+
+  def value(self):
     return self.score
 
   def __str__(self):
@@ -52,5 +55,5 @@ def n_gram_stats(sentence, gram, output_dict):
   for i in range(len(sentence)):
     for j in range(1, gram+1):
       if i+j < len(sentence) + 1:
-        output_dict[j-1][" ".join(sentence[i:i+j])] += 1
+        output_dict[j-1][" ".join(map(str, sentence[i:i+j]))] += 1
   return output_dict

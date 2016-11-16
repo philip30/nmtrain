@@ -27,6 +27,12 @@ class DataManager:
     self.train_batches[1].arrange(new_arrangement)
     return new_arrangement
 
+  def has_dev_data(self):
+    return hasattr(self, "dev_batches")
+
+  def total_trg_words(self):
+    return self.train_batches[1].analyzer.total_count
+
   # Generators
   def train_data(self): return self.data(self.train_batches)
   def dev_data(self): return self.data(self.dev_batches)
@@ -47,7 +53,9 @@ def load_data(data, vocab, mode, n_items=1, cut_threshold=1):
   batch_manager = nmtrain.BatchManager()
   transformer = nmtrain.data.transformer.NMTDataTransformer(mode,
                                                             vocab=vocab,
-                                                            unk_freq_threshold=cut_threshold)
+                                                            unk_freq_threshold=cut_threshold,
+                                                            data_analyzer=batch_manager.analyzer)
+
   with open(data) as data_file:
     batch_manager.load(data_file,
                        n_items=n_items,

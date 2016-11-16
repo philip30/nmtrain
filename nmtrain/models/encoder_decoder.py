@@ -16,20 +16,15 @@ class EncoderDecoderNMT(chainer.Chain):
     )
 
   def encode(self, src_data):
-    self.encoder.reset_state()
-    self.decoder.reset_state()
-
     """ Encode the whole source sentence into a single representation 'h' """
-    self.h = self.encoder(src_data)
+    self.S = self.encoder(src_data)
+    self.decoder.init(self.S)
 
   def decode(self):
     """ Produces the word probability distribution based on the last state of decoder """
-    return chainer.functions.softmax(self.decoder(self.h))
+    return chainer.functions.softmax(self.decoder())
 
   def update(self, word):
     """ Produces the next state depends on current word """
     self.decoder.update(word)
 
-  def reset_state(self):
-    self.encoder.reset_state()
-    self.decoder.reset_state()

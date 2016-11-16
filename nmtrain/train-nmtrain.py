@@ -4,7 +4,8 @@ import argparse
 
 import nmtrain.environment
 import nmtrain.enumeration
-import nmtrain.trainer
+import nmtrain.classifiers
+import nmtrain.trainers
 
 """ Arguments """
 parser = argparse.ArgumentParser("NMT model trainer")
@@ -43,6 +44,6 @@ nmtrain.argument_checker.train_sanity_check(args)
 nmtrain.environment.init(args, nmtrain.enumeration.RunMode.TRAIN)
 
 # Load up data
-trainer = nmtrain.trainer.MaximumLikelihoodTrainer(args)
-trainer.train()
+trainer = nmtrain.trainers.MaximumLikelihoodTrainer(args)
+trainer.train(nmtrain.classifiers.RNN_NMT())
 

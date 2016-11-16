@@ -9,16 +9,15 @@ class LSTMDecoder(chainer.Chain):
       affine_vocab  = chainer.links.Linear(hidden_size, out_size),
       output_embed  = chainer.links.EmbedID(out_size, embed_size)
     )
+    self.h = None
+
+  def __call__(self):
+    return self.affine_vocab(chainer.functions.tanh(self.h))
 
   def init(self, h):
     self.decoder.reset_state()
-    self.decoder(h)
-
-  def __call__(self, h):
-    return self.affine_vocab(chainer.functions.tanh(h))
+    self.h = self.decoder(h)
 
   def update(self, next_word):
-    self.decoder(self.output_embed(next_word))
+    self.h = self.decoder(self.output_embed(next_word))
 
-  def reset_state(self):
-    self.decoder.reset_state()

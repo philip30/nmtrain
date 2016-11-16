@@ -32,6 +32,10 @@ class StackLSTM(chainer.ChainList):
     self.h = [None for _ in range(self.depth)]
     self.c = [None for _ in range(self.depth)]
 
+  def set_state(self, h, c):
+    self.h = h
+    self.c = c
+
   def __call__(self, x):
     for i in range(len(self.h)):
       lstm_in = x if i == 0 else self.h[i-1]
