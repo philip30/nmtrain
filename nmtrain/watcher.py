@@ -22,7 +22,7 @@ class TrainingWatcher(object):
     # To measure time
     self.time = time.time()
     # Verbose
-    log.info("Start Epoch %d" % (self.state.finished_epoch))
+    log.info("Start Epoch %d" % (self.state.finished_epoch + 1))
 
   def batch_update(self, loss=0, size=1):
     ppl = math.exp(float(loss))
@@ -36,11 +36,11 @@ class TrainingWatcher(object):
     self.state.batch_indexes = new_data_arrangement
     self.state.time_spent.append(time.time() - self.time)
     self.state.perplexities.append(self.epoch_ppl / self.epoch_update_counter)
-    self.state.wps.append(self.total_trg_words / self.state.last_time())
-    log.info("Epoch %d finished! PPL=%f, time=%f mins, wps=%f" % (self.state.finished_epoch - 1,
+    self.state.wps_time.append(self.total_trg_words / self.state.last_time())
+    log.info("Epoch %d finished! PPL=%f, time=%f mins, wps=%f" % (self.state.finished_epoch,
                                                                   self.state.ppl(),
                                                                   self.state.last_time() / 60,
-                                                                  self.wps()))
+                                                                  self.state.wps()))
   # DEV SET
   # Sentence-wise prediction
   def start_prediction(self):

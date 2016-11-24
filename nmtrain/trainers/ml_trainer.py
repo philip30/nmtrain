@@ -3,6 +3,7 @@ import numpy
 import nmtrain
 import nmtrain.data
 import nmtrain.evaluator
+import nmtrain.serializer
 import nmtrain.watcher
 import nmtrain.log as log
 
@@ -13,6 +14,8 @@ class MaximumLikelihoodTrainer:
     # Training Parameters
     self.maximum_epoch = args.epoch
     self.bptt_len = args.bptt_len
+    # Location of output model
+    self.model_file = args.model_out
     # Load in the real data
     log.info("Loading Data")
     self.data_manager.load_train(args.src, args.trg,
@@ -90,8 +93,8 @@ class MaximumLikelihoodTrainer:
       # Stop Early, otherwise, save
       if evaluator.should_early_stop():
         if evaluator.should_save():
-          pass
+          nmtrain.serializer.save(self.nmtrain_model, self.model_file)
         break
       else:
-        pass
+        nmtrain.serializer.save(self.nmtrain_model, self.model_file)
 

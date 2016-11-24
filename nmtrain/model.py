@@ -12,48 +12,25 @@ class NmtrainModel:
       - Training State
   """
   def __init__(self, args):
-    self.src_vocab = nmtrain.Vocabulary(True, True, True)
-    self.trg_vocab = nmtrain.Vocabulary(True, True, True)
-    self.training_state = TrainingState()
-    self.optimizer = parse_optimizer(args.optimizer)
-   # Init Model
+    # Init Model
     if args.init_model:
-      pass # TODO(philip30): Implement init model
+      nmtrain.serializer.load(self, args.init_model)
     else:
+      self.src_vocab = nmtrain.Vocabulary(True, True, True)
+      self.trg_vocab = nmtrain.Vocabulary(True, True, True)
+      self.optimizer = parse_optimizer(args.optimizer)
+      self.training_state = TrainingState()
+      self.specification = args
       self.chainer_model = None
 
   def finalize_model(self, args):
-    # Construct appropriate model if model has not been initialized
     if self.chainer_model is None:
-      if args.model_architecture == "encdec":
-        self.chainer_model = nmtrain.models.EncoderDecoderNMT(
-          embed_size   = args.embed,
-          hidden_size  = args.hidden,
-          drop_out     = args.dropout,
-          lstm_depth   = args.depth,
-          in_size      = len(self.src_vocab),
-          out_size     = len(self.trg_vocab)
-        )
-      elif args.model_architecture == "attn":
-        self.chainer_model = nmtrain.models.AttentionalNMT(
-          embed_size   = args.embed,
-          hidden_size  = args.hidden,
-          drop_out     = args.dropout,
-          lstm_depth   = args.depth,
-          in_size      = len(self.src_vocab),
-          out_size     = len(self.trg_vocab)
-        )
-      else:
-        raise Exception("Unknown Model Type:", model_type)
+      self.chainer_model = from_spec(args, len(self.src_vocab), len(self.trg_vocab))
+      self.optimizer.setup(self.chainer_model)
 
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
       self.chainer_model.to_gpu(nmtrain.environment.gpu)
-
-    # Setup Optimizer
-    if self.optimizer is not None:
-      self.optimizer.setup(self.chainer_model)
-      # TODO(philip30): Implement optimizer loading here
 
 class TrainingState(object):
   def __init__(self):
@@ -62,7 +39,7 @@ class TrainingState(object):
     self.dev_perplexities = []
     self.bleu_scores      = []
     self.time_spent       = []
-    self.wps              = []
+    self.wps_time         = []
     self.batch_indexes    = None
 
   def ppl(self):
@@ -78,13 +55,19 @@ class TrainingState(object):
     return self.time_spent[-1]
 
   def wps(self):
-    retirm self.wps[-1]
+    return self.wps_time[-1]
 
   def time(self):
     return sum(self.time_spent)
 
 def parse_optimizer(optimizer_str):
-  opt, opt_param = optimizer_str.split(":")
+  optimizer_str = optimizer_str.split(":")
+  opt = optimizer_str[0]
+  if len(optimizer_str) == 1:
+    opt_param = ""
+  else:
+    opt_param = optimizer_str[1]
+  # Select optimizer
   if opt == "adam":
     param = parse_parameter(opt_param, {
       "alpha":float, "beta1":float, "beta2": float, "eps": float})
@@ -97,6 +80,8 @@ def parse_optimizer(optimizer_str):
     raise ValueError("Unrecognized optimizer:", opt)
 
 def parse_parameter(opt_param, param_mapping):
+  if len(opt_param) == 0:
+    return {}
   param = {}
   for param_str in opt_param.split(","):
     param_str = param_str.split("=")
@@ -106,4 +91,26 @@ def parse_parameter(opt_param, param_mapping):
     else:
       param[param_str[0]] = param_mapping[param_str[0]](param_str[1])
   return param
+
+def from_spec(spec, in_size, out_size):
+  if spec.model_architecture == "encdec":
+    return nmtrain.models.EncoderDecoderNMT(
+      embed_size   = spec.embed,
+      hidden_size  = spec.hidden,
+      drop_out     = spec.dropout,
+      lstm_depth   = spec.depth,
+      in_size      = in_size,
+      out_size     = out_size
+    )
+  elif spec.model_architecture == "attn":
+    return nmtrain.models.AttentionalNMT(
+      embed_size   = spec.embed,
+      hidden_size  = spec.hidden,
+      drop_out     = spec.dropout,
+      lstm_depth   = spec.depth,
+      in_size      = in_size,
+      out_size     = out_size
+    )
+  else:
+    raise Exception("Unknown Model Type:", model_type)
 
