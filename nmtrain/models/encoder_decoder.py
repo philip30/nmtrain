@@ -9,7 +9,7 @@ class EncoderDecoderNMT(chainer.Chain):
     super(EncoderDecoderNMT, self).__init__(
         encoder = encoder.BidirectionalEncoder(in_size, embed_size,
                                                hidden_size, drop_out,
-                                               lstm_depth, attention=False),
+                                               lstm_depth),
         decoder = decoder.LSTMDecoder(out_size, embed_size,
                                       hidden_size, drop_out,
                                       lstm_depth)
@@ -21,7 +21,7 @@ class EncoderDecoderNMT(chainer.Chain):
 
   def decode(self):
     """ Produces the word probability distribution based on the last state of decoder """
-    return chainer.functions.softmax(self.decoder())
+    return self.decoder()
 
   def update(self, word):
     """ Produces the next state depends on current word """

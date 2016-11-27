@@ -3,6 +3,7 @@ import numpy
 import sys
 
 import nmtrain
+import nmtrain.model
 import nmtrain.classifiers
 import nmtrain.log as log
 
@@ -29,7 +30,7 @@ def main(args):
   # The model, chainer model inside
   model         = nmtrain.NmtrainModel(args)
   # The watcher, who logs everything
-  watcher       = nmtrain.TestWatcher(state         = lambda: None,
+  watcher       = nmtrain.TestWatcher(state         = nmtrain.model.TestState(),
                                       src_vocab     = model.src_vocab,
                                       trg_vocab     = model.trg_vocab,
                                       output_stream = sys.stdout )

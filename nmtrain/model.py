@@ -60,6 +60,13 @@ class TrainingState(object):
   def time(self):
     return sum(self.time_spent)
 
+class TestState(TrainingState):
+  def __init__(self):
+    self.wps_time    = []
+    self.time_spent  = []
+    self.bleu_scores = []
+    self.perplexities = []
+
 def parse_optimizer(optimizer_str):
   optimizer_str = optimizer_str.split(":")
   opt = optimizer_str[0]

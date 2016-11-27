@@ -2,6 +2,7 @@ import numpy
 
 import nmtrain
 import nmtrain.data
+import nmtrain.model
 import nmtrain.serializer
 import nmtrain.watcher
 import nmtrain.log as log
@@ -21,6 +22,7 @@ class MaximumLikelihoodTrainer:
                                  self.nmtrain_model.src_vocab,
                                  self.nmtrain_model.trg_vocab,
                                  args.src_dev, args.trg_dev,
+                                 args.src_test, args.trg_test,
                                  args.batch)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
@@ -41,6 +43,13 @@ class MaximumLikelihoodTrainer:
     data    = self.data_manager
     # Chainer optimizer
     optimizer = self.nmtrain_model.optimizer
+
+    # If test data is provided, prepare the appropriate watcher
+    if data.has_test_data():
+      self.test_state = nmtrain.model.TestState()
+      test_watcher = nmtrain.watcher.TestWatcher(self.test_state,
+                                                 self.nmtrain_model.src_vocab,
+                                                 self.nmtrain_model.trg_vocab)
 
     def bptt(batch_loss):
       """ Backpropagation through time """
@@ -84,6 +93,21 @@ class MaximumLikelihoodTrainer:
           # Prepare for evaluation
           classifier.test(model, src_data, watcher, trg_data=trg_data, force_limit=True)
         watcher.end_evaluation(*data.dev_batches)
+        nmtrain.environment.set_train()
+
+      # Incremental testing if wished
+      if data.has_test_data():
+        nmtrain.environment.set_test()
+        test_watcher.begin_evaluation()
+        for src_sent, trg_sent in data.test_data():
+          if xp != numpy:
+            src_data = xp.array(src_sent.data, dtype=numpy.int32)
+            trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
+          else:
+            src_data = src_sent.data
+            trg_data = trg_sent.data
+          classifier.test(model, src_data, test_watcher, trg_data=trg_data, force_limit=False)
+        test_watcher.end_evaluation(*data.test_batches)
         nmtrain.environment.set_train()
 
       # Stop Early, otherwise, save

@@ -30,10 +30,10 @@ parser.add_argument("--seed", type=int, default=0, help="Seed for RNG. 0 for tot
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Development set
-parser.add_argument("--src_dev", type=str, help="Development data src")
-parser.add_argument("--trg_dev", type=str, help="Development data trg")
-# Attentional
-parser.add_argument("--attention_type", type=str, choices=["dot", "general", "concat"], default="dot", help="How to calculate attention layer")
+parser.add_argument("--src_dev", type=str, help="Development data source")
+parser.add_argument("--trg_dev", type=str, help="Development data target")
+parser.add_argument("--src_test", type=str, help="Testing source data, for per epoch testing")
+parser.add_argument("--trg_test", type=str, help="Testing target data, for per epoch testing")
 # DictAttn
 parser.add_argument("--dict",type=str, help="Tab separated trg give src dictionary")
 parser.add_argument("--dict_method", type=str, help="Method to be used for dictionary", choices=["bias", "linear"], default="bias")

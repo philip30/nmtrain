@@ -3,7 +3,9 @@ import nmtrain.enumeration
 
 class DataManager:
 
-  def load_train(self, src, trg, src_voc, trg_voc, src_dev=None, trg_dev=None, batch_size=1):
+  def load_train(self, src, trg, src_voc, trg_voc,
+                 src_dev=None, trg_dev=None,
+                 src_test=None, trg_test=None,batch_size=1):
     self.train_batches = load_parallel_data(src, trg, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TRAIN,
                                             n_items=batch_size)
@@ -11,6 +13,10 @@ class DataManager:
       self.dev_batches = load_parallel_data(src_dev, trg_dev, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TEST,
                                             n_items=1)
+    if src_test and trg_test:
+      self.test_batches = load_parallel_data(src_test, trg_test, src_voc, trg_voc,
+                                             mode=nmtrain.enumeration.DataMode.TEST,
+                                             n_items=1)
 
   def load_test(self, src, src_voc, ref=None, trg_voc=None):
     if ref is not None:
@@ -35,6 +41,9 @@ class DataManager:
 
   def has_dev_data(self):
     return hasattr(self, "dev_batches")
+
+  def has_test_data(self):
+    return hasattr(self, "test_batches")
 
   def total_trg_words(self):
     return self.train_batches[1].analyzer.total_count
