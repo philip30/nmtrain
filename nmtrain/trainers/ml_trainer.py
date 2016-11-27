@@ -2,7 +2,6 @@ import numpy
 
 import nmtrain
 import nmtrain.data
-import nmtrain.evaluator
 import nmtrain.serializer
 import nmtrain.watcher
 import nmtrain.log as log
@@ -36,9 +35,6 @@ class MaximumLikelihoodTrainer:
                                               self.nmtrain_model.src_vocab,
                                               self.nmtrain_model.trg_vocab,
                                               self.data_manager.total_trg_words())
-    # Evaluator will judge whether the program should stop the training
-    # and should write the model to file.
-    evaluator = nmtrain.evaluator.TrainingEvaluator(state)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
     # Our data manager
@@ -91,8 +87,8 @@ class MaximumLikelihoodTrainer:
         nmtrain.environment.set_train()
 
       # Stop Early, otherwise, save
-      if evaluator.should_early_stop():
-        if evaluator.should_save():
+      if watcher.should_early_stop():
+        if watcher.should_save():
           nmtrain.serializer.save(self.nmtrain_model, self.model_file)
         break
       else:

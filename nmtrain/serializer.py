@@ -3,6 +3,7 @@ import chainer
 import pickle
 
 import nmtrain.model
+import nmtrain.log as log
 
 # File names
 SPEC      = "mod.spec"
@@ -13,6 +14,7 @@ STATE     = "mod.state"
 WEIGHT    = "mod.weight"
 
 def save(model, out_file):
+  log.info("Saving model...")
   # Init directory
   if not os.path.exists(out_file):
     os.makedirs(out_file)
@@ -32,6 +34,7 @@ def save(model, out_file):
 
   # Saving Weight
   chainer.serializers.save_npz(os.path.join(out_file, WEIGHT), model.chainer_model)
+  log.info("Finished saving model.")
 
 def load(model, in_file):
   # Loading Specification

@@ -39,11 +39,17 @@ parser.add_argument("--dict",type=str, help="Tab separated trg give src dictiona
 parser.add_argument("--dict_method", type=str, help="Method to be used for dictionary", choices=["bias", "linear"], default="bias")
 args = parser.parse_args()
 
-# Initiation
-nmtrain.argument_checker.train_sanity_check(args)
-nmtrain.environment.init(args, nmtrain.enumeration.RunMode.TRAIN)
+def main(args):
+  # Initiation
+  sanity_check(args)
+  nmtrain.environment.init(args, nmtrain.enumeration.RunMode.TRAIN)
 
-# Load up data
-trainer = nmtrain.trainers.MaximumLikelihoodTrainer(args)
-trainer.train(nmtrain.classifiers.RNN_NMT())
+  # Load up data
+  trainer = nmtrain.trainers.MaximumLikelihoodTrainer(args)
+  trainer.train(nmtrain.classifiers.RNN_NMT())
 
+def sanity_check(args):
+  pass
+
+if __name__ == "__main__":
+  main(args)

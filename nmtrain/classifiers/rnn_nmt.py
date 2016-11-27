@@ -27,9 +27,10 @@ class RNN_NMT(object):
     batch_loss /= len(trg_data)
     return batch_loss
 
-  def test(self, model, src_data, watcher, trg_data=None, gen_limit=1, store_probabilities=False, force_limit=False):
-    xp     = nmtrain.environment.array_module()
-    argmax = chainer.functions.argmax
+  def test(self, model, src_data, watcher,
+           trg_data=None, gen_limit=50,
+           store_probabilities=False, force_limit=False,
+           post_processor=None):
     loss, loss_ctr = 0, 0
     prediction     = []
     probabilities  = []
@@ -42,6 +43,7 @@ class RNN_NMT(object):
     for i in range(gen_limit):
       # Generate word output probability distribution
       y = model.decode()
+      print(y.data)
       word_var = chainer.functions.argmax(y)
       model.update(chainer.functions.reshape(word_var, (1,)))
       # Whether to store softmax probability
@@ -56,5 +58,8 @@ class RNN_NMT(object):
       prediction.append(word)
       if watcher.end_of_sentence(word) and not force_limit:
         break
-    loss /= loss_ctr
+    if loss_ctr != 0:
+      loss /= loss_ctr
+    # TODO(philip30): Implement PostProcessor
     watcher.end_prediction(loss = loss, prediction = prediction, probabilities = probabilities)
+

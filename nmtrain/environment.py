@@ -10,9 +10,12 @@ run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
 
 def init(args, run_mode):
+  init_run_mode(run_mode)
   init_gpu(args.gpu)
-  init_random(args.seed)
-  init_verbosity(args.verbosity)
+  if hasattr(args, "seed"):
+    init_random(args.seed)
+  if hasattr(args, "verbosity"):
+    init_verbosity(args.verbosity)
 
 # Environment Functions
 def init_gpu(gpu_num):

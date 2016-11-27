@@ -12,10 +12,16 @@ class DataManager:
                                             mode=nmtrain.enumeration.DataMode.TEST,
                                             n_items=1)
 
-  def load_test(self, src, trg, src_voc, trg_voc):
-    self.test_batches = load_parallel_data(src, trg, src_voc, trg_voc,
-                                           mode=nmtrain.enumeration.DataMode.TEST,
-                                           n_items=1)
+  def load_test(self, src, src_voc, ref=None, trg_voc=None):
+    if ref is not None:
+      self.test_batches = load_parallel_data(src, ref, src_voc, trg_voc,
+                                             mode=nmtrain.enumeration.DataMode.TEST,
+                                             n_items=1, sort=False)
+    else:
+      self.test_batches = (load_data(src, src_voc,
+                                     mode=nmtrain.enumeration.DataMode.TEST,
+                                     n_items=1, sort=False), None)
+
   # Training data arrange + shuffle
   def arrange(self, indexes):
     if indexes is not None:
@@ -39,16 +45,20 @@ class DataManager:
   def test_data(self): return self.data(self.test_batches)
 
   def data(self, batches):
-    for src, trg in zip(batches[0], batches[1]):
-      yield src, trg
+    if batches[1] is None:
+      for src in batches[0]:
+        yield src, None
+    else:
+      for src, trg in zip(batches[0], batches[1]):
+        yield src, trg
 
 ### Functions
-def load_parallel_data(src, trg, src_vocab, trg_vocab, mode, n_items=1, cut_threshold=1):
+def load_parallel_data(src, trg, src_vocab, trg_vocab, mode, n_items=1, cut_threshold=1, sort=True):
   """ Load parallel data into batch managers """
-  return (load_data(src, src_vocab, mode, n_items, cut_threshold),
-          load_data(trg, trg_vocab, mode, n_items, cut_threshold))
+  return (load_data(src, src_vocab, mode, n_items, cut_threshold, sort=sort),
+          load_data(trg, trg_vocab, mode, n_items, cut_threshold, sort=sort))
 
-def load_data(data, vocab, mode, n_items=1, cut_threshold=1):
+def load_data(data, vocab, mode, n_items=1, cut_threshold=1, sort=True):
   """ Transform single dataset into a form of batch manager """
   batch_manager = nmtrain.BatchManager()
   transformer = nmtrain.data.transformer.NMTDataTransformer(mode,
@@ -60,6 +70,6 @@ def load_data(data, vocab, mode, n_items=1, cut_threshold=1):
     batch_manager.load(data_file,
                        n_items=n_items,
                        data_transformer=transformer,
-                       sort=True)
+                       sort=sort)
 
   return batch_manager

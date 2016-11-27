@@ -22,7 +22,6 @@ class BidirectionalEncoder(chainer.Chain):
     self.encode_backward.reset_state()
 
     # Perform encoding
-    fe = None
     for j in range(len(src_data)):
       fe = self.encode_forward(self.embed(nmtrain.environment.Variable(src_data[j])))
       be = self.encode_backward(self.embed(nmtrain.environment.Variable(src_data[-j-1])))

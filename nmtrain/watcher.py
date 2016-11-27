@@ -59,22 +59,71 @@ class TrainingWatcher(object):
     log.info("Begin Evaluation...")
 
   def end_evaluation(self, src_dev, trg_dev):
-    self.state.bleu_scores.append(self.calculate_bleu(self.predictions, trg_dev))
+    self.state.bleu_scores.append(calculate_bleu(self.predictions, trg_dev))
     self.state.dev_perplexities.append(self.dev_ppl / self.dev_ppl_ctr)
 
     # Generate one line report
     dev_ppl = self.state.dev_ppl()
     dev_ppl_report = "DEV_PPL=%f" % dev_ppl if dev_ppl < 1e4 else "DEV_PPL=TOO_BIG"
-    log.info("End Evaluation: %s, BLEU=%f" % (dev_ppl_report,
-                                              self.state.bleu().value() * 100))
+    log.info("End Evaluation: %s, BLEU=%s" % (dev_ppl_report,
+                                              self.state.bleu()))
 
   def end_of_sentence(self, word):
     return word == self.trg_vocab.eos_id()
 
+  def should_save(self):
+    return True
+
+  def should_stop(self):
+    return False
+
+class TestWatcher(object):
+  def __init__(self, state, src_vocab, trg_vocab, output_stream=None):
+    self.state     = state
+    self.src_vocab = src_vocab
+    self.trg_vocab = trg_vocab
+    self.output_stream = output_stream
+
+  def begin_evaluation(self):
+    log.info("Decoding Started")
+    self.time = time.time()
+    self.predictions = []
+    self.test_ppl = 0
+    self.test_ppl_ctr = 0
+
+  def end_evaluation(self, src, ref=None):
+    log.info("Decoding Finished, starting evaluation if reference is provided.")
+    self.state.time = time.time() - self.time
+    self.state.wps  = sum(len(prediction) for prediction in self.predictions) / self.state.time
+    if ref is not None:
+      self.state.bleu = calculate_bleu(self.predictions, ref)
+      self.state.ppl = self.test_ppl / self.test_ppl_ctr
+    # Creating evaluation string
+    eval_string = "Time=%.2f mins, WPS=%f" % (self.state.time, self.state.wps)
+    if ref is not None:
+      eval_string += " " + ("BLEU=%s, PPL=%f" % (str(self.state.bleu), self.state.ppl))
+
+    log.info("Evaluation Finished!", eval_string)
+
+  def end_of_sentence(self, word):
+    return word == self.trg_vocab.eos_id()
+
+  def start_prediction(self):
+    pass
+
+  def end_prediction(self, loss, prediction, probabilities):
+    self.predictions.append(prediction)
+    self.test_ppl += math.exp(float(loss))
+    self.test_ppl_ctr += 1
+
+    if self.output_stream is not None:
+      print(self.trg_vocab.sentence(prediction), file=self.output_stream)
+
 # Calculate BLEU Score
-  def calculate_bleu(self, predictions, trg_dev):
-    def dev_corpus():
-      for trg_batch in trg_dev:
-        for reference in trg_batch.data.transpose():
-          yield reference
-    return eval.bleu.calculate_bleu_corpus(predictions, dev_corpus())
+def calculate_bleu(predictions, trg_dev):
+  def dev_corpus():
+    for trg_batch in trg_dev:
+      for reference in trg_batch.data.transpose():
+        yield reference
+  return eval.bleu.calculate_bleu_corpus(predictions, dev_corpus())
+

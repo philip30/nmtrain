@@ -49,7 +49,7 @@ class BLEU(object):
     return self.score
 
   def __str__(self):
-    return str(self.score)
+    return str(self.score * 100) + " BP=%f" % (self.brevity_penalty)
 
 def n_gram_stats(sentence, gram, output_dict):
   for i in range(len(sentence)):
