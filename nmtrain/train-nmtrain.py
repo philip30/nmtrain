@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 
-import nmtrain.environment
+import nmtrain.log as log
 import nmtrain.enumeration
 import nmtrain.classifiers
 import nmtrain.trainers
@@ -34,9 +35,6 @@ parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")
 parser.add_argument("--src_test", type=str, help="Testing source data, for per epoch testing")
 parser.add_argument("--trg_test", type=str, help="Testing target data, for per epoch testing")
-# DictAttn
-parser.add_argument("--dict",type=str, help="Tab separated trg give src dictionary")
-parser.add_argument("--dict_method", type=str, help="Method to be used for dictionary", choices=["bias", "linear"], default="bias")
 args = parser.parse_args()
 
 def main(args):
@@ -49,7 +47,16 @@ def main(args):
   trainer.train(nmtrain.classifiers.RNN_NMT())
 
 def sanity_check(args):
-  pass
+  if (args.src_dev and not args.trg_dev) or (not args.src_dev and args.trg_dev):
+    log.fatal("Need to specify both src_dev and trg_dev")
+  if (args.src_test and not args.trg_test) or (not args.src_test and args.trg_test):
+    log.fatal("Need to specify both src_test and trg_test")
+  if any([getattribute(args, attr) <= 0 for attr in ["batch", "epoch", "depth"]]):
+    log.fatal("Batch, Epoch, Depth should be > 0")
+  if any([getattribute(args, attr) < 0 for attr in ["unk_cut"]]):
+    log.fatal("Unknown Cut should be >= 0")
+  if args.droput < 0 or args.dropout > 1:
+    log.fatal("Dropout should be 0 <= dropout <= 1")
 
 if __name__ == "__main__":
   main(args)
