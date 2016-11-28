@@ -29,7 +29,7 @@ class TrainingWatcher(object):
     self.epoch_ppl += ppl
     self.epoch_update_counter += 1
     self.trained += batch_size
-    log.info("Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.trained, ppl, col_size))
+    log.info("[%d] Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.state.finished_epoch + 1, self.trained, ppl, col_size))
 
   def end_epoch(self, new_data_arrangement):
     self.state.finished_epoch += 1

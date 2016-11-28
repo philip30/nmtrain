@@ -53,9 +53,9 @@ def load(model, in_file):
   model.chainer_model = nmtrain.model.from_spec(model.specification,
                                                 len(model.src_vocab),
                                                 len(model.trg_vocab))
-
-  model.optimizer = nmtrain.model.parse_optimizer(model.specification.optimizer)
-  model.optimizer.setup(model.chainer_model)
+  if nmtrain.environment.is_train():
+    model.optimizer = nmtrain.model.parse_optimizer(model.specification.optimizer)
+    model.optimizer.setup(model.chainer_model)
   chainer.serializers.load_npz(os.path.join(in_file, WEIGHT), model.chainer_model)
 
   # Loading Optimizer
