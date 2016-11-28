@@ -46,7 +46,7 @@ class NmtrainModel:
     print("Dropout Ratio  :", self.specification.dropout, file=sys.stderr)
     print("Unknown Cut    :", self.specification.unk_cut, file=sys.stderr)
     print("Batch Size     :", self.specification.batch, file=sys.stderr)
-    print("Optimizer      :", self.optimizer.__class__.__name__.)
+    print("Optimizer      :", self.optimizer.__class__.__name__)
 
 class TrainingState(object):
   def __init__(self):

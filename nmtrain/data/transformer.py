@@ -57,4 +57,18 @@ class NMTDataTransformer(object):
         # Add the end of word at the end
         sentence.append(self.vocab.eos_id())
       corpus[batch_id].data = numpy.array(batch_data.data, dtype=numpy.int32).transpose()
+    # Remapping the unknown words for training data
+    # Making the unknown words to appear at the last of the ids
+    if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
+      unk_map = self.vocab.remap_unknown()
+      # Remap the whole corpus
+      for batch_id, batch_data in corpus.items():
+        for sentence_id, sentence in enumerate(batch_data):
+          for i, word_id in enumerate(sentence):
+            if word_id in unk_map:
+              new_word_id, new_word = unk_map[word_id]
+              sentence[i] = new_word_id
+            else:
+              raise Exception("Unmapped word id:", word_id)
+    # Return the new corpus (the old one has already changed also)
     return corpus

@@ -65,7 +65,8 @@ class BatchManager(object):
 
     # Creating batch
     for i, data in corpus:
-      partial_batch.data.append(data_transformer.transform(data))
+      transformed_data = data_transformer.transform(data)
+      partial_batch.data.append(transformed_data)
       partial_batch.sentence_id.append(i)
       if len(partial_batch.data) == n_items:
         new_batch()

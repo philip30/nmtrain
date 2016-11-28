@@ -77,7 +77,9 @@ class MaximumLikelihoodTrainer:
         batch_loss = classifier.train(model, src_data, trg_data,
                                       watcher, bptt,
                                       bptt_len=self.bptt_len)
-        watcher.batch_update(loss=batch_loss.data, size=len(trg_batch.data[0]))
+        watcher.batch_update(loss=batch_loss.data,
+                             batch_size=len(trg_batch.data[0]),
+                             col_size=len(trg_batch.data))
         bptt(batch_loss)
       watcher.end_epoch(data.shuffle())
 

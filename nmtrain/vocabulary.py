@@ -68,6 +68,47 @@ class Vocabulary(object):
     self.rare_words.add(word_id)
     return self.unk_id()
 
+  def remap_unknown(self):
+    """ This method should be called only by the transfomer.
+        It remaps the ids in the vocabulary, based on the unknown words.
+        The known words will get an early ids while the unknown words will get the last ids.
+    """
+    mapping_id   = {}
+    mapping_rare = {}
+    # Handle EOS, STUFF, UNK
+    has_unk = UNK in self.word_to_id
+    has_eos = EOS in self.word_to_id
+    has_stuff = STUFF in self.word_to_id
+    now_id = len([flag for flag in [has_unk, has_eos, has_stuff] if flag])
+    default_id = [self.eos_id(), self.stuff_id(), self.unk_id()]
+    # Create the mapping
+    # For the content
+    for word_id, word in self.id_to_word.items():
+      if word_id not in self.rare_words and word_id not in default_id:
+        mapping_id[word_id] = now_id, word
+        now_id += 1
+    # For the artificially generated token
+    for id in default_id:
+      mapping_id[id] = id, self.word(id)
+    # For the rare words
+    for word_id in self.rare_words:
+      mapping_rare[word_id] = now_id, self.word(word_id)
+      now_id += 1
+    # Remap the whole vocabulary
+    self.rare_words.clear()
+    self.id_to_word.clear()
+    self.word_to_id.clear()
+    if has_unk: self.add_word(UNK)
+    if has_eos: self.add_word(EOS)
+    if has_stuff: self.add_word(STUFF)
+    for _, (new_id, word) in mapping_id.items():
+      self.set_word(word, new_id)
+    for _, (new_id, word) in mapping_rare.items():
+      self.set_word(word, new_id)
+      self.rare_words.add(new_id)
+    # Return the mapping so the client will aware of the changed word_ids
+    return mapping_id
+
   def unk_id(self): return self[UNK]
   def eos_id(self): return self[EOS]
   def stuff_id(self): return self[STUFF]
