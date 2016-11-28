@@ -19,7 +19,7 @@ class StackLSTM(chainer.ChainList):
         size = in_size
       else:
         size = out_size
-      lstm.append(chainer.links.StatelessLSTM(in_size, out_size))
+      lstm.append(chainer.links.StatelessLSTM(size, out_size))
       self.h.append(None)
       self.c.append(None)
 

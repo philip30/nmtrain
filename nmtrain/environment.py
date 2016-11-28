@@ -19,7 +19,7 @@ def init(args, run_mode):
 
 # Environment Functions
 def init_gpu(gpu_num):
-  global xp
+  global xp, gpu
   xp = numpy
   if hasattr(chainer.cuda, "cupy"):
     if gpu_num >= 0:

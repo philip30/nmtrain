@@ -70,7 +70,6 @@ class MaximumLikelihoodTrainer:
         else:
           src_data = src_batch.data
           trg_data = trg_batch.data
-
         # Prepare for training
         batch_loss = classifier.train(model, src_data, trg_data,
                                       watcher, bptt,

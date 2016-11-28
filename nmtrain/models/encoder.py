@@ -40,7 +40,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
   def __call__(self, src_data):
     self.encode_forward.reset_state()
     self.encode_backward.reset_state()
-
+ 
     # Perform encoding
     fe, be = [], []
     for j in range(len(src_data)):
