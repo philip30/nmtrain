@@ -17,7 +17,7 @@ class TrainingWatcher(object):
     # Number of training sentences
     self.trained = 0
     # To measure ppl
-    self.epoch_ppl = 0
+    self.epoch_loss = 0
     self.epoch_update_counter = 0
     # To measure time
     self.time = time.time()
@@ -26,7 +26,7 @@ class TrainingWatcher(object):
 
   def batch_update(self, loss=0, batch_size=1, col_size=1):
     ppl = math.exp(float(loss))
-    self.epoch_ppl += ppl
+    self.epoch_loss += loss
     self.epoch_update_counter += 1
     self.trained += batch_size
     log.info("[%d] Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.state.finished_epoch + 1, self.trained, ppl, col_size))
@@ -35,7 +35,7 @@ class TrainingWatcher(object):
     self.state.finished_epoch += 1
     self.state.batch_indexes = new_data_arrangement
     self.state.time_spent.append(time.time() - self.time)
-    self.state.perplexities.append(self.epoch_ppl / self.epoch_update_counter)
+    self.state.perplexities.append(math.exp(self.epoch_loss / self.epoch_update_counter))
     self.state.wps_time.append(self.total_trg_words / self.state.last_time())
     log.info("Epoch %d finished! PPL=%f, time=%f mins, wps=%f" % (self.state.finished_epoch,
                                                                   self.state.ppl(),
@@ -47,26 +47,26 @@ class TrainingWatcher(object):
     pass
 
   def end_prediction(self, loss, prediction, probabilities, attention):
-    self.dev_ppl += math.exp(float(loss))
-    self.dev_ppl_ctr += 1
+    self.dev_loss += float(loss)
+    self.dev_loss_ctr += 1
     self.predictions.append(prediction)
     # During Training ignore attention vector.
     # This might change in the future
 
   # Corpus-wise evalution
   def begin_evaluation(self):
-    self.dev_ppl = 0
-    self.dev_ppl_ctr = 0
+    self.dev_loss = 0
+    self.dev_loss_ctr = 0
     self.predictions = []
     log.info("Begin Evaluation...")
 
   def end_evaluation(self, src_dev, trg_dev):
     self.state.bleu_scores.append(calculate_bleu(self.predictions, trg_dev))
-    self.state.dev_perplexities.append(self.dev_ppl / self.dev_ppl_ctr)
+    self.state.dev_perplexities.append(math.exp(self.dev_loss/ self.dev_loss_ctr))
 
     # Generate one line report
     dev_ppl = self.state.dev_ppl()
-    dev_ppl_report = "DEV_PPL=%f" % dev_ppl if dev_ppl < 1e4 else "DEV_PPL=TOO_BIG"
+    dev_ppl_report = "DEV_PPL=%f" % dev_ppl if dev_ppl < 1e6 else "DEV_PPL=TOO_BIG"
     log.info("End Evaluation: %s, BLEU=%s" % (dev_ppl_report,
                                               self.state.bleu()))
 
@@ -90,8 +90,8 @@ class TestWatcher(object):
     log.info("Decoding Started")
     self.time = time.time()
     self.predictions = []
-    self.test_ppl = 0
-    self.test_ppl_ctr = 0
+    self.test_loss = 0
+    self.test_loss_ctr = 0
     self.attentions = []
 
   def end_evaluation(self, src, ref=None):
@@ -100,7 +100,7 @@ class TestWatcher(object):
     self.state.wps_time.append(sum(len(prediction) for prediction in self.predictions) / self.state.last_time())
     if ref is not None:
       self.state.bleu_scores.append(calculate_bleu(self.predictions, ref))
-      self.state.perplexities.append(self.test_ppl / self.test_ppl_ctr)
+      self.state.perplexities.append(math.exp(self.test_loss / self.test_loss_ctr))
     # Creating evaluation string
     eval_string = "Time=%.2f mins, WPS=%f" % (self.state.time() / 60, self.state.wps())
     if ref is not None:
@@ -116,8 +116,8 @@ class TestWatcher(object):
 
   def end_prediction(self, loss, prediction, probabilities, attention):
     self.predictions.append(prediction)
-    self.test_ppl += math.exp(float(loss))
-    self.test_ppl_ctr += 1
+    self.test_loss += float(loss)
+    self.test_loss_ctr += 1
 
     # Attention is SRC X TRG
     if attention is not None:
