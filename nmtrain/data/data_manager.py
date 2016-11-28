@@ -5,11 +5,11 @@ class DataManager:
 
   def load_train(self, src, trg, src_voc, trg_voc,
                  src_dev=None, trg_dev=None,
-                 src_test=None, trg_test=None, batch_size=1, unk_cut=0):
+                 src_test=None, trg_test=None, batch_size=1, unk_cut=0, max_vocab=1e6):
     self.train_batches = load_parallel_data(src, trg, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TRAIN,
                                             n_items=batch_size,
-                                            cut_threshold=unk_cut)
+                                            cut_threshold=unk_cut, max_vocab=max_vocab)
     if src_dev and trg_dev:
       self.dev_batches = load_parallel_data(src_dev, trg_dev, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TEST,
@@ -63,18 +63,19 @@ class DataManager:
         yield src, trg
 
 ### Functions
-def load_parallel_data(src, trg, src_vocab, trg_vocab, mode, n_items=1, cut_threshold=1, sort=True):
+def load_parallel_data(src, trg, src_vocab, trg_vocab, mode, n_items=1, cut_threshold=1, sort=True, max_vocab=1e6):
   """ Load parallel data into batch managers """
-  return (load_data(src, src_vocab, mode, n_items, cut_threshold, sort=sort),
-          load_data(trg, trg_vocab, mode, n_items, cut_threshold, sort=sort))
+  return (load_data(src, src_vocab, mode, n_items, cut_threshold, sort=sort, max_vocab=max_vocab),
+          load_data(trg, trg_vocab, mode, n_items, cut_threshold, sort=sort, max_vocab=max_vocab))
 
-def load_data(data, vocab, mode, n_items=1, cut_threshold=1, sort=True):
+def load_data(data, vocab, mode, n_items=1, cut_threshold=1, sort=True, max_vocab=1e6):
   """ Transform single dataset into a form of batch manager """
   batch_manager = nmtrain.BatchManager()
   transformer = nmtrain.data.transformer.NMTDataTransformer(mode,
                                                             vocab=vocab,
                                                             unk_freq_threshold=cut_threshold,
-                                                            data_analyzer=batch_manager.analyzer)
+                                                            data_analyzer=batch_manager.analyzer,
+                                                            max_vocab=max_vocab)
 
   with open(data) as data_file:
     batch_manager.load(data_file,

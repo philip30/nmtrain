@@ -23,6 +23,7 @@ parser.add_argument("--depth", type=int, default=1, help="Depth of the network."
 parser.add_argument("--unk_cut", type=int, default=1, help="Threshold for words in corpora to be treated as unknown.")
 parser.add_argument("--dropout", type=float, default=0.2, help="Dropout ratio for LSTM.")
 parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9,beta2=0.999,eps=1e-8", help="Optimizer used for BPTT")
+parser.add_argument("--max_vocab", type=int, default=50000, help="Maximum vocabulary size in the model")
 # Configuration
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")
@@ -51,11 +52,11 @@ def sanity_check(args):
     log.fatal("Need to specify both src_dev and trg_dev")
   if (args.src_test and not args.trg_test) or (not args.src_test and args.trg_test):
     log.fatal("Need to specify both src_test and trg_test")
-  if any([getattribute(args, attr) <= 0 for attr in ["batch", "epoch", "depth"]]):
+  if any([getattr(args, attr) <= 0 for attr in ["batch", "epoch", "depth"]]):
     log.fatal("Batch, Epoch, Depth should be > 0")
-  if any([getattribute(args, attr) < 0 for attr in ["unk_cut"]]):
+  if any([getattr(args, attr) < 0 for attr in ["unk_cut"]]):
     log.fatal("Unknown Cut should be >= 0")
-  if args.droput < 0 or args.dropout > 1:
+  if args.dropout < 0 or args.dropout > 1:
     log.fatal("Dropout should be 0 <= dropout <= 1")
 
 if __name__ == "__main__":

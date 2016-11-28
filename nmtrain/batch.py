@@ -21,7 +21,7 @@ class BatchManager(object):
       the index by looking it in the map.
   """
 
-  def __init__(self):
+  def __init__(self, max_vocab=1e6):
     # Hold the batch indexes
     self.batch_indexes    = []
     # Mapping from id -> batch

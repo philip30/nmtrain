@@ -14,11 +14,13 @@ class NMTDataTransformer(object):
   def __init__(self, data_type=nmtrain.enumeration.DataMode.TRAIN,
                vocab=nmtrain.Vocabulary(),
                data_analyzer=analyzer.StandardAnalyzer(),
-               unk_freq_threshold=0):
+               unk_freq_threshold=0,
+               max_vocab=1e6):
     self.vocab = vocab
     self.data_type = data_type
     self.data_analyzer = data_analyzer
     self.unk_freq_threshold = unk_freq_threshold
+    self.max_vocab_size = max_vocab
 
   def transform(self, data):
     """ Transform the input string to list of word id.
@@ -43,13 +45,15 @@ class NMTDataTransformer(object):
           2. Adding EOS for every element in batch
           3. Transform it into imutable numpy array.
     """
+    in_vocabulary = self.data_analyzer.ranked_count(self.max_vocab_size)
     for batch_id, batch_data in corpus.items():
       max_length = max([len(sentence) for sentence in batch_data])
       for sentence_id, sentence in enumerate(batch_data):
         # First if it is train model the unknown word for freq < threshold
         if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
           for i, word_id in enumerate(sentence):
-            if self.data_analyzer.word_count[word_id] <= self.unk_freq_threshold:
+            if self.data_analyzer.word_count[word_id] <= self.unk_freq_threshold or \
+              word_id not in in_vocabulary:
               sentence[i] = self.vocab.set_rare_word(word_id)
         # Stuff it so they have a square batch
         for _ in range(max_length - len(sentence)):
