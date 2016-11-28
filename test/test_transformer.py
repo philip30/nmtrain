@@ -17,7 +17,7 @@ class TestNMTTransformer(unittest.TestCase):
     self.train_transformer = transformer.NMTDataTransformer(nmtrain.enumeration.DataMode.TRAIN,
                                                             vocab=vocab,
                                                             data_analyzer=data_analyzer,
-                                                            unk_freq_threshold=1)
+                                                            unk_freq_threshold=0)
 
   def test_transform_line(self):
     word_id = self.train_transformer.transform("this is philip arthur")
@@ -29,7 +29,7 @@ class TestNMTTransformer(unittest.TestCase):
     batch.append(self.train_transformer.transform("this is a test ."))
     corpus = {0 : nmtrain.batch.Batch(0, batch)}
     self.train_transformer.transform_corpus(corpus)
-    expected_batch = numpy.array([[3, 4, 5, 6, 2, 1], [3, 4, 7, 8, 9, 1]])
+    expected_batch = numpy.array([[3, 4, 5, 6, 2, 1], [3, 4, 7, 8, 9, 1]]).transpose()
     numpy.testing.assert_array_equal(corpus[0].data, expected_batch)
 
 class TestNMTTestTransformer(unittest.TestCase):
@@ -57,7 +57,7 @@ class TestRareWords(unittest.TestCase):
     self.train_transformer = transformer.NMTDataTransformer(nmtrain.enumeration.DataMode.TRAIN,
                                                             vocab=vocab,
                                                             data_analyzer=data_analyzer,
-                                                            unk_freq_threshold=2)
+                                                            unk_freq_threshold=1)
 
   def test_transform_batch(self):
     batch = []
@@ -65,7 +65,7 @@ class TestRareWords(unittest.TestCase):
     batch.append(self.train_transformer.transform("this is a test ."))
     corpus = {0 : nmtrain.batch.Batch(0, batch)}
     self.train_transformer.transform_corpus(corpus)
-    expected_batch = numpy.array([[3, 4, 0, 0, 2, 1], [3, 4, 0, 0, 0, 1]])
+    expected_batch = numpy.array([[3, 4, 0, 0, 2, 1], [3, 4, 0, 0, 0, 1]]).transpose()
     numpy.testing.assert_array_equal(corpus[0].data, expected_batch)
 
 if __name__ == "__main__":

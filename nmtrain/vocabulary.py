@@ -86,7 +86,7 @@ class Vocabulary(object):
     return iter(self.word_to_id)
 
   def __len__(self):
-    return len(self.word_to_id)
+    return len(self.word_to_id) - len(self.rare_words)
 
   def __reversed__(self):
     return reversed(self.word_to_id)
@@ -99,4 +99,5 @@ class Vocabulary(object):
       return False
     else:
       return self.id_to_word == other.id_to_word and \
-          self.word_to_id == other.word_to_id
+          self.word_to_id == other.word_to_id and \
+          self.rare_words == other.rare_words

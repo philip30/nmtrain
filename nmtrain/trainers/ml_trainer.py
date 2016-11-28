@@ -23,7 +23,7 @@ class MaximumLikelihoodTrainer:
                                  self.nmtrain_model.trg_vocab,
                                  args.src_dev, args.trg_dev,
                                  args.src_test, args.trg_test,
-                                 args.batch)
+                                 args.batch, args.unk_cut)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model(args)
@@ -57,6 +57,9 @@ class MaximumLikelihoodTrainer:
       batch_loss.backward()
       batch_loss.unchain_backward()
       optimizer.update()
+
+    # Before Training Describe the model
+    self.nmtrain_model.describe()
 
     # Training with maximum likelihood estimation
     data.arrange(state.batch_indexes)

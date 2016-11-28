@@ -1,7 +1,9 @@
 import chainer
+import sys
 
 import nmtrain
 import nmtrain.models
+import nmtrain.log as log
 
 class NmtrainModel:
   """
@@ -31,6 +33,20 @@ class NmtrainModel:
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
       self.chainer_model.to_gpu(nmtrain.environment.gpu)
+
+  def describe(self):
+    print("~ Nmtrain ~", file=sys.stderr)
+    print("~ By: Philip Arthur (philip.arthur30@gmail.com)", file=sys.stderr)
+    print("Model Type     :", self.specification.model_architecture, file=sys.stderr)
+    print("Hidden Size    :", self.specification.hidden, file=sys.stderr)
+    print("Embed Size     :", self.specification.embed, file=sys.stderr)
+    print("LSTM Depth     :", self.specification.depth, file=sys.stderr)
+    print("SRC Vocab Size :", len(self.src_vocab), file=sys.stderr)
+    print("TRG Vocab Size :", len(self.trg_vocab), file=sys.stderr)
+    print("Dropout Ratio  :", self.specification.dropout, file=sys.stderr)
+    print("Unknown Cut    :", self.specification.unk_cut, file=sys.stderr)
+    print("Batch Size     :", self.specification.batch, file=sys.stderr)
+    print("Optimizer      :", self.optimizer.__class__.__name__.)
 
 class TrainingState(object):
   def __init__(self):

@@ -14,7 +14,7 @@ class NMTDataTransformer(object):
   def __init__(self, data_type=nmtrain.enumeration.DataMode.TRAIN,
                vocab=nmtrain.Vocabulary(),
                data_analyzer=analyzer.StandardAnalyzer(),
-               unk_freq_threshold=1):
+               unk_freq_threshold=0):
     self.vocab = vocab
     self.data_type = data_type
     self.data_analyzer = data_analyzer
@@ -49,7 +49,7 @@ class NMTDataTransformer(object):
         # First if it is train model the unknown word for freq < threshold
         if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
           for i, word_id in enumerate(sentence):
-            if self.data_analyzer.word_count[word_id] < self.unk_freq_threshold:
+            if self.data_analyzer.word_count[word_id] <= self.unk_freq_threshold:
               sentence[i] = self.vocab.set_rare_word(word_id)
         # Stuff it so they have a square batch
         for _ in range(max_length - len(sentence)):

@@ -5,10 +5,11 @@ class DataManager:
 
   def load_train(self, src, trg, src_voc, trg_voc,
                  src_dev=None, trg_dev=None,
-                 src_test=None, trg_test=None,batch_size=1):
+                 src_test=None, trg_test=None, batch_size=1, unk_cut=0):
     self.train_batches = load_parallel_data(src, trg, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TRAIN,
-                                            n_items=batch_size)
+                                            n_items=batch_size,
+                                            cut_threshold=unk_cut)
     if src_dev and trg_dev:
       self.dev_batches = load_parallel_data(src_dev, trg_dev, src_voc, trg_voc,
                                             mode=nmtrain.enumeration.DataMode.TEST,
