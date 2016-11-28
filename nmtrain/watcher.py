@@ -1,4 +1,5 @@
 import math
+import numpy
 import time
 
 import nmtrain
@@ -6,11 +7,12 @@ import nmtrain.evals as eval
 import nmtrain.log as log
 
 class TrainingWatcher(object):
-  def __init__(self, state, src_vocab, trg_vocab, total_trg_words):
+  def __init__(self, state, src_vocab, trg_vocab, total_trg_words, early_stop_num):
     self.state = state
     self.src_vocab = src_vocab
     self.trg_vocab = trg_vocab
     self.total_trg_words = total_trg_words
+    self.early_stop = early_stop_num
 
   # TRAIN SET
   def begin_epoch(self):
@@ -74,9 +76,16 @@ class TrainingWatcher(object):
     return word == self.trg_vocab.eos_id()
 
   def should_save(self):
-    return True
+    if len(self.state.dev_perplexities) > 0:
+      lowest_ppl_index = int(numpy.argmin(self.state.dev_perplexities))
+      return (lowest_ppl_index + 1) != len(self.state.dev_perplexities)
+    else:
+      return True
 
   def should_early_stop(self):
+    if len(self.state.dev_perplexities) > 0:
+      lowest_ppl_index = int(numpy.argmin(self.state.dev_perplexities))
+      return abs(len(self.state.dev_perplexities) - lowest_ppl_index - 1) > self.early_stop
     return False
 
 class TestWatcher(object):

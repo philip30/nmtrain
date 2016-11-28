@@ -24,6 +24,7 @@ parser.add_argument("--unk_cut", type=int, default=1, help="Threshold for words 
 parser.add_argument("--dropout", type=float, default=0.2, help="Dropout ratio for LSTM.")
 parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9,beta2=0.999,eps=1e-8", help="Optimizer used for BPTT")
 parser.add_argument("--max_vocab", type=int, default=50000, help="Maximum vocabulary size in the model")
+parser.add_argument("--early_stop", type=int, default=100, help="How many iterations should the model patiently keeps training before it stop due to low dev ppl")
 # Configuration
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")

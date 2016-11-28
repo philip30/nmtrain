@@ -14,6 +14,7 @@ class MaximumLikelihoodTrainer:
     # Training Parameters
     self.maximum_epoch = args.epoch
     self.bptt_len = args.bptt_len
+    self.early_stop_num = args.early_stop
     # Location of output model
     self.model_file = args.model_out
     # Load in the real data
@@ -36,7 +37,8 @@ class MaximumLikelihoodTrainer:
     watcher = nmtrain.watcher.TrainingWatcher(state,
                                               self.nmtrain_model.src_vocab,
                                               self.nmtrain_model.trg_vocab,
-                                              self.data_manager.total_trg_words())
+                                              self.data_manager.total_trg_words(),
+                                              self.early_stop_num)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
     # Our data manager
