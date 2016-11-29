@@ -29,18 +29,19 @@ class BidirectionalEncoder(chainer.Chain):
     return self.encode_project(F.concat((fe, be), axis=1))
 
 class BidirectionalAttentionalEncoder(chainer.Chain):
-  def __init__(self, in_size, embed_size, hidden_size, dropout_ratio, lstm_depth):
+  def __init__(self, in_size, embed_size, hidden_size, dropout_ratio, lstm_depth, input_feeding=True):
     super(BidirectionalAttentionalEncoder, self).__init__(
         embed           = chainer.links.EmbedID(in_size, embed_size),
         encode_forward  = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
         encode_backward = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
         encode_project  = chainer.links.Linear(2*hidden_size, embed_size)
     )
+    self.input_feeding = input_feeding
 
   def __call__(self, src_data):
     self.encode_forward.reset_state()
     self.encode_backward.reset_state()
- 
+
     # Perform encoding
     fe, be = [], []
     for j in range(len(src_data)):
@@ -49,16 +50,17 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
 
     # Joining encoding together
     S = []
-    for i in range(len(fe)):
-      h = self.encode_project(F.concat((fe[i], be[-1-i]), axis=1))
+    for j in range(len(fe)):
+      h = self.encode_project(F.concat((fe[j], be[-1-j]), axis=1))
       S.append(F.expand_dims(h, axis=2))
     S = F.swapaxes(F.concat(S, axis=2), 1, 2)
 
     # Append 0 to the end of h
-    xp = nmtrain.environment.array_module()
-    shape = fe[0].data.shape # (batch_size, hidden_size)
-    zero = nmtrain.environment.Variable(xp.zeros(shape, dtype=numpy.float32))
-    h = F.hstack((h, zero))
- 
+    if self.input_feeding:
+      xp = nmtrain.environment.array_module()
+      shape = fe[0].data.shape # (batch_size, hidden_size)
+      zero = nmtrain.environment.Variable(xp.zeros(shape, dtype=numpy.float32))
+      h = F.hstack((h, zero))
+
     return h, S
 

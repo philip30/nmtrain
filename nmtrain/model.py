@@ -132,7 +132,8 @@ def from_spec(spec, in_size, out_size):
       drop_out     = spec.dropout,
       lstm_depth   = spec.depth,
       in_size      = in_size,
-      out_size     = out_size
+      out_size     = out_size,
+      input_feeding = spec.input_feeding
     )
   else:
     raise Exception("Unknown Model Type:", model_type)

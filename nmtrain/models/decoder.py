@@ -24,13 +24,17 @@ class LSTMDecoder(chainer.Chain):
 
 # Implementation of Luong et al.
 class LSTMAttentionalDecoder(LSTMDecoder):
-  def __init__(self, out_size, embed_size, hidden_size, dropout_ratio, lstm_depth):
+  def __init__(self, out_size, embed_size, hidden_size, dropout_ratio, lstm_depth, input_feeding=True):
+    decoder_in_size = embed_size
+    if input_feeding:
+      decoder_in_size += hidden_size
     super(LSTMDecoder, self).__init__(
-      decoder         = nmtrain.chner.StackLSTM(embed_size + hidden_size, hidden_size, lstm_depth, dropout_ratio),
+      decoder         = nmtrain.chner.StackLSTM(decoder_in_size, hidden_size, lstm_depth, dropout_ratio),
       context_project = chainer.links.Linear(2*hidden_size, hidden_size),
       affine_vocab    = chainer.links.Linear(hidden_size, out_size),
       output_embed    = chainer.links.EmbedID(out_size, embed_size)
     )
+    self.input_feeding = input_feeding
 
   def init(self, h):
     h, S = h
@@ -52,7 +56,10 @@ class LSTMAttentionalDecoder(LSTMDecoder):
 
   def update(self, next_word):
     # embed_size + hidden size -> input feeding approach
-    self.h = self.decoder(F.hstack((self.output_embed(next_word), self.ht)))
+    decoder_update = self.output_embed(next_word)
+    if self.input_feeding:
+      decoder_update = F.hstack((decoder_update, self.ht))
+    self.h = self.decoder(decoder_update)
 
 # MISC class for holding the output
 class Output(object):

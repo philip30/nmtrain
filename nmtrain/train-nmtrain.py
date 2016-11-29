@@ -37,6 +37,9 @@ parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")
 parser.add_argument("--src_test", type=str, help="Testing source data, for per epoch testing")
 parser.add_argument("--trg_test", type=str, help="Testing target data, for per epoch testing")
+# Attentional Setting
+parser.add_argument("--no_input_feeding", dest="input_feeding", action="store_false")
+parser.set_defaults(input_feeding=True)
 args = parser.parse_args()
 
 def main(args):

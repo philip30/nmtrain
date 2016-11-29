@@ -20,8 +20,6 @@ class StackLSTM(chainer.ChainList):
       else:
         size = out_size
       lstm.append(chainer.links.StatelessLSTM(size, out_size))
-      self.h.append(None)
-      self.c.append(None)
 
     # Pass it to the super connection
     super(StackLSTM, self).__init__(*lstm)
