@@ -29,6 +29,7 @@ def main(args):
   data_manager  = nmtrain.data.DataManager()
   # The model, chainer model inside
   model         = nmtrain.NmtrainModel(args)
+  model.finalize_model(args)
   # The watcher, who logs everything
   watcher       = nmtrain.TestWatcher(state         = nmtrain.model.TestState(),
                                       src_vocab     = model.src_vocab,
@@ -41,7 +42,6 @@ def main(args):
 
    # Array module
   xp = nmtrain.environment.array_module()
-
   log.info("Loading Data")
   data_manager.load_test(src     = args.src,
                          src_voc = model.src_vocab,
