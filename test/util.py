@@ -25,6 +25,8 @@ def basic_train_args(model_architecture="encdec"):
   args.src_test = ""
   args.trg_test = ""
   args.early_stop = 0
+  args.unk_cut = 0
+  args.max_vocab = 10000000000
   # Dummy test file
   this_script_dir = os.path.dirname(os.path.realpath(__file__))
   args.src = os.path.join(this_script_dir, "data", "train.ja")
