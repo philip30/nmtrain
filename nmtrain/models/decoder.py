@@ -8,7 +8,8 @@ class LSTMDecoder(chainer.Chain):
     super(LSTMDecoder, self).__init__(
       decoder       = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
       affine_vocab  = chainer.links.Linear(hidden_size, out_size),
-      output_embed  = chainer.links.EmbedID(out_size, embed_size)
+      output_embed  = chainer.links.EmbedID(out_size, embed_size),
+      state_init    = chainer.links.Linear(hidden_size, embed_size)
     )
 
   def __call__(self):
@@ -17,7 +18,7 @@ class LSTMDecoder(chainer.Chain):
 
   def init(self, h):
     self.decoder.reset_state()
-    self.h = self.decoder(h)
+    self.h = self.decoder(self.state_init(h))
 
   def update(self, next_word):
     self.h = self.decoder(self.output_embed(next_word))

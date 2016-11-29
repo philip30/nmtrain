@@ -12,7 +12,7 @@ class BidirectionalEncoder(chainer.Chain):
         embed           = chainer.links.EmbedID(in_size, embed_size),
         encode_forward  = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
         encode_backward = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
-        encode_project  = chainer.links.Linear(2*hidden_size, embed_size)
+        encode_project  = chainer.links.Linear(2*hidden_size, hidden_size)
     )
 
   def __call__(self, src_data):

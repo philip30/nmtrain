@@ -59,7 +59,8 @@ def load(model, in_file):
   chainer.serializers.load_npz(os.path.join(in_file, WEIGHT), model.chainer_model)
 
   # Loading Optimizer
-  chainer.serializers.load_npz(os.path.join(in_file, OPTIMIZER), model.optimizer)
+  if nmtrain.environment.is_train():
+    chainer.serializers.load_npz(os.path.join(in_file, OPTIMIZER), model.optimizer)
 
 #####################
 # PRIVATE FUNCTIONS #
