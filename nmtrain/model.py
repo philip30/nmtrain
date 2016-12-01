@@ -30,6 +30,10 @@ class NmtrainModel:
       self.chainer_model = from_spec(args, len(self.src_vocab), len(self.trg_vocab))
       self.optimizer.setup(self.chainer_model)
 
+    if hasattr(self, "optimizer"):
+      self.optimizer.add_hook(chainer.optimizer.GradientClipping(args.gradient_clipping))
+      self.optimizer.add_hook(chainer.optimizer.GradientNoise(args.gradient_noise))
+
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
       self.chainer_model.to_gpu(nmtrain.environment.gpu)

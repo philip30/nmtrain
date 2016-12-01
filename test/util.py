@@ -9,7 +9,13 @@ def init_env(gpu=-1, seed=2):
   nmtrain.environment.init_random(3)
 
 def basic_train_args(model_architecture="encdec"):
-  args = lambda: None
+  class Args(object):
+    def getattr(self, key):
+      if hasattr(self, key):
+        return self.__dict__[key]
+      else:
+        return None
+  args = Args()
   args.model_architecture = "encdec"
   args.embed  = 50
   args.hidden = 50

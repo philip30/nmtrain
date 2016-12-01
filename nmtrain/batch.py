@@ -1,7 +1,6 @@
 import numpy
 
 import nmtrain
-import nmtrain.data.analyzer
 import nmtrain.data.transformer as transformer
 
 class Batch(object):
@@ -21,19 +20,15 @@ class BatchManager(object):
       the index by looking it in the map.
   """
 
-  def __init__(self, max_vocab=1e6):
+  def __init__(self):
     # Hold the batch indexes
     self.batch_indexes    = []
     # Mapping from id -> batch
     self.batch_map  = {}
-    # Analyzer
-    self.analyzer   = nmtrain.data.analyzer.StandardAnalyzer()
 
   # stream  : data stream
   # n_items : number of items in batch
-  def load(self, stream, n_items=1,
-           data_transformer = transformer.IdentityTransformer(),
-           sort=False):
+  def load(self, stream, n_items=1, post_process=None):
     assert(n_items >= 1)
 
     partial_batch = lambda: None
@@ -42,6 +37,9 @@ class BatchManager(object):
     partial_batch.sentence_id = []
 
     def new_batch():
+      if post_process is not None:
+        post_process(partial_batch)
+
       batch = Batch(batch_id = partial_batch.id,
           data = partial_batch.data)
       batch.sentence_id = partial_batch.sentence_id
@@ -53,27 +51,15 @@ class BatchManager(object):
       partial_batch.data = []
       partial_batch.id  += 1
 
-    # Load data from stream
-    if not sort:
-      corpus = enumerate(stream)
-    else:
-      # TODO(philip30): Add test to the sorted one
-      corpus = []
-      for i, data in enumerate(stream):
-        corpus.append((i, data))
-      corpus = sorted(corpus, key=lambda x: len(x[1].split()))
-
     # Creating batch
-    for i, data in corpus:
-      transformed_data = data_transformer.transform(data)
-      partial_batch.data.append(transformed_data)
+    for i, data in enumerate(stream):
+      partial_batch.data.append(data)
       partial_batch.sentence_id.append(i)
       if len(partial_batch.data) == n_items:
         new_batch()
 
     if len(partial_batch.data) != 0:
       new_batch()
-    data_transformer.transform_corpus(self.batch_map)
 
   def arrange(self, indexes):
     self.batch_indexes = indexes

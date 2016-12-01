@@ -36,12 +36,15 @@ class LSTMAttentionalDecoder(LSTMDecoder):
       output_embed    = chainer.links.EmbedID(out_size, embed_size)
     )
     self.input_feeding = input_feeding
+    self.dropout_ratio = dropout_ratio
 
   def init(self, h):
     h, S = h
     self.decoder.reset_state()
     self.S = S
-    self.h = self.decoder(h)
+    self.h = self.decoder(F.dropout(h,
+                                    ratio=self.dropout_ratio,
+                                    train=nmtrain.environment.is_train()))
 
   def __call__(self):
     # Calculate Attention vector

@@ -67,7 +67,7 @@ class MaximumLikelihoodTrainer:
     data.arrange(state.batch_indexes)
     for ep in range(state.finished_epoch, self.maximum_epoch):
       watcher.begin_epoch()
-      for src_batch, trg_batch in data.train_data():
+      for src_batch, trg_batch in data.train_data:
         # Convert to appropriate array
         if xp != numpy:
           src_data = xp.array(src_batch.data, dtype=numpy.int32)
@@ -89,7 +89,7 @@ class MaximumLikelihoodTrainer:
       if data.has_dev_data():
         nmtrain.environment.set_test()
         watcher.begin_evaluation()
-        for src_sent, trg_sent in data.dev_data():
+        for src_sent, trg_sent in data.dev_data:
           if xp != numpy:
             src_data = xp.array(src_sent.data, dtype=numpy.int32)
             trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
@@ -98,14 +98,14 @@ class MaximumLikelihoodTrainer:
             trg_data = trg_sent.data
           # Prepare for evaluation
           classifier.test(model, src_data, watcher, trg_data=trg_data, force_limit=True)
-        watcher.end_evaluation(*data.dev_batches)
+        watcher.end_evaluation(data.dev_data.src(), data.dev_data.trg())
         nmtrain.environment.set_train()
 
       # Incremental testing if wished
       if data.has_test_data():
         nmtrain.environment.set_test()
         test_watcher.begin_evaluation()
-        for src_sent, trg_sent in data.test_data():
+        for src_sent, trg_sent in data.test_data:
           if xp != numpy:
             src_data = xp.array(src_sent.data, dtype=numpy.int32)
             trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
@@ -113,7 +113,7 @@ class MaximumLikelihoodTrainer:
             src_data = src_sent.data
             trg_data = trg_sent.data
           classifier.test(model, src_data, test_watcher, trg_data=trg_data, force_limit=False)
-        test_watcher.end_evaluation(*data.test_batches)
+        test_watcher.end_evaluation(data.test_data.src(), data.test_data.trg())
         nmtrain.environment.set_train()
 
       # Stop Early, otherwise, save

@@ -38,5 +38,7 @@ class StackLSTM(chainer.ChainList):
     for i in range(len(self.h)):
       lstm_in = x if i == 0 else self.h[i-1]
       self.c[i], self.h[i] = self[i](self.c[i], self.h[i], lstm_in)
-    return chainer.functions.dropout(self.h[-1], ratio=self.drop_ratio, train=environment.is_train())
-
+      self.h[i] = chainer.functions.dropout(self.h[i],
+                                            ratio=self.drop_ratio,
+                                            train=environment.is_train())
+    return self.h[-1]

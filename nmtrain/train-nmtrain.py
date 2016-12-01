@@ -32,6 +32,9 @@ parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], d
 parser.add_argument("--seed", type=int, default=0, help="Seed for RNG. 0 for totally random seed.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
+# Gradient
+parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
+parser.add_argument("--gradient_noise_eta", type=float, default=0.3, dest="gradient_noise", help="Gradient noise eta inside noise N(0, eta/(1+t^gamma))")
 # Development set
 parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")

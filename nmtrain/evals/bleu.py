@@ -3,12 +3,17 @@ import math
 from collections import defaultdict
 
 def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0):
+  ref_count = 0
+
   hyp_ngrams = defaultdict(lambda: defaultdict(int))
   ref_ngrams = defaultdict(lambda: defaultdict(int))
   for hyp, ref in zip(hypothesis, reference):
     # Update the dictionary with the stats of n_grams
     n_gram_stats(sentence = hyp, gram = ngram, output_dict = hyp_ngrams)
     n_gram_stats(sentence = ref, gram = ngram, output_dict = ref_ngrams)
+    ref_count += 1
+
+  assert(len(hypothesis) == ref_count)
 
   # Calculating BLEU score
   return BLEU(hyp_ngrams, ref_ngrams, order=ngram, smooth=smooth)
