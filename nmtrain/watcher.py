@@ -62,8 +62,8 @@ class TrainingWatcher(object):
     self.predictions = []
     log.info("Begin Evaluation...")
 
-  def end_evaluation(self, src_dev, trg_dev):
-    self.state.bleu_scores.append(calculate_bleu(self.predictions, trg_dev))
+  def end_evaluation(self, src_dev, trg_dev, trg_vocab):
+    self.state.bleu_scores.append(calculate_bleu(self.predictions, trg_dev, trg_vocab))
     self.state.dev_perplexities.append(math.exp(self.dev_loss/ self.dev_loss_ctr))
 
     # Generate one line report
@@ -103,12 +103,12 @@ class TestWatcher(object):
     self.test_loss_ctr = 0
     self.attentions = []
 
-  def end_evaluation(self, src, ref=None):
+  def end_evaluation(self, src, trg_vocab, ref=None):
     log.info("Decoding Finished, starting evaluation if reference is provided.")
     self.state.time_spent.append(time.time() - self.time)
     self.state.wps_time.append(sum(len(prediction) for prediction in self.predictions) / self.state.last_time())
     if ref is not None:
-      self.state.bleu_scores.append(calculate_bleu(self.predictions, ref))
+      self.state.bleu_scores.append(calculate_bleu(self.predictions, ref, trg_vocab))
       self.state.perplexities.append(math.exp(self.test_loss / self.test_loss_ctr))
     # Creating evaluation string
     eval_string = "Time=%.2f mins, WPS=%f" % (self.state.time() / 60, self.state.wps())
@@ -136,10 +136,14 @@ class TestWatcher(object):
       print(self.trg_vocab.sentence(prediction), file=self.output_stream)
 
 # Calculate BLEU Score
-def calculate_bleu(predictions, trg_dev):
-  def dev_corpus():
-    for trg_batch in trg_dev:
-      for reference in trg_batch.data.transpose():
-        yield reference
-  return eval.bleu.calculate_bleu_corpus(predictions, dev_corpus(), delete_eos=True)
+def calculate_bleu(predictions, ref, trg_vocab):
+  def src_corpus():
+    for hyp in predictions:
+      yield trg_vocab.sentence(hyp).split()
+  def trg_corpus():
+    # TODO(philip30): If you modify transformer, also consider modifying this.
+    with open(ref) as ref_file:
+      for line in ref_file:
+        yield line.strip().split()
+  return eval.bleu.calculate_bleu_corpus(src_corpus(), trg_corpus(), verbose=False)
 

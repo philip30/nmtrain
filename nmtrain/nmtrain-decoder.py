@@ -69,7 +69,9 @@ def main(args):
                     gen_limit = args.gen_limit,
                     store_probabilities=False,
                     post_processor=post_processor)
-  watcher.end_evaluation(data_manager.test_data.src(), data_manager.test_data.trg())
+  watcher.end_evaluation(src       = args.src,
+                         trg_vocab = model.trg_vocab,
+                         ref       = args.ref)
 
 def sanity_check(args):
   pass

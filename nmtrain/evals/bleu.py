@@ -1,25 +1,22 @@
 import math
+import itertools
+import sys
 
 from collections import defaultdict
 
-def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0, delete_eos=False):
-  ref_count = 0
-
-  hyp_ngrams = defaultdict(lambda: defaultdict(int))
-  ref_ngrams = defaultdict(lambda: defaultdict(int))
-  for hyp, ref in zip(hypothesis, reference):
-    if delete_eos:
-      hyp = hyp[:-1]
-      ref = ref[:-1]
+def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0, verbose=False):
+  hyp_stats = []
+  ref_stats = []
+  for hyp, ref in itertools.zip_longest(hypothesis, reference):
+    # DEBUG BEGIN
+    #print("Comparing:\n\t%s\n\t%s" % (str(hyp), str(ref)), file=sys.stderr)
+    # DEBUG END
     # Update the dictionary with the stats of n_grams
-    n_gram_stats(sentence = hyp, gram = ngram, output_dict = hyp_ngrams)
-    n_gram_stats(sentence = ref, gram = ngram, output_dict = ref_ngrams)
-    ref_count += 1
-
-  assert(len(hypothesis) == ref_count)
+    hyp_stats.append(n_gram_stats(sentence = hyp, gram = ngram))
+    ref_stats.append(n_gram_stats(sentence = ref, gram = ngram))
 
   # Calculating BLEU score
-  return BLEU(hyp_ngrams, ref_ngrams, order=ngram, smooth=smooth)
+  return BLEU(hyp_stats, ref_stats, order=ngram, smooth=smooth)
 
 class BLEU(object):
   def __init__(self, hyp_ngrams, ref_ngrams, order, smooth=0):
@@ -29,18 +26,21 @@ class BLEU(object):
     self.hyp_length      = 0
     self.ref_length      = 0
     self.order           = order
+    self.stats           = []
 
     # The length is the sum of all unigram tokens
-    self.hyp_length = hyp_length = sum(hyp_ngrams[0].values())
-    self.ref_length = ref_length = sum(ref_ngrams[0].values())
+    self.hyp_length = hyp_length = sum(sum(stat[0].values()) for stat in hyp_ngrams)
+    self.ref_length = ref_length = sum(sum(stat[0].values()) for stat in ref_ngrams)
     # Calculate BLEU for every n-gram
     for i in range(order):
       smooth_val = 0 if i == 0 else smooth
-      hyp_ngram = hyp_ngrams[i]
-      ref_ngram = ref_ngrams[i]
-      true_positive = sum([min(word_count, ref_ngrams[i][word]) for word, word_count in hyp_ngrams[i].items()])
-      denom = sum(hyp_ngram.values())
-
+      true_positive, denom = 0, 0
+      for hyp_stat, ref_stat in zip(hyp_ngrams, ref_ngrams):
+        for word, word_count in hyp_stat[i].items():
+          if word in ref_stat[i]:
+            true_positive += min(word_count, ref_stat[i][word])
+        denom += sum(hyp_stat[i].values())
+      self.stats.append((true_positive, denom))
       self.precisions.append((true_positive + smooth_val)/(denom + smooth_val))
     # Calculate brevity penalty
     if hyp_length < ref_length:
@@ -57,9 +57,11 @@ class BLEU(object):
     return self.score
 
   def __str__(self):
-    return str(self.score * 100) + " BP=%f" % (self.brevity_penalty)
+    return str(self.score * 100) + " BP=%f" % (self.brevity_penalty) + \
+           " (%s)" % (", ".join("%d/%d" % (tp, ln) for tp, ln in self.stats))
 
-def n_gram_stats(sentence, gram, output_dict):
+def n_gram_stats(sentence, gram):
+  output_dict = defaultdict(lambda: defaultdict(int))
   for i in range(len(sentence)):
     for j in range(1, gram+1):
       if i+j < len(sentence) + 1:
