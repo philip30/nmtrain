@@ -16,7 +16,7 @@ class StandardAnalyzer(object):
   def finish_analysis(self):
     keys = sorted(self.word_count, key=lambda x: self.word_count[x], reverse=True)
     if len(keys) > self.max_vocab_size:
-      self.in_vocab = set(keys[:threshold])
+      self.in_vocab = set(keys[:self.max_vocab_size])
     else:
       self.in_vocab =  set(keys)
 
