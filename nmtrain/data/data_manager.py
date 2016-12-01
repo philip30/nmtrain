@@ -27,10 +27,11 @@ class ParallelData:
 
     # Begin Loading data
     src_data = load_data(src, src_voc, transformer, self.src_analyzer)
-    trg_data = load_data(trg, trg_voc, transformer, self.trg_analyzer)
+    if trg is not None:
+      trg_data = load_data(trg, trg_voc, transformer, self.trg_analyzer)
 
-    # They need to be equal, otherwise they are not parallel data
-    assert(len(src_data) == len(trg_data))
+      # They need to be equal, otherwise they are not parallel data
+      assert(len(src_data) == len(trg_data))
 
     # Sort the data if requested
     if sort:
@@ -44,7 +45,8 @@ class ParallelData:
 
     # Load the data with batch manager
     self.src_batch_manager.load(src_data, n_items=n_items, post_process=src_pp)
-    self.trg_batch_manager.load(trg_data, n_items=n_items, post_process=trg_pp)
+    if trg is not None:
+      self.trg_batch_manager.load(trg_data, n_items=n_items, post_process=trg_pp)
 
   def __iter__(self):
     for src, trg in zip(self.src_batch_manager, self.trg_batch_manager):
@@ -79,14 +81,10 @@ class DataManager:
                                     mode=nmtrain.enumeration.DataMode.TEST,
                                     n_items=1, sort=False)
 
-  def load_test(self, src, src_voc, ref=None, trg_voc=None):
-    if ref is not None:
-      self.test_batches = ParallelData(src, ref, src_voc, trg_voc,
-                                       mode=nmtrain.enumeration.DataMode.TEST,
-                                       n_items=1, sort=False)
-    else:
-      # TODO(philip30): Fill this out
-      pass
+  def load_test(self, src, src_voc, trg_voc, ref=None):
+    self.test_data = ParallelData(src, trg=ref, src_voc=src_voc, trg_voc=trg_voc,
+                                  mode=nmtrain.enumeration.DataMode.TEST,
+                                  n_items=1, sort=False)
 
   # Training data arrange + shuffle
   def arrange(self, indexes):

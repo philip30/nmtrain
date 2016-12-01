@@ -30,6 +30,7 @@ def main(args):
   # The model, chainer model inside
   model         = nmtrain.NmtrainModel(args)
   model.finalize_model(args)
+  model.describe()
   # The watcher, who logs everything
   watcher       = nmtrain.TestWatcher(state         = nmtrain.model.TestState(),
                                       src_vocab     = model.src_vocab,
@@ -50,7 +51,7 @@ def main(args):
   log.info("Loading Finished.")
 
   watcher.begin_evaluation()
-  for batch in data_manager.test_data():
+  for batch in data_manager.test_data:
     # Creating appropriate batches
     # Convert to GPU array if gpu is used
     src, ref = batch
@@ -68,7 +69,7 @@ def main(args):
                     gen_limit = args.gen_limit,
                     store_probabilities=False,
                     post_processor=post_processor)
-  watcher.end_evaluation(*data_manager.test_batches)
+  watcher.end_evaluation(data_manager.test_data.src(), data_manager.test_data.trg())
 
 def sanity_check(args):
   pass

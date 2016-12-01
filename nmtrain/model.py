@@ -32,7 +32,8 @@ class NmtrainModel:
 
     if hasattr(self, "optimizer"):
       self.optimizer.add_hook(chainer.optimizer.GradientClipping(args.gradient_clipping))
-      self.optimizer.add_hook(chainer.optimizer.GradientNoise(args.gradient_noise))
+      # TODO(philip30): Disable it for a time being
+      #self.optimizer.add_hook(chainer.optimizer.GradientNoise(args.gradient_noise))
 
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
@@ -50,7 +51,9 @@ class NmtrainModel:
     print("Dropout Ratio  :", self.specification.dropout, file=sys.stderr)
     print("Unknown Cut    :", self.specification.unk_cut, file=sys.stderr)
     print("Batch Size     :", self.specification.batch, file=sys.stderr)
-    print("Optimizer      :", self.optimizer.__class__.__name__)
+    if hasattr(self, "optimizer"):
+      print("Optimizer      :", self.optimizer.__class__.__name__, file=sys.stderr)
+    print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
 
 class TrainingState(object):
   def __init__(self):

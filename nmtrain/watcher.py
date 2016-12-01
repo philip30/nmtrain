@@ -141,5 +141,5 @@ def calculate_bleu(predictions, trg_dev):
     for trg_batch in trg_dev:
       for reference in trg_batch.data.transpose():
         yield reference
-  return eval.bleu.calculate_bleu_corpus(predictions, dev_corpus())
+  return eval.bleu.calculate_bleu_corpus(predictions, dev_corpus(), delete_eos=True)
 

@@ -2,12 +2,15 @@ import math
 
 from collections import defaultdict
 
-def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0):
+def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0, delete_eos=False):
   ref_count = 0
 
   hyp_ngrams = defaultdict(lambda: defaultdict(int))
   ref_ngrams = defaultdict(lambda: defaultdict(int))
   for hyp, ref in zip(hypothesis, reference):
+    if delete_eos:
+      hyp = hyp[:-1]
+      ref = ref[:-1]
     # Update the dictionary with the stats of n_grams
     n_gram_stats(sentence = hyp, gram = ngram, output_dict = hyp_ngrams)
     n_gram_stats(sentence = ref, gram = ngram, output_dict = ref_ngrams)
