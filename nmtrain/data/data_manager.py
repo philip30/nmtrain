@@ -71,6 +71,10 @@ class DataManager:
                                    n_items=batch_size,
                                    cut_threshold=unk_cut,
                                    max_vocab=max_vocab, sort=True)
+    self.src_dev = src_dev
+    self.trg_dev = trg_dev
+    self.src_test = src_test
+    self.trg_test = trg_test
 
     if src_dev and trg_dev:
       self.dev_data = ParallelData(src_dev, trg_dev, src_voc, trg_voc,

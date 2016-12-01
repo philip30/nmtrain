@@ -68,6 +68,7 @@ class MaximumLikelihoodTrainer:
     for ep in range(state.finished_epoch, self.maximum_epoch):
       watcher.begin_epoch()
       for src_batch, trg_batch in data.train_data:
+        assert(src_batch.id == trg_batch.id)
         # Convert to appropriate array
         if xp != numpy:
           src_data = xp.array(src_batch.data, dtype=numpy.int32)
@@ -98,7 +99,7 @@ class MaximumLikelihoodTrainer:
             trg_data = trg_sent.data
           # Prepare for evaluation
           classifier.test(model, src_data, watcher, trg_data=trg_data, force_limit=True)
-        watcher.end_evaluation(data.dev_data.src(), data.dev_data.trg())
+        watcher.end_evaluation(data.src_dev, data.trg_dev, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
       # Incremental testing if wished
@@ -113,7 +114,7 @@ class MaximumLikelihoodTrainer:
             src_data = src_sent.data
             trg_data = trg_sent.data
           classifier.test(model, src_data, test_watcher, trg_data=trg_data, force_limit=False)
-        test_watcher.end_evaluation(data.test_data.src(), data.test_data.trg())
+        test_watcher.end_evaluation(data.src_test, data.trg_test, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
       # Stop Early, otherwise, save

@@ -103,7 +103,7 @@ class TestWatcher(object):
     self.test_loss_ctr = 0
     self.attentions = []
 
-  def end_evaluation(self, src, trg_vocab, ref=None):
+  def end_evaluation(self, src, ref, trg_vocab):
     log.info("Decoding Finished, starting evaluation if reference is provided.")
     self.state.time_spent.append(time.time() - self.time)
     self.state.wps_time.append(sum(len(prediction) for prediction in self.predictions) / self.state.last_time())
