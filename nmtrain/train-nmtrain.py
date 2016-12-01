@@ -42,6 +42,7 @@ parser.add_argument("--src_test", type=str, help="Testing source data, for per e
 parser.add_argument("--trg_test", type=str, help="Testing target data, for per epoch testing")
 # Attentional Setting
 parser.add_argument("--no_input_feeding", dest="input_feeding", action="store_false")
+parser.add_argument("--attention_type", default="mlp", type=str, choices=["dot", "general", "mlp"])
 parser.set_defaults(input_feeding=True)
 args = parser.parse_args()
 
