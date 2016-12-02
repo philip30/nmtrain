@@ -16,11 +16,11 @@ def load_data(data, vocab, transformer, analyzer):
   return corpus
 
 class ParallelData:
-  def __init__(self, src, trg, src_voc, trg_voc, mode, n_items=1, cut_threshold=0, max_vocab=1e8, sort=True):
+  def __init__(self, src, trg, src_voc, trg_voc, mode, n_items=1, cut_threshold=0, src_max_vocab=1e8, trg_max_vocab=1e8, sort=True):
     self.src_batch_manager = nmtrain.BatchManager()
     self.trg_batch_manager = nmtrain.BatchManager()
-    self.src_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=max_vocab, unk_freq_threshold=cut_threshold)
-    self.trg_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=max_vocab, unk_freq_threshold=cut_threshold)
+    self.src_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=src_max_vocab, unk_freq_threshold=cut_threshold)
+    self.trg_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=trg_max_vocab, unk_freq_threshold=cut_threshold)
 
     # Data Transformer
     transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode)
@@ -64,13 +64,16 @@ class DataManager:
   def load_train(self, src, trg, src_voc, trg_voc,
                  src_dev=None, trg_dev=None,
                  src_test=None, trg_test=None,
-                 batch_size=1, unk_cut=0, max_vocab=1e6):
+                 batch_size=1, unk_cut=0, src_max_vocab=1e6,
+                 trg_max_vocab=1e6):
     # Loading Training Data
     self.train_data = ParallelData(src, trg, src_voc, trg_voc,
                                    mode=nmtrain.enumeration.DataMode.TRAIN,
                                    n_items=batch_size,
                                    cut_threshold=unk_cut,
-                                   max_vocab=max_vocab, sort=True)
+                                   src_max_vocab=src_max_vocab,
+                                   trg_max_vocab=trg_max_vocab,
+                                   sort=True)
     self.src_dev = src_dev
     self.trg_dev = trg_dev
     self.src_test = src_test

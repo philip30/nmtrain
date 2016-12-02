@@ -24,7 +24,9 @@ class MaximumLikelihoodTrainer:
                                  self.nmtrain_model.trg_vocab,
                                  args.src_dev, args.trg_dev,
                                  args.src_test, args.trg_test,
-                                 args.batch, args.unk_cut, args.max_vocab)
+                                 args.batch, args.unk_cut,
+                                 args.src_max_vocab,
+                                 args.trg_max_vocab)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model(args)
