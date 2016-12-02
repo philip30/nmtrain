@@ -49,8 +49,12 @@ class ParallelData:
       self.trg_batch_manager.load(trg_data, n_items=n_items, post_process=trg_pp)
 
   def __iter__(self):
-    for src, trg in zip(self.src_batch_manager, self.trg_batch_manager):
-      yield src, trg
+    if len(self.trg_batch_manager) != 0:
+      for src, trg in zip(self.src_batch_manager, self.trg_batch_manager):
+        yield src, trg
+    else:
+      for src in self.src_batch_manager:
+        yield src, None
 
   def src(self):
     for src in self.src_batch_manager:
