@@ -36,7 +36,8 @@ parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient
 parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
-parser.add_argument("--gradient_noise_eta", type=float, default=0.3, dest="gradient_noise", help="Gradient noise eta inside noise N(0, eta/(1+t^gamma))")
+parser.add_argument("--sgd_lr_decay_factor", type=float, default=0.5, help="Decay factor for SGD")
+parser.add_argument("--sgd_lr_decay_after", type=int, default=5, help="Decay SGD after -th iteration")
 # Development set
 parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")

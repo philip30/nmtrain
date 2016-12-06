@@ -13,7 +13,6 @@ class RNN_NMT(object):
     for trg_word in trg_data:
       y_t = nmtrain.environment.Variable(trg_word)
       output = model.decode()
-
       batch_loss += nmtrain.chner.cross_entropy(output.y, y_t)
       model.update(y_t)
 
@@ -60,7 +59,7 @@ class RNN_NMT(object):
       # Calculate Perplexity
       if trg_data is not None:
         y_t       = nmtrain.environment.Variable(trg_data[i])
-        loss     += float(nmtrain.chner.cross_entropy(y, y_t).data)
+        loss     += nmtrain.chner.cross_entropy(y, y_t)
         loss_ctr += 1
       # Convert to word
       word = numpy.asscalar(chainer.cuda.to_cpu(word_var.data))
@@ -71,7 +70,7 @@ class RNN_NMT(object):
     if loss_ctr != 0:
       loss /= loss_ctr
     # TODO(philip30): Implement PostProcessor
-    watcher.end_prediction(loss = loss, prediction = prediction,
+    watcher.end_prediction(loss = loss.data, prediction = prediction,
                            probabilities = probabilities,
                            attention=numpy.transpose(attention))
 

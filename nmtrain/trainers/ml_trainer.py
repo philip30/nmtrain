@@ -17,6 +17,9 @@ class MaximumLikelihoodTrainer:
     self.early_stop_num = args.early_stop
     # Location of output model
     self.model_file = args.model_out
+    # SGD lr decay factor
+    self.sgd_lr_decay_factor = args.sgd_lr_decay_factor
+    self.sgd_lr_decay_after = args.sgd_lr_decay_after
     # Load in the real data
     log.info("Loading Data")
     self.data_manager.load_train(src=args.src, trg=args.trg,
@@ -58,7 +61,7 @@ class MaximumLikelihoodTrainer:
 
     def bptt(batch_loss):
       """ Backpropagation through time """
-      model.zerograds()
+      model.cleargrads()
       batch_loss.backward()
       batch_loss.unchain_backward()
       optimizer.update()
@@ -121,11 +124,15 @@ class MaximumLikelihoodTrainer:
         test_watcher.end_evaluation(data.src_test, data.trg_test, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
+      # SGD Decay
+      if optimizer.__class__.__name__ == "SGD":
+        if ep + 1 >= self.sgd_lr_decay_after:
+          optimizer.lr *= self.sgd_lr_decay_factor
+          nmtrain.log.info("SGD LR:", optimizer.lr)
+
       # Stop Early, otherwise, save
       if watcher.should_early_stop():
-        if watcher.should_save():
-          nmtrain.serializer.save(self.nmtrain_model, self.model_file)
         break
-      else:
+      elif watcher.should_save():
         nmtrain.serializer.save(self.nmtrain_model, self.model_file)
 

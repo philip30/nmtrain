@@ -45,7 +45,7 @@ class ParallelData:
         data = sorted(zip(src_data, trg_data), key= lambda line: (len(line[1]), len(line[0])))
       else:
         data = zip(src_data, trg_data)
-      for src_line, trg_line in zip(src_data, trg_data):
+      for src_line, trg_line in data:
         if len(src_line) <= max_sent_length and len(trg_line) <= max_sent_length:
           src_crp.append(src_voc.add_sentence(src_line))
           trg_crp.append(trg_voc.add_sentence(trg_line))
@@ -55,7 +55,7 @@ class ParallelData:
       src_data = list(map(lambda sent: src_voc.parse_sentence(sent), src_data))
       if trg is not None:
         trg_data = list(map(lambda sent: trg_voc.parse_sentence(sent), trg_data))
-    
+   
     # Analyzing corpus
     transform_corpus(src_data, self.src_analyzer, transformer, src_voc)
     if trg is not None:
