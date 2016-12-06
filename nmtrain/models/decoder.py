@@ -19,9 +19,14 @@ class LSTMDecoder(chainer.Chain):
   def init(self, h):
     self.decoder.reset_state()
     self.h = self.decoder(self.state_init(h))
+    return self.decoder.state()
 
   def update(self, next_word):
     self.h = self.decoder(self.output_embed(next_word))
+    return self.decoder.state()
+
+  def set_state(self, state):
+    self.decoder.set_state(state)
 
 # Implementation of Luong et al.
 class LSTMAttentionalDecoder(LSTMDecoder):
@@ -31,7 +36,7 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     decoder_in_size = embed_size
     if input_feeding:
       decoder_in_size += hidden_size
- 
+
     if attention_type == "dot":
       attention = DotAttentionLayer()
     elif attention_type == "general":
@@ -58,6 +63,7 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     self.h = self.decoder(F.dropout(h,
                                     ratio=self.dropout_ratio,
                                     train=nmtrain.environment.is_train()))
+    return self.decoder.state()
 
   def __call__(self):
     # Calculate Attention vector
@@ -77,6 +83,10 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     if self.input_feeding:
       decoder_update = F.hstack((decoder_update, self.ht))
     self.h = self.decoder(decoder_update)
+    return self.decoder.state()
+
+  def set_state(self, state):
+    self.decoder.set_state(state)
 
 # Not "Defense of the Ancient"
 class DotAttentionLayer(chainer.Chain):

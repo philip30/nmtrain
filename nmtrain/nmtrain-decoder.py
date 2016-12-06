@@ -16,9 +16,10 @@ parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used,
 parser.add_argument("--init_model", type=str, required=True, help="Init the model with the pretrained model.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--gen_limit", type=int, default=50, help="Maximum Target Output Length.")
+parser.add_argument("--beam", type=int, default=1, help="Beam size in searching.")
+parser.add_argument("--word_penalty", type=float, default=0.0, help="Word penalty in beam search")
 # Evaluation
 parser.add_argument("--ref", type=str, default=None)
-parser.add_argument("--evaluation", type=str)
 args = parser.parse_args()
 
 def main(args):
@@ -68,7 +69,9 @@ def main(args):
                     trg_data=ref, force_limit=False,
                     gen_limit = args.gen_limit,
                     store_probabilities=False,
-                    post_processor=post_processor)
+                    post_processor=post_processor,
+                    word_penalty=args.word_penalty,
+                    beam=args.beam)
   watcher.end_evaluation(src       = args.src,
                          trg_vocab = model.trg_vocab,
                          ref       = args.ref)

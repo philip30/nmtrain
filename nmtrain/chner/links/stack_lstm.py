@@ -42,3 +42,10 @@ class StackLSTM(chainer.ChainList):
                                             ratio=self.drop_ratio,
                                             train=environment.is_train())
     return self.h[-1]
+
+  def state(self):
+    return (self.h, self.c)
+
+  def set_state(self, state):
+    self.h, self.c = state
+

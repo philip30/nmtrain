@@ -32,8 +32,6 @@ class NmtrainModel:
 
     if hasattr(self, "optimizer"):
       self.optimizer.add_hook(chainer.optimizer.GradientClipping(args.gradient_clipping))
-      # TODO(philip30): Disable it for a time being
-      #self.optimizer.add_hook(chainer.optimizer.GradientNoise(args.gradient_noise))
 
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
