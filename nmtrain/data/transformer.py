@@ -16,18 +16,8 @@ class NMTDataTransformer(object):
   def __init__(self, data_type):
     self.data_type = data_type
 
-  def transform(self, data, vocab):
-    """ Transform the input string to list of word id.
-        If it is training, add it. Otherwise just try to parse it.
-    """
-    sentence = []
-    for word in data.strip().split():
-      if self.data_type == nmtrain.enumeration.DataMode.TRAIN:
-        word_id = vocab.add_word(word)
-        sentence.append(word_id)
-      else:
-        sentence.append(vocab.parse_word(word))
-    return sentence
+  def transform(self, data):
+    return data.strip().split()
 
   def transform_corpus(self, corpus, analyzer, vocab):
     """ Called after all data is being transformed.

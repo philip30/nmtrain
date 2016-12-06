@@ -4,40 +4,62 @@ import nmtrain
 import nmtrain.enumeration
 import nmtrain.data.analyzer
 
-def load_data(data, vocab, transformer, analyzer):
+def load_data(data, transformer):
   corpus = []
   with open(data) as data_file:
     for line in data_file:
-      transformed_line = transformer.transform(line, vocab)
-      analyzer.analyze(transformed_line)
-      corpus.append(transformed_line)
-  analyzer.finish_analysis()
-  transformer.transform_corpus(corpus, analyzer, vocab)
+      corpus.append(transformer.transform(line))
   return corpus
 
+def transform_corpus(corpus, analyzer, transformer, vocab):
+  for line in corpus:
+    analyzer.analyze(line)
+  analyzer.finish_analysis()
+  transformer.transform_corpus(corpus, analyzer, vocab)
+
 class ParallelData:
-  def __init__(self, src, trg, src_voc, trg_voc, mode, n_items=1, cut_threshold=0, max_vocab=1e8, sort=True):
+  def __init__(self, src, trg, src_voc, trg_voc, mode,
+               n_items=1, cut_threshold=0, src_max_vocab=1e8, trg_max_vocab=1e8,
+               max_sent_length=100, sort=True):
     self.src_batch_manager = nmtrain.BatchManager()
     self.trg_batch_manager = nmtrain.BatchManager()
-    self.src_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=max_vocab, unk_freq_threshold=cut_threshold)
-    self.trg_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=max_vocab, unk_freq_threshold=cut_threshold)
+    self.src_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=src_max_vocab, unk_freq_threshold=cut_threshold)
+    self.trg_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=trg_max_vocab, unk_freq_threshold=cut_threshold)
 
     # Data Transformer
     transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode)
 
     # Begin Loading data
-    src_data = load_data(src, src_voc, transformer, self.src_analyzer)
+    src_data = load_data(src, transformer)
     if trg is not None:
-      trg_data = load_data(trg, trg_voc, transformer, self.trg_analyzer)
+      trg_data = load_data(trg, transformer)
 
       # They need to be equal, otherwise they are not parallel data
       assert(len(src_data) == len(trg_data))
-
-    # Sort the data if requested
-    if sort:
-      data = sorted(zip(src_data, trg_data), key= lambda line: (len(line[1]), len(line[0])))
-      src_data = [item[0] for item in data]
-      trg_data = [item[1] for item in data]
+   
+    # Max sent length cut + sort
+    if mode == nmtrain.enumeration.DataMode.TRAIN:
+      src_crp = []
+      trg_crp = []
+      if sort:
+        data = sorted(zip(src_data, trg_data), key= lambda line: (len(line[1]), len(line[0])))
+      else:
+        data = zip(src_data, trg_data)
+      for src_line, trg_line in data:
+        if len(src_line) <= max_sent_length and len(trg_line) <= max_sent_length:
+          src_crp.append(src_voc.add_sentence(src_line))
+          trg_crp.append(trg_voc.add_sentence(trg_line))
+      src_data = src_crp
+      trg_data = trg_crp
+    else:
+      src_data = list(map(lambda sent: src_voc.parse_sentence(sent), src_data))
+      if trg is not None:
+        trg_data = list(map(lambda sent: trg_voc.parse_sentence(sent), trg_data))
+   
+    # Analyzing corpus
+    transform_corpus(src_data, self.src_analyzer, transformer, src_voc)
+    if trg is not None:
+      transform_corpus(trg_data, self.trg_analyzer, transformer, trg_voc)
 
     # Post processes
     src_pp = lambda batch: transformer.transform_batch(batch, src_voc)
@@ -68,13 +90,18 @@ class DataManager:
   def load_train(self, src, trg, src_voc, trg_voc,
                  src_dev=None, trg_dev=None,
                  src_test=None, trg_test=None,
-                 batch_size=1, unk_cut=0, max_vocab=1e6):
+                 batch_size=1, unk_cut=0, src_max_vocab=1e6,
+                 max_sent_length=100,
+                 trg_max_vocab=1e6):
     # Loading Training Data
     self.train_data = ParallelData(src, trg, src_voc, trg_voc,
                                    mode=nmtrain.enumeration.DataMode.TRAIN,
                                    n_items=batch_size,
                                    cut_threshold=unk_cut,
-                                   max_vocab=max_vocab, sort=True)
+                                   src_max_vocab=src_max_vocab,
+                                   trg_max_vocab=trg_max_vocab,
+                                   max_sent_length=max_sent_length,
+                                   sort=True)
     self.src_dev = src_dev
     self.trg_dev = trg_dev
     self.src_test = src_test

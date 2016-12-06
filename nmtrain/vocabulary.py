@@ -29,6 +29,9 @@ class Vocabulary(object):
     self.word_to_id[word]    = word_id
     self.id_to_word[word_id] = word
     return word_id
+  
+  def add_sentence(self, sentence):
+    return list(self.add_word(word) for word in sentence)
 
   def set_word(self, word, word_id):
     self.word_to_id[word]    = word_id
@@ -44,7 +47,7 @@ class Vocabulary(object):
     return " ".join(ret)
 
   def parse_sentence(self, words, ignore_rare=True):
-    return tuple(self.parse_word(word, ignore_rare) for word in words)
+    return list(self.parse_word(word, ignore_rare) for word in words)
 
   def word(self, word_id):
     return self.id_to_word.get(word_id, UNK)

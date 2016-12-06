@@ -76,16 +76,16 @@ class TrainingWatcher(object):
     return word == self.trg_vocab.eos_id()
 
   def should_save(self):
-    if len(self.state.dev_perplexities) > 0:
-      lowest_ppl_index = int(numpy.argmin(self.state.dev_perplexities))
-      return (lowest_ppl_index + 1) != len(self.state.dev_perplexities)
+    if len(self.state.bleu_scores) > 0:
+      highest_bleu_index = int(numpy.argmax(self.state.bleu_scores))
+      return (highest_bleu_index + 1) == len(self.state.bleu_scores)
     else:
       return True
 
   def should_early_stop(self):
-    if len(self.state.dev_perplexities) > 0:
-      lowest_ppl_index = int(numpy.argmin(self.state.dev_perplexities))
-      return abs(len(self.state.dev_perplexities) - lowest_ppl_index - 1) > self.early_stop
+    if len(self.state.bleu_scores) > 0:
+      highest_bleu_index = int(numpy.argmax(self.state.bleu_scores))
+      return abs(len(self.state.bleu_scores) - highest_bleu_index - 1) > self.early_stop
     return False
 
 class TestWatcher(object):
@@ -134,6 +134,7 @@ class TestWatcher(object):
 
     if self.output_stream is not None:
       print(self.trg_vocab.sentence(prediction), file=self.output_stream)
+      self.output_stream.flush()
 
 # Calculate BLEU Score
 def calculate_bleu(predictions, ref, trg_vocab):

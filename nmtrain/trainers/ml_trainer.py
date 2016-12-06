@@ -17,14 +17,20 @@ class MaximumLikelihoodTrainer:
     self.early_stop_num = args.early_stop
     # Location of output model
     self.model_file = args.model_out
+    # SGD lr decay factor
+    self.sgd_lr_decay_factor = args.sgd_lr_decay_factor
+    self.sgd_lr_decay_after = args.sgd_lr_decay_after
     # Load in the real data
     log.info("Loading Data")
-    self.data_manager.load_train(args.src, args.trg,
-                                 self.nmtrain_model.src_vocab,
-                                 self.nmtrain_model.trg_vocab,
-                                 args.src_dev, args.trg_dev,
-                                 args.src_test, args.trg_test,
-                                 args.batch, args.unk_cut, args.max_vocab)
+    self.data_manager.load_train(src=args.src, trg=args.trg,
+                                 src_voc=self.nmtrain_model.src_vocab,
+                                 trg_voc=self.nmtrain_model.trg_vocab,
+                                 src_dev=args.src_dev, trg_dev=args.trg_dev,
+                                 src_test=args.src_test, trg_test=args.trg_test,
+                                 batch_size=args.batch, unk_cut=args.unk_cut,
+                                 src_max_vocab=args.src_max_vocab,
+                                 trg_max_vocab=args.trg_max_vocab,
+                                 max_sent_length=args.max_sent_length)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model(args)
@@ -55,7 +61,7 @@ class MaximumLikelihoodTrainer:
 
     def bptt(batch_loss):
       """ Backpropagation through time """
-      model.zerograds()
+      model.cleargrads()
       batch_loss.backward()
       batch_loss.unchain_backward()
       optimizer.update()
@@ -66,6 +72,7 @@ class MaximumLikelihoodTrainer:
     # Training with maximum likelihood estimation
     data.arrange(state.batch_indexes)
     for ep in range(state.finished_epoch, self.maximum_epoch):
+      ep_arrangement = data.shuffle()
       watcher.begin_epoch()
       for src_batch, trg_batch in data.train_data:
         assert(src_batch.id == trg_batch.id)
@@ -82,9 +89,9 @@ class MaximumLikelihoodTrainer:
                                       bptt_len=self.bptt_len)
         watcher.batch_update(loss=batch_loss.data,
                              batch_size=len(trg_batch.data[0]),
-                             col_size=len(trg_batch.data))
+                             col_size=len(trg_batch.data)-1)
         bptt(batch_loss)
-      watcher.end_epoch(data.shuffle())
+      watcher.end_epoch(ep_arrangement)
 
       # Evaluation on Development set
       if data.has_dev_data():
@@ -117,11 +124,15 @@ class MaximumLikelihoodTrainer:
         test_watcher.end_evaluation(data.src_test, data.trg_test, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
+      # SGD Decay
+      if optimizer.__class__.__name__ == "SGD":
+        if ep + 1 >= self.sgd_lr_decay_after:
+          optimizer.lr *= self.sgd_lr_decay_factor
+          nmtrain.log.info("SGD LR:", optimizer.lr)
+
       # Stop Early, otherwise, save
       if watcher.should_early_stop():
-        if watcher.should_save():
-          nmtrain.serializer.save(self.nmtrain_model, self.model_file)
         break
-      else:
+      elif watcher.should_save():
         nmtrain.serializer.save(self.nmtrain_model, self.model_file)
 

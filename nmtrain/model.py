@@ -24,6 +24,8 @@ class NmtrainModel:
       self.training_state = TrainingState()
       self.specification = args
       self.chainer_model = None
+    if hasattr(self, "optimizer"):
+      self.optimizer.use_cleargrads()
 
   def finalize_model(self, args):
     if self.chainer_model is None:
