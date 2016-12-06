@@ -2,6 +2,7 @@ import chainer
 import numpy
 
 import nmtrain
+import random
 
 # Environment Variables
 xp = None
@@ -13,6 +14,8 @@ def init(args, run_mode):
   init_run_mode(run_mode)
   init_gpu(args.gpu)
   if hasattr(args, "seed"):
+    if args.seed == 0:
+      args.seed = random.randint(1, 1e6)
     init_random(args.seed)
   if hasattr(args, "verbosity"):
     init_verbosity(args.verbosity)

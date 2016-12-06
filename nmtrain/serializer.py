@@ -41,6 +41,8 @@ def load(model, in_file):
   # Loading Specification
   model.specification = lambda: None
   model.specification.__dict__.update(pickle_load(os.path.join(in_file, SPEC)))
+  # Update Seed
+  nmtrain.environment.init_random(model.specification.seed)
 
   # Loading vocabularies
   model.src_vocab = pickle_load(os.path.join(in_file, SRC_VOC))

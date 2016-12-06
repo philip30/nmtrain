@@ -10,6 +10,7 @@ import nmtrain.log as log
 class MaximumLikelihoodTrainer:
   def __init__(self, args):
     self.nmtrain_model = nmtrain.NmtrainModel(args)
+    args = self.nmtrain_model.specification
     self.data_manager  = nmtrain.data.DataManager()
     # Training Parameters
     self.maximum_epoch = args.epoch
