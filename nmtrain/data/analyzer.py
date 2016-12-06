@@ -7,18 +7,20 @@ class StandardAnalyzer(object):
     self.total_count = 0
     self.max_vocab_size = max_vocab_size
     self.unk_freq_threshold = unk_freq_threshold
+    self.max_sent_length = 0
 
   def analyze(self, sentence):
     for word_id in sentence:
       self.word_count[word_id] += 1
       self.total_count += 1
+    self.max_sent_length = max(self.max_sent_length, len(sentence))
 
   def finish_analysis(self):
-    keys = sorted(self.word_count, key=lambda x: self.word_count[x], reverse=True)
+    keys = sorted(self.word_count.keys(), key=lambda key: self.word_count[key], reverse=True)
     if len(keys) > self.max_vocab_size:
       self.in_vocab = set(keys[:self.max_vocab_size])
     else:
       self.in_vocab =  set(keys)
 
   def is_rare_word(self, word_id):
-    return self.word_count[word_id] <= self.unk_freq_threshold or word_id not in self.in_vocab
+    return (self.word_count[word_id] <= self.unk_freq_threshold) or (word_id not in self.in_vocab)
