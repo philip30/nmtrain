@@ -17,6 +17,7 @@ class NmtrainModel:
     # Init Model
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
+      args.__dict__.update(self.specification)
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True, True)
@@ -27,13 +28,13 @@ class NmtrainModel:
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
 
-  def finalize_model(self, args):
+  def finalize_model(self):
     if self.chainer_model is None:
-      self.chainer_model = from_spec(args, len(self.src_vocab), len(self.trg_vocab))
+      self.chainer_model = from_spec(self.specification, len(self.src_vocab), len(self.trg_vocab))
       self.optimizer.setup(self.chainer_model)
 
     if hasattr(self, "optimizer"):
-      self.optimizer.add_hook(chainer.optimizer.GradientClipping(args.gradient_clipping))
+      self.optimizer.add_hook(chainer.optimizer.GradientClipping(self.specification.gradient_clipping))
 
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():

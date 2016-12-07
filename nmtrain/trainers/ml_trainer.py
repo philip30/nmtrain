@@ -9,18 +9,24 @@ import nmtrain.log as log
 
 class MaximumLikelihoodTrainer:
   def __init__(self, args):
+    # If init_model is provided, args will be overwritten
+    # Inside the constructor of NmtrainModel using the 
+    # previous training specification.
     self.nmtrain_model = nmtrain.NmtrainModel(args)
-    args = self.nmtrain_model.specification
     self.data_manager  = nmtrain.data.DataManager()
     # Training Parameters
-    self.maximum_epoch = args.epoch
-    self.bptt_len = args.bptt_len
+    self.maximum_epoch  = args.epoch
+    self.bptt_len       = args.bptt_len
     self.early_stop_num = args.early_stop
     # Location of output model
     self.model_file = args.model_out
     # SGD lr decay factor
     self.sgd_lr_decay_factor = args.sgd_lr_decay_factor
-    self.sgd_lr_decay_after = args.sgd_lr_decay_after
+    self.sgd_lr_decay_after  = args.sgd_lr_decay_after
+    # Testing configuration
+    self.test_beam         = args.test_beam
+    self.test_word_penalty = args.test_word_penalty
+    self.test_gen_limit    = args.test_gen_limit
     # Load in the real data
     log.info("Loading Data")
     self.data_manager.load_train(src=args.src, trg=args.trg,
@@ -34,7 +40,7 @@ class MaximumLikelihoodTrainer:
                                  max_sent_length=args.max_sent_length)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
-    self.nmtrain_model.finalize_model(args)
+    self.nmtrain_model.finalize_model()
 
   def train(self, classifier):
     xp      = nmtrain.environment.array_module()
@@ -86,7 +92,7 @@ class MaximumLikelihoodTrainer:
           trg_data = trg_batch.data
         # Prepare for training
         batch_loss = classifier.train(model, src_data, trg_data,
-                                      watcher, bptt,
+                                      bptt=bptt,
                                       bptt_len=self.bptt_len)
         watcher.batch_update(loss=batch_loss.data,
                              batch_size=len(trg_batch.data[0]),
@@ -106,28 +112,35 @@ class MaximumLikelihoodTrainer:
             src_data = src_sent.data
             trg_data = trg_sent.data
           # Prepare for evaluation
-          classifier.test(model, src_data, watcher, trg_data=trg_data, force_limit=True)
+          watcher.start_prediction()
+          loss = classifier.eval(model, src_data, trg_data)
+          # TODO(philip30): If we want to do prediction during dev-set 
+          # call the prediction method here
+          watcher.end_prediction(loss = loss)
         watcher.end_evaluation(data.src_dev, data.trg_dev, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
       # Incremental testing if wished
       if data.has_test_data():
         nmtrain.environment.set_test()
-        test_watcher.begin_evaluation()
-        for src_sent, trg_sent in data.test_data:
-          if xp != numpy:
-            src_data = xp.array(src_sent.data, dtype=numpy.int32)
-            trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
-          else:
-            src_data = src_sent.data
-            trg_data = trg_sent.data
-          classifier.test(model, src_data, test_watcher, trg_data=trg_data, force_limit=False)
-        test_watcher.end_evaluation(data.src_test, data.trg_test, self.nmtrain_model.trg_vocab)
+        tester = nmtrain.Tester(data=data, watcher=test_watcher,
+                                trg_vocab=self.nmtrain_model.trg_vocab,
+                                classifier=classifier,
+                                predict=True, eval_ppl=True)
+        tester.test(model = model,
+                    word_penalty = self.test_word_penalty,
+                    beam_size = self.test_beam,
+                    gen_limit = self.test_gen_limit)
         nmtrain.environment.set_train()
+
+      # Check if dev perplexities decline
+      dev_ppl_decline = False
+      if len(state.dev_perplexities) >= 2:
+        dev_ppl_decline = state.dev_perplexities[-1] > state.dev_perplexities[-2]
 
       # SGD Decay
       if optimizer.__class__.__name__ == "SGD":
-        if ep + 1 >= self.sgd_lr_decay_after:
+        if ep + 1 >= self.sgd_lr_decay_after or dev_ppl_decline:
           optimizer.lr *= self.sgd_lr_decay_factor
           nmtrain.log.info("SGD LR:", optimizer.lr)
 

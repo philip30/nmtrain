@@ -58,7 +58,7 @@ class BLEU(object):
 
   def __lt__(self, other):
     return self.score < other.score
-  
+
   def __gt__(self, other):
     return self.score > other.score
 
@@ -66,7 +66,7 @@ class BLEU(object):
     return self.score == other.score
 
   def __str__(self):
-    return str(self.score * 100) + " BP=%f" % (self.brevity_penalty) + \
+    return str(self.score * 100) + " BP=%.4f" % (self.brevity_penalty) + \
            " (%s)" % (", ".join("%d/%d" % (tp, ln) for tp, ln in self.stats))
 
 def n_gram_stats(sentence, gram):

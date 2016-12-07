@@ -36,8 +36,9 @@ parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient
 parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
+# SGD
 parser.add_argument("--sgd_lr_decay_factor", type=float, default=0.5, help="Decay factor for SGD")
-parser.add_argument("--sgd_lr_decay_after", type=int, default=5, help="Decay SGD after -th iteration")
+parser.add_argument("--sgd_lr_decay_after", type=int, default=10, help="Decay SGD after -th iteration")
 # Development set
 parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")
@@ -47,6 +48,10 @@ parser.add_argument("--trg_test", type=str, help="Testing target data, for per e
 parser.add_argument("--no_input_feeding", dest="input_feeding", action="store_false")
 parser.add_argument("--attention_type", default="mlp", type=str, choices=["dot", "general", "mlp"])
 parser.set_defaults(input_feeding=True)
+# Incremental Testing Setting
+parser.add_argument("--test_beam", default=1, type=int, help="Beam used for beam search")
+parser.add_argument("--test_word_penalty", default=0, type=float, help="Word penalty in beam search")
+parser.add_argument("--test_gen_limit", default=50, type=int, help="Generation limit of prediction during testing")
 args = parser.parse_args()
 
 def main(args):
