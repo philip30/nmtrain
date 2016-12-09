@@ -148,12 +148,11 @@ class MaximumLikelihoodTrainer:
       # Save the model incrementally if wished
       if self.save_models:
         nmtrain.serializer.save(self.nmtrain_model, self.model_file + "-" +
-                                str(state.finished_epoch),
-                                incremental=True)
+                                str(state.finished_epoch))
 
       # Stop Early, otherwise, save
       if watcher.should_early_stop():
         break
-      elif watcher.should_save():
+      elif watcher.should_save() and not self.save_models:
         nmtrain.serializer.save(self.nmtrain_model, self.model_file)
 

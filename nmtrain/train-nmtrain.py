@@ -20,7 +20,7 @@ parser.add_argument("--embed", type=int, default=128, help="Size of embedding ve
 parser.add_argument("--batch", type=int, default=64, help="Number of (src) sentences in batch.")
 parser.add_argument("--epoch", type=int, default=10, help="Number of max epoch to train the model.")
 parser.add_argument("--depth", type=int, default=1, help="Depth of the network.")
-parser.add_argument("--unk_cut", type=int, default=1, help="Threshold for words in corpora to be treated as unknown.")
+parser.add_argument("--unk_cut", type=int, default=0, help="Threshold for words in corpora to be treated as unknown.")
 parser.add_argument("--dropout", type=float, default=0.2, help="Dropout ratio for LSTM.")
 parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9,beta2=0.999,eps=1e-8", help="Optimizer used for BPTT")
 parser.add_argument("--src_max_vocab", type=int, default=50000, help="Maximum src vocabulary size in the model")
@@ -47,7 +47,7 @@ parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")
 parser.add_argument("--src_test", type=str, help="Testing source data, for per epoch testing")
 parser.add_argument("--trg_test", type=str, help="Testing target data, for per epoch testing")
-# Attentional Setting
+# Attention Setting
 parser.add_argument("--no_input_feeding", dest="input_feeding", action="store_false")
 parser.add_argument("--attention_type", default="mlp", type=str, choices=["dot", "general", "mlp"])
 parser.set_defaults(input_feeding=True)
