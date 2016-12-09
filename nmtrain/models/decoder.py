@@ -20,14 +20,16 @@ class LSTMDecoder(chainer.Chain):
   def init(self, h):
     self.decoder.reset_state()
     self.h = self.decoder(self.state_init(h))
-    return self.decoder.state()
 
   def update(self, next_word):
     self.h = self.decoder(self.output_embed(next_word))
-    return self.decoder.state()
 
   def set_state(self, state):
+    self.h, state = state
     self.decoder.set_state(state)
+  
+  def state(self):
+    return self.h, self.decoder.state()
 
 # Implementation of Luong et al.
 class LSTMAttentionalDecoder(LSTMDecoder):
@@ -64,7 +66,7 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     self.h = self.decoder(F.dropout(h,
                                     ratio=self.dropout_ratio,
                                     train=nmtrain.environment.is_train()))
-    return self.decoder.state()
+    return self.h, self.h, self.decoder.state()
 
   def __call__(self):
     mem_optimize = nmtrain.optimization.chainer_mem_optimize
@@ -86,10 +88,13 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     if self.input_feeding:
       decoder_update = F.hstack((decoder_update, self.ht))
     self.h = self.decoder(decoder_update)
-    return self.decoder.state()
 
   def set_state(self, state):
+    self.h, self.ht, state = state
     self.decoder.set_state(state)
+
+  def state(self):
+    return self.h, self.ht, self.decoder.state()
 
 # Not "Defense of the Ancient"
 class DotAttentionLayer(chainer.Chain):

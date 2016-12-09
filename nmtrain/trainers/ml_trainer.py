@@ -140,10 +140,13 @@ class MaximumLikelihoodTrainer:
         dev_ppl_decline = state.dev_perplexities[-1] > state.dev_perplexities[-2]
 
       # SGD Decay
-      if optimizer.__class__.__name__ == "SGD":
-        if ep + 1 >= self.sgd_lr_decay_after or dev_ppl_decline:
+      if ep + 1 >= self.sgd_lr_decay_after or dev_ppl_decline:
+        if optimizer.__class__.__name__ == "SGD":
           optimizer.lr *= self.sgd_lr_decay_factor
           nmtrain.log.info("SGD LR:", optimizer.lr)
+        elif optimizer.__class__.__name__ == "Adam":
+          optimizer.alpha *= self.sgd_lr_decay_factor
+          nmtrain.log.info("Adam Alpha:", optimizer.alpha)
 
       # Save the model incrementally if wished
       if self.save_models:

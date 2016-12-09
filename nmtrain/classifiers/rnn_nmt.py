@@ -69,7 +69,7 @@ class RNN_NMT(object):
     worst_prob = 0
     cur_id = 1
     # Start Prediction
-    init  = model.encode(src_data)
+    model.encode(src_data)
     for i in range(gen_limit):
       # Expand all the beams
       new_beam = []
@@ -84,16 +84,19 @@ class RNN_NMT(object):
           if state.word is not None:
             model.set_state(state.model_state)
             word_var = nmtrain.environment.Variable(xp.array([state.word], dtype=numpy.int32))
-            current_model = model.update(word_var)
-          else:
-            current_model = init
+            model.update(word_var)
+            
           # Produce the output
           output = model.decode()
+          current_model = model.state()
           y_dist = chainer.cuda.to_cpu(output.y.data[0])
           attn_out = chainer.cuda.to_cpu(output.a.data[0]) if hasattr(output, "a") else None
           word_prob = y_dist if store_probabilities else None
           # Produce the next words
-          words = n_argmax(y_dist, beam)
+          if beam == 1:
+            words = [numpy.argmax(y_dist)]
+          else:
+            words = n_argmax(y_dist, beam)
           for word in words:
             new_probability = y_dist[word] * word_penalty * state.probability
             new_beam.append(BeamState(id=cur_id, model_state=current_model, prob=new_probability,
@@ -108,6 +111,7 @@ class RNN_NMT(object):
         break
       else:
         beams = new_beam[:beam]
+
     # Apparently, no hypothesis reached the end of sentence
     if len(beam_prediction) == 0:
       beam_prediction = [beams[0]]

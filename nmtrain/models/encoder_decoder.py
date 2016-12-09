@@ -29,3 +29,6 @@ class EncoderDecoderNMT(chainer.Chain):
 
   def set_state(self, state):
     self.decoder.set_state(state)
+
+  def state(self):
+    return self.decoder.state()
