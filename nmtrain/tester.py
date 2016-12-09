@@ -17,12 +17,12 @@ class Tester(object):
     for src_sent, trg_sent in self.data.test_data:
       if xp != numpy:
         src_data = xp.array(src_sent.data, dtype=numpy.int32)
-        trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
+        trg_data = xp.array(trg_sent.data, dtype=numpy.int32) if trg_sent is not None else None
       else:
         src_data = src_sent.data
-        trg_data = trg_sent.data
+        trg_data = trg_sent.data if trg_sent is not None else None
       self.watcher.start_prediction()
-      if self.eval_ppl:
+      if self.eval_ppl and trg_sent is not None:
         loss = self.classifier.eval(model, src_data, trg_data)
       else:
         loss = None

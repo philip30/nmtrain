@@ -32,7 +32,7 @@ def main(args):
   data_manager  = nmtrain.data.DataManager()
   # The model, chainer model inside
   model         = nmtrain.NmtrainModel(args)
-  model.finalize_model(args)
+  model.finalize_model()
   model.describe()
   # The watcher, who logs everything
   watcher       = nmtrain.TestWatcher(state         = nmtrain.model.TestState(),
@@ -53,30 +53,15 @@ def main(args):
                          ref     = args.ref)
   log.info("Loading Finished.")
 
-  watcher.begin_evaluation()
-  for batch in data_manager.test_data:
-    # Creating appropriate batches
-    # Convert to GPU array if gpu is used
-    src, ref = batch
-    if xp != numpy:
-      src = xp.array(src.data, dtype=numpy.int32)
-      if ref is not None:
-        ref = xp.array(ref.data, dtype=numpy.int32)
-    else:
-      src = src.data
-      if ref is not None:
-        ref = ref.data
-    # Do the decoding
-    classifier.test(model.chainer_model, src, watcher,
-                    trg_data=ref, force_limit=False,
-                    gen_limit = args.gen_limit,
-                    store_probabilities=False,
-                    post_processor=post_processor,
-                    word_penalty=args.word_penalty,
-                    beam=args.beam)
-  watcher.end_evaluation(src       = args.src,
-                         trg_vocab = model.trg_vocab,
-                         ref       = args.ref)
+  # Begin Testing
+  tester = nmtrain.Tester(data=data_manager, watcher=watcher,
+                          trg_vocab=model.trg_vocab,
+                          classifier=classifier,
+                          predict=True, eval_ppl=(args.ref is not None))
+  tester.test(model = model.chainer_model,
+              word_penalty = args.word_penalty,
+              beam_size = args.beam,
+              gen_limit = args.gen_limit)
 
 def sanity_check(args):
   pass

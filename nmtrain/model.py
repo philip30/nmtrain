@@ -17,7 +17,7 @@ class NmtrainModel:
     # Init Model
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
-      args.__dict__.update(self.specification)
+      args.__dict__.update(self.specification.__dict__)
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True, True)

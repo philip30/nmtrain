@@ -33,13 +33,16 @@ parser.add_argument("--init_model", type=str, help="Init the model with the pret
 parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], default="attn", help="Type of model being trained.")
 parser.add_argument("--seed", type=int, default=0, help="Seed for RNG. 0 for totally random seed.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
+# Save Models
+parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
+# BPTT
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient
 parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
 # SGD
 parser.add_argument("--sgd_lr_decay_factor", type=float, default=0.5, help="Decay factor for SGD")
 parser.add_argument("--sgd_lr_decay_after", type=int, default=10, help="Decay SGD after -th iteration")
-# Development set
+# Development + Test set
 parser.add_argument("--src_dev", type=str, help="Development data source")
 parser.add_argument("--trg_dev", type=str, help="Development data target")
 parser.add_argument("--src_test", type=str, help="Testing source data, for per epoch testing")

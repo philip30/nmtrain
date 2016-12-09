@@ -13,13 +13,13 @@ TRG_VOC   = "trg.vocab"
 STATE     = "mod.state"
 WEIGHT    = "mod.weight"
 
-def save(model, out_file):
-  log.info("Saving model...")
+def save(model, out_file, incremental=False):
+  log.info("Saving model to", out_file)
   # Init directory
   if not os.path.exists(out_file):
     os.makedirs(out_file)
 
-  if model.training_state.finished_epoch == 1:
+  if model.training_state.finished_epoch == 1 or incremental:
     # Saving Specification
     pickle_save(os.path.join(out_file, SPEC), model.specification.__dict__)
 

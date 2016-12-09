@@ -38,7 +38,7 @@ class RNN_NMT(object):
 
   def predict(self, model, src_data, eos_id,
               trg_data=None, gen_limit=50,
-              store_probabilities=False,
+              store_probabilities=True,
               beam=1, word_penalty=0):
     # Exponential distribution of word penalty
     word_penalty = math.exp(word_penalty)
@@ -111,18 +111,33 @@ class RNN_NMT(object):
                                key=lambda state:state.probability,
                                reverse=True)
 
-    # Collecting output
+    ## Collecting output
     cur_state  = beam_prediction[0]
-    attention  = None
+    # attention
+    attention_available = hasattr(cur_state, "attention")
+    attention = [] if attention_available else None
+    # probability of each time step
+    probabilities = [] if store_probabilities else None
+    # Prediction
     prediction = []
     while cur_state.parent is not None:
       prediction.append(cur_state.word)
-      #TODO(philip30): handle attention
+      if attention_available:
+        attention.append(numpy.expand_dims(cur_state.attention, axis=1))
+      if store_probabilities:
+        probabilities.append(numpy.expand_dims(cur_state.word_prob, axis=1))
       cur_state = cur_state.parent
-    # Packing outpu
+    ## Packing output
     output = lambda: None
     output.prediction = list(reversed(prediction))
-    output.attention  = attention
-    # TODO(philip30): handle probabilities
-    output.probabilities = None
+    # Output: Attention
+    if attention_available:
+      output.attention = numpy.concatenate(list(reversed(attention)), axis=1)
+    else:
+      output.attention = None
+    # Output: Word probabilities
+    if store_probabilities:
+      output.probabilities = numpy.concatenate(list(reversed(probabilities)), axis=1)
+    else:
+      output.probabilities = None
     return output

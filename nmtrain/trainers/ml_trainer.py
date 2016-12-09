@@ -18,6 +18,7 @@ class MaximumLikelihoodTrainer:
     self.maximum_epoch  = args.epoch
     self.bptt_len       = args.bptt_len
     self.early_stop_num = args.early_stop
+    self.save_models    = args.save_models
     # Location of output model
     self.model_file = args.model_out
     # SGD lr decay factor
@@ -143,6 +144,12 @@ class MaximumLikelihoodTrainer:
         if ep + 1 >= self.sgd_lr_decay_after or dev_ppl_decline:
           optimizer.lr *= self.sgd_lr_decay_factor
           nmtrain.log.info("SGD LR:", optimizer.lr)
+
+      # Save the model incrementally if wished
+      if self.save_models:
+        nmtrain.serializer.save(self.nmtrain_model, self.model_file + "-" +
+                                str(state.finished_epoch),
+                                incremental=True)
 
       # Stop Early, otherwise, save
       if watcher.should_early_stop():
