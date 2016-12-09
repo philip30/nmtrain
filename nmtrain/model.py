@@ -5,6 +5,13 @@ import nmtrain
 import nmtrain.models
 import nmtrain.log as log
 
+# This spec attribute define the number of parameters of network.
+# It should not be changed. If model is loaded, then these settings will be 
+# loaded from the previous model
+OVERWRITE_SPEC = ["hidden", "embed", "depth", "model_architecture", "batch",
+                  "unk_cut", "dropout", "src_max_vocab", "trg_max_vocab", "max_sent_length",
+                  "init_model", "seed", "attention_type", "input_feeding"]
+
 class NmtrainModel:
   """
   Class to represent the model being saved to the file.
@@ -17,7 +24,8 @@ class NmtrainModel:
     # Init Model
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
-      args.__dict__.update(self.specification.__dict__)
+      for spec in OVERWRITE_SPEC:
+        setattr(args, spec, getattr(self.specification, spec))
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True, True)
@@ -27,6 +35,7 @@ class NmtrainModel:
       self.chainer_model = None
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
+    nmtrain.environment.init_vocabulary(self.src_vocab, self.trg_vocab)
 
   def finalize_model(self):
     if self.chainer_model is None:

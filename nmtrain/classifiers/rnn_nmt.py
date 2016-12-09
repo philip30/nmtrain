@@ -3,7 +3,6 @@ import numpy
 import math
 
 import nmtrain.chner
-import nmtrain.environment
 
 class RNN_NMT(object):
   """ Recurrent neural network neural machine translation"""
@@ -38,19 +37,23 @@ class RNN_NMT(object):
 
   def predict(self, model, src_data, eos_id,
               trg_data=None, gen_limit=50,
-              store_probabilities=True,
+              store_probabilities=False,
               beam=1, word_penalty=0):
     # Exponential distribution of word penalty
     word_penalty = math.exp(word_penalty)
     # The beam used to represent state in beam search
     class BeamState:
-      def __init__(self, model_state, prob, word, attention, word_prob, parent):
+      def __init__(self, id, model_state, prob, word, attention, word_prob, parent):
+        self.id          = id
         self.model_state = model_state
         self.probability = prob
         self.word        = word
         self.attention   = attention
         self.word_prob   = word_prob
         self.parent      = parent
+      
+      def __str__(self):
+        return ", ".join([str(self.id), nmtrain.environment.trg_vocab.word(self.word), str(self.probability), str(self.parent.id)])
 
     # The n-argmax function
     def n_argmax(array, top):
@@ -61,9 +64,10 @@ class RNN_NMT(object):
     xp = nmtrain.environment.array_module()
 
     # The beams
-    beams = [BeamState(None, 1, None, None, None, None)]
+    beams = [BeamState(0, None, 1, None, None, None, None)]
     beam_prediction = []
     worst_prob = 0
+    cur_id = 1
     # Start Prediction
     init  = model.encode(src_data)
     for i in range(gen_limit):
@@ -92,9 +96,10 @@ class RNN_NMT(object):
           words = n_argmax(y_dist, beam)
           for word in words:
             new_probability = y_dist[word] * word_penalty * state.probability
-            new_beam.append(BeamState(model_state=current_model, prob=new_probability,
+            new_beam.append(BeamState(id=cur_id, model_state=current_model, prob=new_probability,
                                       word=word, attention=attn_out,
                                       word_prob=word_prob, parent=state))
+            cur_id += 1
       # First sort the beam
       new_beam = sorted(new_beam, key = lambda state: state.probability, reverse=True)
       # When the best hypothesis probability is worse than the best probability stop or
@@ -110,7 +115,7 @@ class RNN_NMT(object):
       beam_prediction = sorted(beam_prediction,
                                key=lambda state:state.probability,
                                reverse=True)
-
+    
     ## Collecting output
     cur_state  = beam_prediction[0]
     # attention

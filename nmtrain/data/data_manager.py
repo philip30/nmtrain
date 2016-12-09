@@ -33,7 +33,6 @@ class ParallelData:
     src_data = load_data(src, transformer)
     if trg is not None:
       trg_data = load_data(trg, transformer)
-
       # They need to be equal, otherwise they are not parallel data
       assert(len(src_data) == len(trg_data))
    
@@ -120,6 +119,8 @@ class DataManager:
     self.test_data = ParallelData(src, trg=ref, src_voc=src_voc, trg_voc=trg_voc,
                                   mode=nmtrain.enumeration.DataMode.TEST,
                                   n_items=1, sort=False)
+    self.src_test = src
+    self.trg_test = ref
 
   # Training data arrange + shuffle
   def arrange(self, indexes):

@@ -10,6 +10,8 @@ verbosity = 0
 run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
 mem_optimization_level = 0
+src_vocab = None
+trg_vocab = None
 
 def init(args, run_mode):
   init_run_mode(run_mode)
@@ -44,6 +46,11 @@ def init_random(seed):
 def init_verbosity(verbosity_level):
   global verbosity
   verbosity = verbosity_level
+
+def init_vocabulary(src_voc, trg_voc):
+  global src_vocab, trg_vocab
+  src_vocab = src_voc
+  trg_vocab = trg_voc
 
 def init_run_mode(run_mode_val):
   global run_mode

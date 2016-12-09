@@ -35,12 +35,17 @@ class StackLSTM(chainer.ChainList):
     self.c = c
 
   def __call__(self, x):
+    c, h = [], []
     for i in range(len(self.h)):
-      lstm_in = x if i == 0 else self.h[i-1]
-      self.c[i], self.h[i] = self[i](self.c[i], self.h[i], lstm_in)
-      self.h[i] = chainer.functions.dropout(self.h[i],
-                                            ratio=self.drop_ratio,
-                                            train=environment.is_train())
+      lstm_in = x if i == 0 else h[i-1]
+      c_new, h_new = self[i](self.c[i], self.h[i], lstm_in)
+      h_new = chainer.functions.dropout(h_new,
+                                        ratio=self.drop_ratio,
+                                        train=environment.is_train())
+      c.append(c_new)
+      h.append(h_new)
+    self.c = c
+    self.h = h
     return self.h[-1]
 
   def state(self):
