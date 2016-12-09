@@ -50,7 +50,7 @@ class NMTDataTransformer(object):
     # stuffing
     max_len = max(len(line) for line in batch.data)
     for i, line in enumerate(batch.data):
-      stuffs = [vocab.stuff_id()] * (max_len - len(line))
+      stuffs = [vocab.eos_id()] * (max_len - len(line))
       line.extend(stuffs)
       line.append(vocab.eos_id())
     batch.data = numpy.array(batch.data, dtype=numpy.int32).transpose()

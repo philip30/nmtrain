@@ -27,8 +27,8 @@ class NmtrainModel:
       for spec in OVERWRITE_SPEC:
         setattr(args, spec, getattr(self.specification, spec))
     else:
-      self.src_vocab = nmtrain.Vocabulary(True, True, True)
-      self.trg_vocab = nmtrain.Vocabulary(True, True, True)
+      self.src_vocab = nmtrain.Vocabulary(True, True, False)
+      self.trg_vocab = nmtrain.Vocabulary(True, True, False)
       self.optimizer = parse_optimizer(args.optimizer)
       self.training_state = TrainingState()
       self.specification = args

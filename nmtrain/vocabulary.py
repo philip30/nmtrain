@@ -83,7 +83,7 @@ class Vocabulary(object):
     has_eos = EOS in self.word_to_id
     has_stuff = STUFF in self.word_to_id
     now_id = len([flag for flag in [has_unk, has_eos, has_stuff] if flag])
-    default_id = [self.eos_id(), self.stuff_id(), self.unk_id()]
+    default_id = [self.eos_id(), self.unk_id()]
     # Create the mapping
     # For the content
     for word_id, word in self.id_to_word.items():

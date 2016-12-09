@@ -27,8 +27,8 @@ class StackLSTM(chainer.ChainList):
   def reset_state(self):
     del self.h
     del self.c
-    self.h = [None for _ in range(self.depth)]
-    self.c = [None for _ in range(self.depth)]
+    self.h = tuple(None for _ in range(self.depth))
+    self.c = tuple(None for _ in range(self.depth))
 
   def set_state(self, h, c):
     self.h = h
@@ -44,8 +44,8 @@ class StackLSTM(chainer.ChainList):
                                         train=environment.is_train())
       c.append(c_new)
       h.append(h_new)
-    self.c = c
-    self.h = h
+    self.c = tuple(c)
+    self.h = tuple(h)
     return self.h[-1]
 
   def state(self):
