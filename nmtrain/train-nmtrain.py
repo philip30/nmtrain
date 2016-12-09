@@ -33,6 +33,8 @@ parser.add_argument("--init_model", type=str, help="Init the model with the pret
 parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], default="attn", help="Type of model being trained.")
 parser.add_argument("--seed", type=int, default=0, help="Seed for RNG. 0 for totally random seed.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
+# Optimization
+parser.add_argument("--memory_optimization", type=int, default=0, help="Memory optimization level, 0 for no optimization. Effect running time.")
 # Save Models
 parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
 # BPTT

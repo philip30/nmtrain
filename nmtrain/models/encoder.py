@@ -4,7 +4,6 @@ import numpy
 
 import nmtrain
 import nmtrain.chner
-import nmtrain.environment
 
 class BidirectionalEncoder(chainer.Chain):
   def __init__(self, in_size, embed_size, hidden_size, dropout_ratio, lstm_depth):
@@ -19,17 +18,19 @@ class BidirectionalEncoder(chainer.Chain):
   def __call__(self, src_data):
     # The dropout function
     dropout = lambda link: F.dropout(link, ratio=self.dropout_ratio, train=nmtrain.environment.is_train())
+    mem_optimize = nmtrain.optimization.chainer_mem_optimize
     # Reset both encoders
     self.encode_forward.reset_state()
     self.encode_backward.reset_state()
 
     # Perform encoding
-    fe = None
     for j in range(len(src_data)):
-      fe = self.encode_forward(dropout(self.embed(nmtrain.environment.Variable(src_data[j]))))
-      be = self.encode_backward(dropout(self.embed(nmtrain.environment.Variable(src_data[-j-1]))))
+      forward_embed = dropout(mem_optimize(self.embed, nmtrain.environment.Variable(src_data[j]), level=1))
+      backward_embed = dropout(mem_optimize(self.embed, nmtrain.environment.Variable(src_data[-j-1]), level=1))
+      fe = self.encode_forward(forward_embed)
+      be = self.encode_backward(backward_embed)
 
-    return dropout(self.encode_project(F.concat((fe, be), axis=1)))
+    return dropout(mem_optimize(self.encode_project, F.concat((fe, be), axis=1), level=2))
 
 class BidirectionalAttentionalEncoder(chainer.Chain):
   def __init__(self, in_size, embed_size, hidden_size, dropout_ratio, lstm_depth, input_feeding=True):
@@ -45,6 +46,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
   def __call__(self, src_data):
     # The dropout function
     dropout = lambda link: F.dropout(link, ratio=self.dropout_ratio, train=nmtrain.environment.is_train())
+    mem_optimize = nmtrain.optimization.chainer_mem_optimize
     # Reset both encoders
     self.encode_forward.reset_state()
     self.encode_backward.reset_state()
@@ -52,13 +54,15 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
     # Perform encoding
     fe, be = [], []
     for j in range(len(src_data)):
-      fe.append(self.encode_forward(dropout(self.embed(nmtrain.environment.Variable(src_data[j])))))
-      be.append(self.encode_backward(dropout(self.embed(nmtrain.environment.Variable(src_data[-j-1])))))
+      forward_embed = dropout(mem_optimize(self.embed, nmtrain.environment.Variable(src_data[j]), level=1))
+      backward_embed = dropout(mem_optimize(self.embed, nmtrain.environment.Variable(src_data[-j-1]), level=1))
+      fe.append(self.encode_forward(forward_embed))
+      be.append(self.encode_backward(backward_embed))
 
     # Joining encoding together
     S = []
     for j in range(len(fe)):
-      h = self.encode_project(F.concat((fe[j], be[-1-j]), axis=1))
+      h = mem_optimize(self.encode_project, F.concat((fe[j], be[-1-j]), axis=1), level=2)
       S.append(F.expand_dims(h, axis=2))
     S = F.swapaxes(F.concat(S, axis=2), 1, 2)
 

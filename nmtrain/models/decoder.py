@@ -13,7 +13,8 @@ class LSTMDecoder(chainer.Chain):
     )
 
   def __call__(self):
-    y = F.softmax(self.affine_vocab(F.tanh(self.h)))
+    mem_optimize = nmtrain.optimization.chainer_mem_optimize
+    y = mem_optimize(F.softmax, mem_optimize(self.affine_vocab, F.tanh(self.h), level=1), level=1)
     return Output(y=y)
 
   def init(self, h):
@@ -66,6 +67,7 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     return self.decoder.state()
 
   def __call__(self):
+    mem_optimize = nmtrain.optimization.chainer_mem_optimize
     # Calculate Attention vector
     a = self.attention(self.S, self.h)
     # Calculate context vector
@@ -73,7 +75,8 @@ class LSTMAttentionalDecoder(LSTMDecoder):
     # Calculate hidden vector + context
     self.ht = self.context_project(F.concat((self.h, c), axis=1))
     # Calculate Word probability distribution
-    y = F.softmax(self.affine_vocab(F.tanh(self.ht)))
+    y = mem_optimize(F.softmax, mem_optimize(self.affine_vocab,
+                                             F.tanh(self.ht), level=1), level=1)
     # Return the vocabulary size output projection
     return Output(y=y, a=a)
 

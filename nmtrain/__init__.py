@@ -2,6 +2,7 @@ import nmtrain.enumeration
 import nmtrain.environment
 import nmtrain.serializer
 import nmtrain.log
+import nmtrain.optimization
 
 from nmtrain.postprocesses import NMTrainPostProcessor
 from nmtrain.watcher import TrainingWatcher, TestWatcher

@@ -9,10 +9,12 @@ xp = None
 verbosity = 0
 run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
+mem_optimization_level = 0
 
 def init(args, run_mode):
   init_run_mode(run_mode)
   init_gpu(args.gpu)
+  init_mem_optimization_level(args.memory_optimization)
   if hasattr(args, "seed"):
     if args.seed == 0:
       args.seed = random.randint(1, 1e6)
@@ -47,6 +49,10 @@ def init_run_mode(run_mode_val):
   global run_mode
   run_mode = run_mode_val
 
+def init_mem_optimization_level(opt_level):
+  global mem_optimization_level
+  mem_optimization_level = opt_level
+
 def array_module():
   assert xp is not None, "Need to call init_gpu first"
   return xp
@@ -63,6 +69,9 @@ def set_train():
 
 def set_test():
   set_runmode(nmtrain.enumeration.RunMode.TEST)
+
+def memory_optimization_level():
+  return mem_optimization_level
 
 def Variable(data):
   volatile = chainer.OFF if is_train() else chainer.ON
