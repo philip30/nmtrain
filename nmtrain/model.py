@@ -10,7 +10,8 @@ import nmtrain.log as log
 # loaded from the previous model
 OVERWRITE_SPEC = ["hidden", "embed", "depth", "model_architecture", "batch",
                   "unk_cut", "dropout", "src_max_vocab", "trg_max_vocab", "max_sent_length",
-                  "init_model", "seed", "attention_type", "input_feeding"]
+                  "init_model", "seed", "attention_type", "input_feeding", "lexicon_method",
+                  "lexicon_alpha"]
 
 class NmtrainModel:
   """
@@ -33,13 +34,22 @@ class NmtrainModel:
       self.training_state = TrainingState()
       self.specification = args
       self.chainer_model = None
+      self.lexicon = None
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
     nmtrain.environment.init_vocabulary(self.src_vocab, self.trg_vocab)
 
   def finalize_model(self):
+    if self.lexicon is None and self.specification.lexicon:
+      self.lexicon = nmtrain.Lexicon(self.specification.lexicon,
+                                     self.src_vocab, self.trg_vocab,
+                                     self.specification.lexicon_alpha,
+                                     self.specification.lexicon_method)
+    else:
+      self.lexicon = None
+
     if self.chainer_model is None:
-      self.chainer_model = from_spec(self.specification, len(self.src_vocab), len(self.trg_vocab))
+      self.chainer_model = from_spec(self.specification, self.src_vocab, self.trg_vocab, self.lexicon)
       self.optimizer.setup(self.chainer_model)
 
     if hasattr(self, "optimizer"):
@@ -132,7 +142,8 @@ def parse_parameter(opt_param, param_mapping):
       param[param_str[0]] = param_mapping[param_str[0]](param_str[1])
   return param
 
-def from_spec(spec, in_size, out_size):
+def from_spec(spec, src_voc, trg_voc, lexicon):
+  in_size, out_size = len(src_voc), len(trg_voc)
   if spec.model_architecture == "encdec":
     return nmtrain.models.EncoderDecoderNMT(
       embed_size   = spec.embed,
@@ -144,14 +155,16 @@ def from_spec(spec, in_size, out_size):
     )
   elif spec.model_architecture == "attn":
     return nmtrain.models.AttentionalNMT(
-      embed_size   = spec.embed,
-      hidden_size  = spec.hidden,
-      drop_out     = spec.dropout,
-      lstm_depth   = spec.depth,
-      in_size      = in_size,
-      out_size     = out_size,
-      input_feeding = spec.input_feeding,
-      attention_type = spec.attention_type
+      embed_size     = spec.embed,
+      hidden_size    = spec.hidden,
+      drop_out       = spec.dropout,
+      lstm_depth     = spec.depth,
+      in_size        = in_size,
+      out_size       = out_size,
+      input_feeding  = spec.input_feeding,
+      attention_type = spec.attention_type,
+      # (Arthur et al., 2016)
+      lexicon        = lexicon,
     )
   else:
     raise Exception("Unknown Model Type:", model_type)

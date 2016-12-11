@@ -84,6 +84,11 @@ def Variable(data):
   volatile = chainer.OFF if is_train() else chainer.ON
   return chainer.Variable(data, volatile=volatile)
 
+def VariableArray(model, data, dtype=numpy.int32):
+  if model.xp != numpy:
+    data = model.xp.array(data, dtype=dtype)
+  return Variable(data)
+
 def use_gpu():
   global gpu
   return gpu >= 0

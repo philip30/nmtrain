@@ -16,6 +16,7 @@ SRC_VOC   = "src.vocab"
 TRG_VOC   = "trg.vocab"
 STATE     = "mod.state"
 WEIGHT    = "mod.weight"
+LEXICON   = "mod.lexicon"
 
 def save(model, out_file):
   if not out_file.endswith(".zip"):
@@ -40,6 +41,10 @@ def save(model, out_file):
   # Saving Weight
   chainer.serializers.save_npz(os.path.join(tmpdir, WEIGHT), model.chainer_model)
 
+  # Saving Lexicon
+  if model.lexicon is not None:
+    pickle_save(os.path.join(tmpdir, LEXICON), model.lexicon)
+
   # Zipping
   zf = zipfile.ZipFile(out_file, mode="w", compression=zipfile.ZIP_DEFLATED)
   try:
@@ -49,6 +54,7 @@ def save(model, out_file):
     write_zip(zf, os.path.join(tmpdir, WEIGHT))
     write_zip(zf, os.path.join(tmpdir, SPEC))
     write_zip(zf, os.path.join(tmpdir, OPTIMIZER))
+    if model.lexicon is not None: write_zip(zf, os.path.join(tmpdir, LEXICON))
   finally:
     zf.close()
 
@@ -72,16 +78,22 @@ def load(model, in_file):
   # Loading training state
   model.training_state = pickle_load(os.path.join(tmpdir, STATE))
 
+  # Loading Lexicon
+  if model.specification.lexicon:
+    model.lexicon = pickle_load(os.path.join(tmpdir, LEXICON))
+  else:
+    model.lexicon = None
+
   # Loading Weight
   model.chainer_model = nmtrain.model.from_spec(model.specification,
-                                                len(model.src_vocab),
-                                                len(model.trg_vocab))
+                                                model.src_vocab,
+                                                model.trg_vocab,
+                                                model.lexicon)
   if nmtrain.environment.is_train():
     model.optimizer = nmtrain.model.parse_optimizer(model.specification.optimizer)
     model.optimizer.setup(model.chainer_model)
   chainer.serializers.load_npz(os.path.join(tmpdir, WEIGHT), model.chainer_model)
 
-  # Loading Optimizer
   if nmtrain.environment.is_train():
     chainer.serializers.load_npz(os.path.join(tmpdir, OPTIMIZER), model.optimizer)
   atexit.register(lambda dir=tmpdir: shutil.rmtree(tmpdir))

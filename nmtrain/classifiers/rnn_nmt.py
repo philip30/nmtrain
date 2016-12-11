@@ -6,12 +6,12 @@ import nmtrain.chner
 
 class RNN_NMT(object):
   """ Recurrent neural network neural machine translation"""
-  def train(self, model, src_data, trg_data, bptt, bptt_len=0):
+  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0):
     batch_loss  = 0
     bptt_ctr    = 0
-    model.encode(src_data)
-    for trg_word in trg_data:
-      y_t = nmtrain.environment.Variable(trg_word)
+    model.encode(src_batch.data)
+    for trg_word in trg_batch.data:
+      y_t = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
       batch_loss += nmtrain.chner.cross_entropy(output.y, y_t)
       model.update(y_t)
@@ -22,21 +22,20 @@ class RNN_NMT(object):
         if bptt_ctr == bptt_len:
           bptt(batch_loss)
           bptt_ctr = 0
-    return batch_loss / len(trg_data)
+    return batch_loss / len(trg_batch.data)
 
-  def eval(self, model, src_data, trg_data):
+  def eval(self, model, src_sent, trg_sent):
     loss = 0
     # Start Prediction
-    model.encode(src_data)
-    for trg_word in trg_data:
-      y_t    = nmtrain.environment.Variable(trg_word)
+    model.encode(src_sent.data)
+    for trg_word in trg_sent.data:
+      y_t    = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
       loss  += nmtrain.chner.cross_entropy(output.y, y_t)
       model.update(y_t)
-    return float(loss.data) / len(trg_data)
+    return float(loss.data) / len(trg_sent.data)
 
-  def predict(self, model, src_data, eos_id,
-              trg_data=None, gen_limit=50,
+  def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,
               beam=1, word_penalty=0):
     # Exponential distribution of word penalty
@@ -51,7 +50,7 @@ class RNN_NMT(object):
         self.attention   = attention
         self.word_prob   = word_prob
         self.parent      = parent
-      
+
       def __str__(self):
         return ", ".join([str(self.id), nmtrain.environment.trg_vocab.word(self.word), str(self.probability), str(self.parent.id)])
 
@@ -69,7 +68,7 @@ class RNN_NMT(object):
     worst_prob = 0
     cur_id = 1
     # Start Prediction
-    model.encode(src_data)
+    model.encode(src_sent.data)
     for i in range(gen_limit):
       # Expand all the beams
       new_beam = []
@@ -85,7 +84,7 @@ class RNN_NMT(object):
             model.set_state(state.model_state)
             word_var = nmtrain.environment.Variable(xp.array([state.word], dtype=numpy.int32))
             model.update(word_var)
-            
+
           # Produce the output
           output = model.decode()
           current_model = model.state()
@@ -119,7 +118,7 @@ class RNN_NMT(object):
       beam_prediction = sorted(beam_prediction,
                                key=lambda state:state.probability,
                                reverse=True)
-    
+ 
     ## Collecting output
     cur_state  = beam_prediction[0]
     # attention

@@ -84,15 +84,8 @@ class MaximumLikelihoodTrainer:
       watcher.begin_epoch()
       for src_batch, trg_batch in data.train_data:
         assert(src_batch.id == trg_batch.id)
-        # Convert to appropriate array
-        if xp != numpy:
-          src_data = xp.array(src_batch.data, dtype=numpy.int32)
-          trg_data = xp.array(trg_batch.data, dtype=numpy.int32)
-        else:
-          src_data = src_batch.data
-          trg_data = trg_batch.data
         # Prepare for training
-        batch_loss = classifier.train(model, src_data, trg_data,
+        batch_loss = classifier.train(model, src_batch, trg_batch,
                                       bptt=bptt,
                                       bptt_len=self.bptt_len)
         watcher.batch_update(loss=batch_loss.data,
@@ -106,15 +99,9 @@ class MaximumLikelihoodTrainer:
         nmtrain.environment.set_test()
         watcher.begin_evaluation()
         for src_sent, trg_sent in data.dev_data:
-          if xp != numpy:
-            src_data = xp.array(src_sent.data, dtype=numpy.int32)
-            trg_data = xp.array(trg_sent.data, dtype=numpy.int32)
-          else:
-            src_data = src_sent.data
-            trg_data = trg_sent.data
           # Prepare for evaluation
           watcher.start_prediction()
-          loss = classifier.eval(model, src_data, trg_data)
+          loss = classifier.eval(model, src_sent, trg_sent)
           # TODO(philip30): If we want to do prediction during dev-set 
           # call the prediction method here
           watcher.end_prediction(loss = loss)
