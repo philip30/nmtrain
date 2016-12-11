@@ -1,7 +1,6 @@
 
 UNK = "<UNK>"
 EOS = "<EOS>"
-STUFF = "{*}"
 
 class Vocabulary(object):
   """ Class to represent static vocabulary of neural machine translation.
@@ -12,7 +11,7 @@ class Vocabulary(object):
       print(vocab.word(parse_sent[0])) # First word
   """
 
-  def __init__(self, add_unk=False, add_eos=False, add_stuff=False):
+  def __init__(self, add_unk=False, add_eos=False):
     self.word_to_id = {}
     self.id_to_word = {}
     self.rare_words = set()
@@ -21,8 +20,6 @@ class Vocabulary(object):
       self.add_word(UNK)
     if add_eos:
       self.add_word(EOS)
-    if add_stuff:
-      self.add_word(STUFF)
 
   def add_word(self, word):
     word_id = self.word_to_id.get(word, len(self.word_to_id))
@@ -78,11 +75,10 @@ class Vocabulary(object):
     """
     mapping_id   = {}
     mapping_rare = {}
-    # Handle EOS, STUFF, UNK
+    # Handle EOS, UNK
     has_unk = UNK in self.word_to_id
     has_eos = EOS in self.word_to_id
-    has_stuff = STUFF in self.word_to_id
-    now_id = len([flag for flag in [has_unk, has_eos, has_stuff] if flag])
+    now_id = len([flag for flag in [has_unk, has_eos] if flag])
     default_id = [self.eos_id(), self.unk_id()]
     # Create the mapping
     # For the content
@@ -103,7 +99,6 @@ class Vocabulary(object):
     self.word_to_id.clear()
     if has_unk: self.add_word(UNK)
     if has_eos: self.add_word(EOS)
-    if has_stuff: self.add_word(STUFF)
     for _, (new_id, word) in mapping_id.items():
       self.set_word(word, new_id)
     for _, (new_id, word) in mapping_rare.items():
@@ -114,10 +109,8 @@ class Vocabulary(object):
 
   def unk_id(self): return self[UNK]
   def eos_id(self): return self[EOS]
-  def stuff_id(self): return self[STUFF]
   def unk(self): return UNK
   def eos(self): return EOS
-  def stuff(self): return STUFF
 
   # Operators
   def __getitem__(self, word):

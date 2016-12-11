@@ -32,7 +32,6 @@ class Lexicon(object):
     dense_prob = numpy.zeros(self.trg_size, dtype=numpy.float32)
     for trg_word, trg_prob in sparse_prob.items():
       dense_prob[trg_word] = trg_prob
-    dense_prob[self.unk_src_id] += (1 - sum(dense_prob))
     return dense_prob
 
   def p_lex(self):
@@ -48,9 +47,12 @@ def lexicon_from_file(lexicon_file, src_voc, trg_voc):
         raise ValueError("Failed to parse line for lexicon:", line)
       trg = trg_voc.parse_word(trg)
       src = src_voc.parse_word(src)
-      lexicon_prob[src][trg] += float(prob)
+      if trg != trg_voc.unk_id() and src != src_voc.unk_id():
+        lexicon_prob[src][trg] += float(prob)
   # Making sure the probability is correct
   for src, p_trg_given_src in lexicon_prob.items():
-    assert abs(sum(p_trg_given_src.values()) - 1) < 1e-6, "p(trg|src='%s') does not sum to 1" % src_voc.word(src)
+    unk_prob = 1 - sum(p_trg_given_src.values())
+    assert unk_prob >= -1e-6 and unk_prob <= 1 + 1e-6, "Strange unknown prob:%s" % (unk_prob)
+    lexicon_prob[src][trg_voc.unk_id()] = unk_prob
   return lexicon_prob
 
