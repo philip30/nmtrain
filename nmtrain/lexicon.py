@@ -24,21 +24,19 @@ class Lexicon(object):
     xp = nmtrain.environment.array_module()
     if xp != numpy:
       lexicon_matrix = xp.array(lexicon_matrix, dtype=numpy.float32)
-    self.lexicon_matrix = nmtrain.environment.Variable(lexicon_matrix)
+
+    return lexicon_matrix
 
   @functools.lru_cache(maxsize=512)
   def dense_probability(self, src_word):
-    sparse_prob = self.lexicon[src_word]
+    sparse_prob = self.lexicon.get(src_word, {})
     dense_prob = numpy.zeros(self.trg_size, dtype=numpy.float32)
     for trg_word, trg_prob in sparse_prob.items():
       dense_prob[trg_word] = trg_prob
     return dense_prob
 
-  def p_lex(self):
-    return self.lexicon_matrix
-
 def lexicon_from_file(lexicon_file, src_voc, trg_voc):
-  lexicon_prob = collections.defaultdict(lambda: collections.defaultdict(int))
+  lexicon_prob = {}
   with open(lexicon_file) as lex_fp:
     for line in lex_fp:
       try:
@@ -48,7 +46,10 @@ def lexicon_from_file(lexicon_file, src_voc, trg_voc):
       trg = trg_voc.parse_word(trg)
       src = src_voc.parse_word(src)
       if trg != trg_voc.unk_id() and src != src_voc.unk_id():
-        lexicon_prob[src][trg] += float(prob)
+        if src not in lexicon_prob:
+          lexicon_prob[src] = {}
+        dict_prob = lexicon_prob[src]
+        dict_prob[trg] = dict_prob.get(trg, 0.0) + float(prob)
   # Making sure the probability is correct
   for src, p_trg_given_src in lexicon_prob.items():
     unk_prob = 1 - sum(p_trg_given_src.values())

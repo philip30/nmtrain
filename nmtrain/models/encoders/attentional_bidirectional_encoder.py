@@ -49,7 +49,9 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
 
     # If lexicon is provided
     if self.lexicon is not None:
-      self.lexicon.init(src_data)
+      lex_matrix = nmtrain.environment.Variable(self.lexicon.init(src_data))
+    else:
+      lex_matrix = None
 
-    return h, S
+    return h, S, lex_matrix
 

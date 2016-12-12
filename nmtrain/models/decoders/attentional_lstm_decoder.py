@@ -25,9 +25,9 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Construct Appropriate Lexicon Chain
     if lexicon is not None:
       if lexicon.type == "bias":
-        lexicon_model = nmtrain.models.lexicons.BiasedLexicon(lexicon)
+        lexicon_model = nmtrain.models.lexicons.BiasedLexicon(lexicon.alpha)
       elif lexicon.type == "linear":
-        lexicon_model = nmtrain.models.lexicons.LinearInterpolationLexicon(lexicon, hidden_size)
+        lexicon_model = nmtrain.models.lexicons.LinearInterpolationLexicon(hidden_size)
       else:
         raise ValueError("Unknown Lexicon Type:", lexicon.type)
     else:
@@ -46,12 +46,13 @@ class LSTMAttentionalDecoder(chainer.Chain):
     self.dropout_ratio = dropout_ratio
 
   def init(self, h):
-    h, S = h
+    h, S, lexicon_matrix = h
     self.decoder.reset_state()
     self.S = S
     self.h = self.decoder(F.dropout(h,
                                     ratio=self.dropout_ratio,
                                     train=nmtrain.environment.is_train()))
+    self.lexicon_matrix = lexicon_matrix
 
   def __call__(self):
     mem_optimize = nmtrain.optimization.chainer_mem_optimize
@@ -63,7 +64,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     self.ht = self.context_project(F.concat((self.h, c), axis=1))
     # Calculate Word probability distribution
     y = mem_optimize(self.affine_vocab, F.tanh(self.ht), level=1)
-    y_lex_enhanced, is_probability = self.lexicon_model(y, a, self.ht)
+    y_lex_enhanced, is_probability = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
     if not is_probability:
       y_lex_enhanced = F.softmax(y_lex_enhanced)
     # Return the vocabulary size output projection
