@@ -35,7 +35,6 @@ def main(args):
   data_manager  = nmtrain.data.DataManager()
   # The model, chainer model inside
   model         = load_model(args)
-  print(type(model))
   # The watcher, who logs everything
   watcher       = nmtrain.TestWatcher(state         = nmtrain.model.TestState(),
                                       src_vocab     = model.src_vocab,

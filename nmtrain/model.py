@@ -78,6 +78,10 @@ class NmtrainModel:
       print("Optimizer      :", self.optimizer.__class__.__name__, file=sys.stderr)
     print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
 
+  @property
+  def xp(self):
+    return self.chainer_model.xp
+
 class TrainingState(object):
   def __init__(self):
     self.finished_epoch   = 0
