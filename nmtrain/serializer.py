@@ -79,7 +79,7 @@ def load(model, in_file):
   model.training_state = pickle_load(os.path.join(tmpdir, STATE))
 
   # Loading Lexicon
-  if model.specification.lexicon:
+  if hasattr(model.specification, "lexicon") and model.specification.lexicon:
     model.lexicon = pickle_load(os.path.join(tmpdir, LEXICON))
   else:
     model.lexicon = None

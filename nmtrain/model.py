@@ -26,7 +26,8 @@ class NmtrainModel:
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
       for spec in OVERWRITE_SPEC:
-        setattr(args, spec, getattr(self.specification, spec))
+        if hasattr(self.specification, spec):
+          setattr(args, spec, getattr(self.specification, spec))
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True)
@@ -40,7 +41,7 @@ class NmtrainModel:
     nmtrain.environment.init_vocabulary(self.src_vocab, self.trg_vocab)
 
   def finalize_model(self):
-    if self.lexicon is None and self.specification.lexicon:
+    if self.lexicon is None and hasattr(self.specification, "lexicon") and self.specification.lexicon:
       self.lexicon = nmtrain.Lexicon(self.specification.lexicon,
                                      self.src_vocab, self.trg_vocab,
                                      self.specification.lexicon_alpha,
