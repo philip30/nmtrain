@@ -26,7 +26,7 @@ class Vocabulary(object):
     self.word_to_id[word]    = word_id
     self.id_to_word[word_id] = word
     return word_id
-  
+
   def add_sentence(self, sentence):
     return list(self.add_word(word) for word in sentence)
 
@@ -131,10 +131,11 @@ class Vocabulary(object):
   def __str__(self):
     return str(self.word_to_id)
 
-  def __equal__(self, other):
+  def __eq__(self, other):
     if type(self) != type(other):
       return False
     else:
-      return self.id_to_word == other.id_to_word and \
+      return len(self) == len(other) and \
+          self.id_to_word == other.id_to_word and \
           self.word_to_id == other.word_to_id and \
           self.rare_words == other.rare_words
