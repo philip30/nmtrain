@@ -27,6 +27,7 @@ class NmtrainModel:
       nmtrain.serializer.load(self, args.init_model)
       for spec in OVERWRITE_SPEC:
         setattr(args, spec, getattr(self.specification, spec))
+      self.name = args.init_model
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True)
@@ -35,8 +36,10 @@ class NmtrainModel:
       self.specification = args
       self.chainer_model = None
       self.lexicon = None
+
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
+
     nmtrain.environment.init_vocabulary(self.src_vocab, self.trg_vocab)
 
   def finalize_model(self):
@@ -60,8 +63,7 @@ class NmtrainModel:
       self.chainer_model.to_gpu(nmtrain.environment.gpu)
 
   def describe(self):
-    print("~ Nmtrain ~", file=sys.stderr)
-    print("~ By: Philip Arthur (philip.arthur30@gmail.com)", file=sys.stderr)
+    print("~ NMTrain-Model ~")
     print("Model Type     :", self.specification.model_architecture, file=sys.stderr)
     print("Hidden Size    :", self.specification.hidden, file=sys.stderr)
     print("Embed Size     :", self.specification.embed, file=sys.stderr)

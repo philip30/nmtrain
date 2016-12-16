@@ -5,3 +5,4 @@ import nmtrain.models.decoders
 
 from nmtrain.models.nmt_encdec import EncoderDecoderNMT
 from nmtrain.models.nmt_attentional import AttentionalNMT
+from nmtrain.models.nmt_ensemble import EnsembleLinearInterpolateNMT, EnsembleLogSumNMT
