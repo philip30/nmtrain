@@ -60,7 +60,7 @@ def main(args):
                           classifier=classifier,
                           predict=True, eval_ppl=(args.ref is not None))
 
-  if model.__class__.__name__ == "NMTrainModel":
+  if model.__class__.__name__ == "NmtrainModel":
     model = model.chainer_model
 
   tester.test(model = model,
