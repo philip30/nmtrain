@@ -10,6 +10,7 @@ class RNN_NMT(object):
     batch_loss  = 0
     bptt_ctr    = 0
     model.encode(src_batch.data)
+
     for trg_word in trg_batch.data:
       y_t = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
@@ -22,6 +23,7 @@ class RNN_NMT(object):
         if bptt_ctr == bptt_len:
           bptt(batch_loss)
           bptt_ctr = 0
+
     return batch_loss / len(trg_batch.data)
 
   def eval(self, model, src_sent, trg_sent):
@@ -118,7 +120,7 @@ class RNN_NMT(object):
       beam_prediction = sorted(beam_prediction,
                                key=lambda state:state.probability,
                                reverse=True)
- 
+
     ## Collecting output
     cur_state  = beam_prediction[0]
     # attention
