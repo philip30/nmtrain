@@ -58,7 +58,7 @@ parser.add_argument("--no_input_feeding", dest="input_feeding", action="store_fa
 parser.add_argument("--attention_type", default="mlp", type=str, choices=["dot", "general", "mlp"])
 parser.set_defaults(input_feeding=True)
 parser.add_argument("--lexicon", type=str, help="P(trg|src) in format of trg src prob")
-parser.add_argument("--lexicon_alpha", type=float, default=0.01, help="Strength of the lexicon. Should be >= 0")
+parser.add_argument("--lexicon_alpha", type=float, default=1e-3, help="Strength of the lexicon. Should be >= 0")
 parser.add_argument("--lexicon_method", type=str, choices=["bias", "linear"], default="bias", help="Way of integrating lexicon")
 # Incremental Testing Setting
 parser.add_argument("--test_beam", default=1, type=int, help="Beam used for beam search")
