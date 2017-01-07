@@ -13,11 +13,17 @@ class IdentityTransformer(object):
     return
 
 class NMTDataTransformer(object):
-  def __init__(self, data_type):
+  def __init__(self, data_type, codec=None):
     self.data_type = data_type
+    self.codec = codec
 
   def transform(self, data):
-    return data.strip().split()
+    line = data.strip().split()
+
+    # The codec
+    if self.codec is not None:
+      line = self.codec.segment(line)
+    return line
 
   def transform_corpus(self, corpus, analyzer, vocab):
     """ Called after all data is being transformed.

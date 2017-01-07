@@ -12,7 +12,6 @@ class Tester(object):
     self.classifier = classifier
 
   def test(self, model, word_penalty, gen_limit, beam_size):
-    xp = nmtrain.environment.array_module()
     self.watcher.begin_evaluation()
     for src_sent, trg_sent in self.data.test_data:
       self.watcher.start_prediction()
@@ -26,6 +25,7 @@ class Tester(object):
                                                  word_penalty = word_penalty,
                                                  gen_limit    = gen_limit,
                                                  beam         = beam_size)
+        nmtrain.post_processor.post_process(predict_output, self.trg_vocab)
       else:
         predict_output = lambda: None
         predict_output.prediction = None

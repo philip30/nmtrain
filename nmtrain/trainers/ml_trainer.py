@@ -44,7 +44,6 @@ class MaximumLikelihoodTrainer:
     self.nmtrain_model.finalize_model()
 
   def train(self, classifier):
-    xp      = nmtrain.environment.array_module()
     state   = self.nmtrain_model.training_state
     # Watcher is the supervisor of this training
     # It will watch and record everything happens during training

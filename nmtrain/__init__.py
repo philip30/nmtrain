@@ -4,9 +4,10 @@ import nmtrain.serializer
 import nmtrain.log
 import nmtrain.optimization
 import nmtrain.chner
+import nmtrain.bpe
+import nmtrain.post_processor
 
 from nmtrain.lexicon import Lexicon
-from nmtrain.postprocesses import NMTrainPostProcessor
 from nmtrain.watcher import TrainingWatcher, TestWatcher
 from nmtrain.model import NmtrainModel
 from nmtrain.vocabulary import Vocabulary

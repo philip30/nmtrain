@@ -17,7 +17,7 @@ parser.add_argument("--src", type=str, required=True)
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, nargs="+", required=True, help="Init the model with the pretrained model.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
-parser.add_argument("--gen_limit", type=int, default=50, help="Maximum Target Output Length.")
+parser.add_argument("--gen_limit", type=int, default=300, help="Maximum Target Output Length.")
 parser.add_argument("--beam", type=int, default=1, help="Beam size in searching.")
 parser.add_argument("--word_penalty", type=float, default=0.0, help="Word penalty in beam search")
 parser.add_argument("--memory_optimization", type=int, default=0)
@@ -40,13 +40,10 @@ def main(args):
                                       src_vocab     = model.src_vocab,
                                       trg_vocab     = model.trg_vocab,
                                       output_stream = sys.stdout )
-  # PostProcessor
-  post_processor = nmtrain.NMTrainPostProcessor()
   # Classifier, that run the data and the model
   classifier    = nmtrain.classifiers.RNN_NMT()
 
    # Array module
-  xp = nmtrain.environment.array_module()
   log.info("Loading Data")
   data_manager.load_test(src     = args.src,
                          src_voc = model.src_vocab,

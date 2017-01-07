@@ -37,11 +37,13 @@ class NmtrainModel:
       self.specification = args
       self.chainer_model = None
       self.lexicon = None
+      self.bpe_codec = load_bpe_codec(args.src_bpe_codec, args.trg_bpe_codec)
 
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
 
-    nmtrain.environment.init_vocabulary(self.src_vocab, self.trg_vocab)
+    if hasattr(self, "bpe_codec"):
+      nmtrain.environment.init_bpe_codec(self.bpe_codec)
 
   def finalize_model(self):
     if self.lexicon is None and hasattr(self.specification, "lexicon") and self.specification.lexicon:
@@ -148,6 +150,14 @@ def parse_parameter(opt_param, param_mapping):
     else:
       param[param_str[0]] = param_mapping[param_str[0]](param_str[1])
   return param
+
+def load_bpe_codec(src_bpe_codec, trg_bpe_codec):
+  if len(src_bpe_codec) > 0 and len(trg_bpe_codec) > 0:
+    src_codec = nmtrain.bpe.BPE(src_bpe_codec)
+    trg_codec = nmtrain.bpe.BPE(trg_bpe_codec)
+    return src_codec, trg_codec
+  else:
+    return None, None
 
 def from_spec(spec, src_voc, trg_voc, lexicon):
   in_size, out_size = len(src_voc), len(trg_voc)

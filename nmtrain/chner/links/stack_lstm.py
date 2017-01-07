@@ -5,7 +5,6 @@ import nmtrain.environment as environment
 # TODO(philip30): Write test for this class
 class StackLSTM(chainer.ChainList):
   def __init__(self, in_size, out_size, depth, drop_ratio):
-    xp = environment.array_module()
     self.depth = depth
     self.drop_ratio = drop_ratio
     self.h = []

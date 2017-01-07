@@ -75,7 +75,7 @@ class TrainingWatcher(object):
       prev_dev_ppl = None
 
     # Update the dev perplexities
-    self.state.dev_perplexities.append(math.exp(self.dev_loss/ self.dev_loss_ctr))
+    self.state.dev_perplexities.append(math.exp(self.dev_loss / self.dev_loss_ctr))
 
     # Generate one line report
     dev_ppl = self.state.dev_ppl()
@@ -153,14 +153,14 @@ class TestWatcher(object):
       self.attentions.append(attention)
 
     if self.output_stream is not None:
-      print(self.trg_vocab.sentence(prediction), file=self.output_stream)
+      print(prediction, file=self.output_stream)
       self.output_stream.flush()
 
 # Calculate BLEU Score
 def calculate_bleu(predictions, ref, trg_vocab):
   def src_corpus():
     for hyp in predictions:
-      yield trg_vocab.sentence(hyp).split()
+      yield hyp
   def trg_corpus():
     # TODO(philip30): If you modify transformer, also consider modifying this.
     with open(ref) as ref_file:

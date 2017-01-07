@@ -5,13 +5,11 @@ import nmtrain
 import random
 
 # Environment Variables
-xp = None
 verbosity = 0
 run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
 mem_optimization_level = 0
-src_vocab = None
-trg_vocab = None
+bpe_codec = None, None
 
 def init(args, run_mode):
   init_run_mode(run_mode)
@@ -26,12 +24,10 @@ def init(args, run_mode):
 
 # Environment Functions
 def init_gpu(gpu_num):
-  global xp, gpu
-  xp = numpy
+  global gpu
   if hasattr(chainer.cuda, "cupy"):
     if gpu_num >= 0:
       gpu = gpu_num
-      xp = chainer.cuda.cupy
       chainer.cuda.get_device(gpu_num).use()
     else:
       xp = numpy
@@ -47,11 +43,6 @@ def init_verbosity(verbosity_level):
   global verbosity
   verbosity = verbosity_level
 
-def init_vocabulary(src_voc, trg_voc):
-  global src_vocab, trg_vocab
-  src_vocab = src_voc
-  trg_vocab = trg_voc
-
 def init_run_mode(run_mode_val):
   global run_mode
   run_mode = run_mode_val
@@ -60,9 +51,9 @@ def init_mem_optimization_level(opt_level):
   global mem_optimization_level
   mem_optimization_level = opt_level
 
-def array_module():
-  assert xp is not None, "Need to call init_gpu first"
-  return xp
+def init_bpe_codec(bpe_codec_obj):
+  global bpe_codec
+  bpe_codec = bpe_codec_obj
 
 def is_train():
   return run_mode == nmtrain.enumeration.RunMode.TRAIN

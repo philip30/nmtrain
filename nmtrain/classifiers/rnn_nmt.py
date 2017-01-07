@@ -61,9 +61,6 @@ class RNN_NMT(object):
       top = min(top, len(array))
       return numpy.argpartition(array, -top)[-top:]
 
-    # Array module:
-    xp = nmtrain.environment.array_module()
-
     # The beams
     beams = [BeamState(0, None, 1, None, None, None, None)]
     beam_prediction = []
@@ -84,7 +81,7 @@ class RNN_NMT(object):
         else:
           if state.word is not None:
             model.set_state(state.model_state)
-            word_var = nmtrain.environment.Variable(xp.array([state.word], dtype=numpy.int32))
+            word_var = nmtrain.environment.Variable(model.xp.array([state.word], dtype=numpy.int32))
             model.update(word_var)
 
           # Produce the output

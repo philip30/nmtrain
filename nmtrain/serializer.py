@@ -17,6 +17,7 @@ TRG_VOC   = "trg.vocab"
 STATE     = "mod.state"
 WEIGHT    = "mod.weight"
 LEXICON   = "mod.lexicon"
+BPE_CODEC = "mod.bpe_codec"
 
 def save(model, out_file):
   if not out_file.endswith(".zip"):
@@ -45,6 +46,10 @@ def save(model, out_file):
   if model.lexicon is not None:
     pickle_save(os.path.join(tmpdir, LEXICON), model.lexicon)
 
+  # Saving BPE codec
+  if hasattr(model, "bpe_codec"):
+    pickle_save(os.path.join(tmpdir, BPE_CODEC), model.bpe_codec)
+
   # Zipping
   zf = zipfile.ZipFile(out_file, mode="w", compression=zipfile.ZIP_DEFLATED)
   try:
@@ -55,6 +60,7 @@ def save(model, out_file):
     write_zip(zf, os.path.join(tmpdir, SPEC))
     write_zip(zf, os.path.join(tmpdir, OPTIMIZER))
     if model.lexicon is not None: write_zip(zf, os.path.join(tmpdir, LEXICON))
+    if hasattr(model, "bpe_codec"): write_zip(zf, os.path.join(tmpdir, BPE_CODEC))
   finally:
     zf.close()
 
@@ -83,6 +89,12 @@ def load(model, in_file):
     model.lexicon = pickle_load(os.path.join(tmpdir, LEXICON))
   else:
     model.lexicon = None
+
+  # Loading BPE Codec
+  if len(model.specification.src_bpe_codec) != 0 and len(model.specification.trg_bpe_codec) != 0:
+    model.bpe_codec = pickle_load(os.path.join(tmpdir, BPE_CODEC))
+  else:
+    model.bpe_codec = None, None
 
   # Loading Weight
   model.chainer_model = nmtrain.model.from_spec(model.specification,

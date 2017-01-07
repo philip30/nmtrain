@@ -1,2 +1,0 @@
-class NMTrainPostProcessor(object):
-  pass

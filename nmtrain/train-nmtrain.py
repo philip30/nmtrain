@@ -26,7 +26,7 @@ parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9
 parser.add_argument("--src_max_vocab", type=int, default=50000, help="Maximum src vocabulary size in the model")
 parser.add_argument("--trg_max_vocab", type=int, default=50000, help="Maximum trg vocabulary size in the model")
 parser.add_argument("--early_stop", type=int, default=100, help="How many iterations should the model patiently keeps training before it stop due to low dev ppl")
-parser.add_argument("--max_sent_length", type=int, default=100, help="Maximum length of training sentences in both sides")
+parser.add_argument("--max_sent_length", type=int, default=300, help="Maximum length of training sentences in both sides")
 # Configuration
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")
@@ -41,6 +41,9 @@ parser.add_argument("--save_models", action="store_true", help="Whether to save 
 parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient
 parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
+# BPE by Rico Sennrich (if available)
+parser.add_argument("--src_bpe_codec", type=str, help="src codec file", default="")
+parser.add_argument("--trg_bpe_codec", type=str, help="trg codec file", default="")
 # SGD
 parser.add_argument("--sgd_lr_decay_factor", type=float, default=0.5, help="Decay factor for SGD")
 parser.add_argument("--sgd_lr_decay_after", type=int, default=10, help="Decay SGD after -th iteration")
@@ -59,7 +62,7 @@ parser.add_argument("--lexicon_method", type=str, choices=["bias", "linear"], de
 # Incremental Testing Setting
 parser.add_argument("--test_beam", default=1, type=int, help="Beam used for beam search")
 parser.add_argument("--test_word_penalty", default=0, type=float, help="Word penalty in beam search")
-parser.add_argument("--test_gen_limit", default=50, type=int, help="Generation limit of prediction during testing")
+parser.add_argument("--test_gen_limit", default=300, type=int, help="Generation limit of prediction during testing")
 args = parser.parse_args()
 
 def main(args):

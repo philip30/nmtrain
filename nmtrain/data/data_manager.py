@@ -27,15 +27,17 @@ class ParallelData:
     self.trg_analyzer = nmtrain.data.analyzer.StandardAnalyzer(max_vocab_size=trg_max_vocab, unk_freq_threshold=cut_threshold)
 
     # Data Transformer
-    transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode)
+    src_codec, trg_codec = nmtrain.environment.bpe_codec
+    src_transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode, codec=src_codec)
+    trg_transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode, codec=trg_codec)
 
     # Begin Loading data
-    src_data = load_data(src, transformer)
+    src_data = load_data(src, src_transformer)
     if trg is not None:
-      trg_data = load_data(trg, transformer)
+      trg_data = load_data(trg, trg_transformer)
       # They need to be equal, otherwise they are not parallel data
       assert(len(src_data) == len(trg_data))
-   
+
     # Max sent length cut + sort
     if mode == nmtrain.enumeration.DataMode.TRAIN:
       src_crp = []
@@ -54,15 +56,15 @@ class ParallelData:
       src_data = list(map(lambda sent: src_voc.parse_sentence(sent), src_data))
       if trg is not None:
         trg_data = list(map(lambda sent: trg_voc.parse_sentence(sent), trg_data))
-   
+
     # Analyzing corpus
-    transform_corpus(src_data, self.src_analyzer, transformer, src_voc)
+    transform_corpus(src_data, self.src_analyzer, src_transformer, src_voc)
     if trg is not None:
-      transform_corpus(trg_data, self.trg_analyzer, transformer, trg_voc)
+      transform_corpus(trg_data, self.trg_analyzer, trg_transformer, trg_voc)
 
     # Post processes
-    src_pp = lambda batch: transformer.transform_batch(batch, src_voc)
-    trg_pp = lambda batch: transformer.transform_batch(batch, trg_voc)
+    src_pp = lambda batch: src_transformer.transform_batch(batch, src_voc)
+    trg_pp = lambda batch: trg_transformer.transform_batch(batch, trg_voc)
 
     # Load the data with batch manager
     self.src_batch_manager.load(src_data, n_items=n_items, post_process=src_pp)
