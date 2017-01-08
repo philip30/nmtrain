@@ -38,7 +38,7 @@ parser.add_argument("--memory_optimization", type=int, default=0, help="Memory o
 # Save Models
 parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
 # BPTT
-parser.add_argument("--bptt_len", type=int, default=0, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
+parser.add_argument("--bptt_len", type=int, default=50, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient
 parser.add_argument("--gradient_clipping", type=float, default=5.0, help="Threshold for gradient clipping")
 # BPE by Rico Sennrich (if available)

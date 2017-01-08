@@ -160,7 +160,7 @@ class TestWatcher(object):
 def calculate_bleu(predictions, ref, trg_vocab):
   def src_corpus():
     for hyp in predictions:
-      yield hyp
+      yield hyp.split()
   def trg_corpus():
     # TODO(philip30): If you modify transformer, also consider modifying this.
     with open(ref) as ref_file:
