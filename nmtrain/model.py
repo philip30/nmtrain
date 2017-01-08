@@ -66,7 +66,7 @@ class NmtrainModel:
       self.chainer_model.to_gpu(nmtrain.environment.gpu)
 
   def describe(self):
-    print("~ NMTrain-Model ~")
+    print("~ NMTrain-Model ~", file=sys.stderr)
     print("Model Type     :", self.specification.model_architecture, file=sys.stderr)
     print("Hidden Size    :", self.specification.hidden, file=sys.stderr)
     print("Embed Size     :", self.specification.embed, file=sys.stderr)
