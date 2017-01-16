@@ -23,6 +23,8 @@ class TrainingWatcher(object):
     self.epoch_update_counter = 0
     # To measure time
     self.time = time.time()
+    # To measure number of trained sentence
+    self.state.trained_sentence = 0
     # Verbose
     log.info("Start Epoch %d" % (self.state.finished_epoch + 1))
 
@@ -30,8 +32,8 @@ class TrainingWatcher(object):
     ppl = math.exp(float(loss))
     self.epoch_loss += loss
     self.epoch_update_counter += 1
-    self.trained += batch_size
-    log.info("[%d] Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.state.finished_epoch + 1, self.trained, ppl, col_size))
+    self.state.trained_sentence += batch_size
+    log.info("[%d] Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.state.finished_epoch + 1, self.state.trained_sentence, ppl, col_size))
 
   def end_epoch(self, new_data_arrangement):
     self.state.finished_epoch += 1

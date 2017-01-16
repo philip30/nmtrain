@@ -79,6 +79,7 @@ class NmtrainModel:
     if hasattr(self, "optimizer"):
       print("Optimizer      :", self.optimizer.__class__.__name__, file=sys.stderr)
     print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
+    print("Trained Sentences:", self.training_state.trained_sentence, file=sys.stderr)
 
   @property
   def xp(self):
@@ -87,6 +88,7 @@ class NmtrainModel:
 class TrainingState(object):
   def __init__(self):
     self.finished_epoch   = 0
+    self.trained_sentence = 0
     self.perplexities     = []
     self.dev_perplexities = []
     self.bleu_scores      = []

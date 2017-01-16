@@ -1,4 +1,5 @@
 import numpy
+import gc
 
 import nmtrain
 import nmtrain.data
@@ -58,6 +59,11 @@ class MaximumLikelihoodTrainer:
     data    = self.data_manager
     # Chainer optimizer
     optimizer = self.nmtrain_model.optimizer
+    # Save function
+    save = lambda suffix: nmtrain.serializer.save(self.nmtrain_model, self.model_file + suffix)
+    # Snapshot save function
+    snapshot_counter = 0
+    snapshot_threshold = self.nmtrain_model.specification.save_snapshot
 
     # If test data is provided, prepare the appropriate watcher
     if data.has_test_data():
@@ -91,7 +97,16 @@ class MaximumLikelihoodTrainer:
                              batch_size=len(trg_batch.data[0]),
                              col_size=len(trg_batch.data)-1)
         bptt(batch_loss)
+
+        # Saving snapshots
+        if snapshot_threshold > 0:
+          snapshot_counter += len(trg_batch.data[0])
+          if snapshot_counter > snapshot_threshold:
+            save("-snapshot")
+
       watcher.end_epoch(ep_arrangement)
+
+      gc.collect()
 
       # Evaluation on Development set
       if data.has_dev_data():
@@ -136,12 +151,11 @@ class MaximumLikelihoodTrainer:
 
       # Save the model incrementally if wished
       if self.save_models:
-        nmtrain.serializer.save(self.nmtrain_model, self.model_file + "-" +
-                                str(state.finished_epoch))
+        save("-" + str(state.finished_epoch))
 
       # Stop Early, otherwise, save
       if watcher.should_early_stop():
         break
       elif watcher.should_save() and not self.save_models:
-        nmtrain.serializer.save(self.nmtrain_model, self.model_file)
+        save("")
 

@@ -37,6 +37,7 @@ parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--memory_optimization", type=int, default=0, help="Memory optimization level, 0 for no optimization. Effect running time.")
 # Save Models
 parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
+parser.add_argument("--save_snapshot", type=int, default=0, help="Save snapshot of model every n sentence of sentence in training")
 # BPTT
 parser.add_argument("--bptt_len", type=int, default=50, help="Length of iteration until bptt is trigerred. <= 0 for Infinite")
 # Gradient

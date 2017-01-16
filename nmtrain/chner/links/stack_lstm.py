@@ -43,8 +43,8 @@ class StackLSTM(chainer.ChainList):
                                         train=environment.is_train())
       c.append(c_new)
       h.append(h_new)
-    self.c = tuple(c)
-    self.h = tuple(h)
+    self.c = c
+    self.h = h
     return self.h[-1]
 
   def state(self):

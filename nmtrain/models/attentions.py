@@ -23,14 +23,16 @@ class GeneralAttentionLayer(chainer.Chain):
 class MLPAttentionLayer(chainer.Chain):
   def __init__(self, hidden_size):
     super(MLPAttentionLayer, self).__init__(
-      first_layer = chainer.links.Linear(2*hidden_size, hidden_size),
+      first_layer_hidden = chainer.links.Linear(hidden_size, hidden_size),
+      first_layer_context = chainer.links.Linear(hidden_size, hidden_size),
       second_layer = chainer.links.Linear(hidden_size, 1)
     )
 
   def __call__(self, S, h):
     batch_size, src_len, hidden_size = S.data.shape
-    h = F.broadcast_to(F.expand_dims(h, axis=2), (batch_size, hidden_size, src_len))
-    h = F.swapaxes(h, 1, 2)
-    S = F.reshape(F.concat((S, h), axis=2), (batch_size * src_len, 2 * hidden_size))
-    a = F.softmax(F.reshape(self.second_layer(F.tanh(self.first_layer(S))), (batch_size, src_len)))
+    h = F.expand_dims(self.first_layer_hidden(h), axis=2)
+    h = F.broadcast_to(h, (batch_size, hidden_size, src_len))
+    h = F.reshape(F.swapaxes(h, 1, 2), (batch_size * src_len, hidden_size))
+    S = self.first_layer_context(F.reshape(S, (batch_size * src_len, hidden_size)))
+    a = F.softmax(F.reshape(self.second_layer(F.tanh(S + h)), (batch_size, src_len)))
     return a

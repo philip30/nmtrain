@@ -31,6 +31,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     super(LSTMAttentionalDecoder, self).__init__(
       decoder         = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
       context_project = chainer.links.Linear(hidden_size, hidden_size),
+      hidden_project  = chainer.links.Linear(hidden_size, hidden_size),
       affine_vocab    = chainer.links.Linear(hidden_size, out_size),
       output_embed    = chainer.links.EmbedID(out_size, embed_size),
       attention       = attention,
@@ -62,7 +63,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Calculate context vector
     c = F.squeeze(F.batch_matmul(self.S, a, transa=True), axis=2)
     # Calculate hidden vector + context
-    self.ht = self.context_project(self.h) + c
+    self.ht = self.hidden_project(self.h) + self.context_project(c)
     # Calculate Word probability distribution
     y = mem_optimize(self.affine_vocab, F.tanh(self.ht), level=1)
     if self.use_lexicon:
