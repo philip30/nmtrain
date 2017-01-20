@@ -13,7 +13,7 @@ class Lexicon(object):
     self.trg_size = len(trg_voc)
     self.unk_src_id = src_voc.unk_id()
 
-  def init(self, src_data):
+  def init(self, src_data, xp):
     src_size, batch_size = src_data.shape
     lexicon_matrix = numpy.zeros((batch_size, src_size, self.trg_size), dtype=numpy.float32)
     for i in range(batch_size):
@@ -21,7 +21,6 @@ class Lexicon(object):
         lexicon_matrix[i][j] = self.dense_probability(src_data[j][i])
 
     # Convert to gpu / cpu array
-    xp = nmtrain.environment.array_module()
     if xp != numpy:
       lexicon_matrix = xp.array(lexicon_matrix, dtype=numpy.float32)
 
