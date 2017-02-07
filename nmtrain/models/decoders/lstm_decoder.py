@@ -13,8 +13,7 @@ class LSTMDecoder(chainer.Chain):
 
   def __call__(self):
     mem_optimize = nmtrain.optimization.chainer_mem_optimize
-    y = mem_optimize(chainer.functions.softmax,
-                     mem_optimize(self.affine_vocab, chainer.functions.tanh(self.h), level=1), level=1)
+    y =  mem_optimize(self.affine_vocab, chainer.functions.tanh(self.h), level=1)
     return nmtrain.models.decoders.Output(y=y)
 
   def init(self, h):

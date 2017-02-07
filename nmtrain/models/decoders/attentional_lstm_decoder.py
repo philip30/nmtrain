@@ -22,8 +22,8 @@ class LSTMAttentionalDecoder(chainer.Chain):
     if lexicon is not None:
       if lexicon.type == "bias":
         lexicon_model = nmtrain.models.lexicons.BiasedLexicon(lexicon.alpha)
-      elif lexicon.type == "linear":
-        lexicon_model = nmtrain.models.lexicons.LinearInterpolationLexicon(hidden_size)
+#      elif lexicon.type == "linear":
+#        lexicon_model = nmtrain.models.lexicons.LinearInterpolationLexicon(hidden_size)
       else:
         raise ValueError("Unknown Lexicon Type:", lexicon.type)
 
@@ -67,18 +67,13 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Calculate Word probability distribution
     y = mem_optimize(self.affine_vocab, F.tanh(self.ht), level=1)
     if self.use_lexicon:
-      y_lex_enhanced, is_probability = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
-    else:
-      y_lex_enhanced, is_probability = y, False
-
-    if not is_probability:
-      y_lex_enhanced = F.softmax(y_lex_enhanced)
+      y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 
     if nmtrain.environment.is_train():
-      return nmtrain.models.decoders.Output(y=y_lex_enhanced)
+      return nmtrain.models.decoders.Output(y=y)
     else:
       # Return the vocabulary size output projection
-      return nmtrain.models.decoders.Output(y=y_lex_enhanced, a=a)
+      return nmtrain.models.decoders.Output(y=y, a=a)
 
   def update(self, next_word):
     # embed_size + hidden size -> input feeding approach

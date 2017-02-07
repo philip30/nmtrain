@@ -14,7 +14,7 @@ class RNN_NMT(object):
     for trg_word in trg_batch.data:
       y_t = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
-      batch_loss += nmtrain.chner.cross_entropy(output.y, y_t)
+      batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
 
       # Truncated BPTT

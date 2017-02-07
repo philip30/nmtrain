@@ -30,7 +30,7 @@ class ParallelData:
     src_codec, trg_codec = nmtrain.environment.bpe_codec
     src_transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode, codec=src_codec)
     trg_transformer = nmtrain.data.transformer.NMTDataTransformer(data_type=mode, codec=trg_codec)
-
+    
     # Begin Loading data
     src_data = load_data(src, src_transformer)
     if trg is not None:

@@ -7,9 +7,6 @@ class StackLSTM(chainer.ChainList):
   def __init__(self, in_size, out_size, depth, drop_ratio):
     self.depth = depth
     self.drop_ratio = drop_ratio
-    self.h = []
-    self.c = []
-    self.reset_state()
 
     # Init all connections
     lstm = []
@@ -19,15 +16,16 @@ class StackLSTM(chainer.ChainList):
       else:
         size = out_size
       lstm.append(chainer.links.StatelessLSTM(size, out_size))
+    
+    # None array for quick reset
+    self.none_arr = tuple([None for _ in range(self.depth)])
 
     # Pass it to the super connection
     super(StackLSTM, self).__init__(*lstm)
 
   def reset_state(self):
-    del self.h
-    del self.c
-    self.h = tuple(None for _ in range(self.depth))
-    self.c = tuple(None for _ in range(self.depth))
+    self.h = self.none_arr
+    self.c = self.none_arr
 
   def set_state(self, h, c):
     self.h = h
@@ -35,7 +33,7 @@ class StackLSTM(chainer.ChainList):
 
   def __call__(self, x):
     c, h = [], []
-    for i in range(len(self.h)):
+    for i in range(self.depth):
       lstm_in = x if i == 0 else h[i-1]
       c_new, h_new = self[i](self.c[i], self.h[i], lstm_in)
       h_new = chainer.functions.dropout(h_new,

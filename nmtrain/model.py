@@ -75,11 +75,22 @@ class NmtrainModel:
     print("TRG Vocab Size :", len(self.trg_vocab) - 2, file=sys.stderr)
     print("Dropout Ratio  :", self.specification.dropout, file=sys.stderr)
     print("Unknown Cut    :", self.specification.unk_cut, file=sys.stderr)
+    print("BPTT Len       :", self.specification.bptt_len, file=sys.stderr)
+    print("Gradient Clip  :", self.specification.gradient_clipping, file=sys.stderr)
+    print("Seed           :", self.specification.seed, file=sys.stderr)
+    print("LR decay       :", self.specification.sgd_lr_decay_factor, file=sys.stderr)
+    print("Decay after    :", self.specification.sgd_lr_decay_after, file=sys.stderr)
     print("Batch Size     :", self.specification.batch, file=sys.stderr)
     if hasattr(self, "optimizer"):
       print("Optimizer      :", self.optimizer.__class__.__name__, file=sys.stderr)
     print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
     print("Trained Sentences:", self.training_state.trained_sentence, file=sys.stderr)
+    if self.specification.model_architecture == "attn":
+        print("Attn input Feeding : ", self.specification.input_feeding, file=sys.stderr)
+        print("Attn strategy      : ", self.specification.attention_type, file=sys.stderr)
+    if self.specification.lexicon:
+        print("Lexicon         : ", self.specification.lexicon)
+        print("Lexicon Alpha   : ", self.specification.lexicon_alpha)
 
   @property
   def xp(self):
