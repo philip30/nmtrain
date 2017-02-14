@@ -87,7 +87,7 @@ class RNN_NMT(object):
           # Produce the output
           output = model.decode()
           current_model = model.state()
-          y_dist = chainer.cuda.to_cpu(output.y.data[0])
+          y_dist = chainer.cuda.to_cpu(chainer.functions.softmax(output.y).data[0])
           attn_out = chainer.cuda.to_cpu(output.a.data[0]) if hasattr(output, "a") else None
           word_prob = y_dist if store_probabilities else None
           # Produce the next words
