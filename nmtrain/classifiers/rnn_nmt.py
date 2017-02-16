@@ -33,7 +33,7 @@ class RNN_NMT(object):
     for trg_word in trg_sent.data:
       y_t    = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
-      loss  += nmtrain.chner.cross_entropy(output.y, y_t)
+      loss  += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
     return float(loss.data) / len(trg_sent.data)
 
