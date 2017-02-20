@@ -10,8 +10,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
         embed           = chainer.links.EmbedID(in_size, embed_size),
         encode_forward  = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
         encode_backward = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
-        encode_project_forward  = chainer.links.Linear(hidden_size, embed_size),
-        encode_project_backward = chainer.links.Linear(hidden_size, embed_size)
+        encode_project  = chainer.links.Linear(2 * hidden_size, embed_size),
     )
     self.dropout_ratio = dropout_ratio
     self.lexicon       = lexicon
@@ -37,7 +36,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
     # Joining encoding together
     S = []
     for j in range(len(fe)):
-      h = self.encode_project_forward(fe[j]) + self.encode_project_backward(be[-1-j])
+      h = self.encode_project(F.concat((fe[j], be[-1-j]), axis=1))
       S.append(F.expand_dims(h, axis=2))
     S = F.swapaxes(F.concat(S, axis=2), 1, 2)
 
