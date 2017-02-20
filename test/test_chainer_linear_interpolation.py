@@ -13,7 +13,8 @@ from chainer import testing
 from chainer.testing import attr
 from chainer.testing import condition
 
-from chainn.chainer_component.links.linear_interpolation import LinearInterpolation, sigmoid
+import nmtrain.chner
+from nmtrain.chner.links.linear_interpolation import LinearInterpolation, sigmoid
 
 class TestLinearInterpolation(unittest.TestCase):
 
@@ -39,7 +40,7 @@ class TestLinearInterpolation(unittest.TestCase):
     def test_forward_cpu(self):
         self.check_forward(self.x1, self.x2)
 
-    @attr.gpu
+    @skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected.")
     @condition.retry(3)
     def test_forward_gpu(self):
         self.link.to_gpu()
@@ -52,7 +53,7 @@ class TestLinearInterpolation(unittest.TestCase):
     def test_backward_cpu(self):
         self.check_backward(self.x1, self.x2, self.gy)
 
-    @attr.gpu
+    @skipIf(not hasattr(chainer.cuda, "cupy"), "No GPU detected.")
     @condition.retry(3)
     def test_backward_gpu(self):
         self.link.to_gpu()
