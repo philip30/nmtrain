@@ -24,6 +24,7 @@ You need to specify the source file (not ~~```stdin```~~) with ```--src```.
 
 ## Training Options
 Bellow is the basic training options:
+
 | Usage                | Option                                | Constraint          |
 |---                   |---                                    |---                  |
 | With GPU             | ```--gpu <gpu_num>            ```     | 0 <= int <= num_gpu |
