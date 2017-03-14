@@ -42,9 +42,6 @@ class NmtrainModel:
     if hasattr(self, "optimizer"):
       self.optimizer.use_cleargrads()
 
-    if hasattr(self, "bpe_codec"):
-      nmtrain.environment.init_bpe_codec(self.bpe_codec)
-
   def finalize_model(self):
     if self.lexicon is None and hasattr(self.specification, "lexicon") and self.specification.lexicon:
       self.lexicon = nmtrain.Lexicon(self.specification.lexicon,
@@ -104,7 +101,6 @@ class TrainingState(object):
     self.dev_perplexities = []
     self.bleu_scores      = []
     self.time_spent       = []
-    self.wps_time         = []
     self.batch_indexes    = None
 
   def ppl(self):
@@ -119,15 +115,11 @@ class TrainingState(object):
   def last_time(self):
     return self.time_spent[-1]
 
-  def wps(self):
-    return self.wps_time[-1]
-
   def time(self):
     return sum(self.time_spent)
 
 class TestState(TrainingState):
   def __init__(self):
-    self.wps_time    = []
     self.time_spent  = []
     self.bleu_scores = []
     self.perplexities = []

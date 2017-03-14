@@ -31,15 +31,22 @@ class MaximumLikelihoodTrainer:
     self.test_gen_limit    = args.test_gen_limit
     # Load in the real data
     log.info("Loading Data")
-    self.data_manager.load_train(src=args.src, trg=args.trg,
-                                 src_voc=self.nmtrain_model.src_vocab,
-                                 trg_voc=self.nmtrain_model.trg_vocab,
-                                 src_dev=args.src_dev, trg_dev=args.trg_dev,
-                                 src_test=args.src_test, trg_test=args.trg_test,
-                                 batch_size=args.batch, unk_cut=args.unk_cut,
-                                 src_max_vocab=args.src_max_vocab,
-                                 trg_max_vocab=args.trg_max_vocab,
-                                 max_sent_length=args.max_sent_length)
+    self.data_manager.load_train(src              = args.src,
+                                 trg              = args.trg,
+                                 src_voc          = self.nmtrain_model.src_vocab,
+                                 trg_voc          = self.nmtrain_model.trg_vocab,
+                                 src_dev          = args.src_dev,
+                                 trg_dev          = args.trg_dev,
+                                 src_test         = args.src_test,
+                                 trg_test         = args.trg_test,
+                                 batch_size       = args.batch,
+                                 unk_cut          = args.unk_cut,
+                                 src_max_vocab    = args.src_max_vocab,
+                                 trg_max_vocab    = args.trg_max_vocab,
+                                 max_sent_length  = args.max_sent_length,
+                                 sort_method      = args.sort_method,
+                                 batch_strategy   = args.batch_strategy,
+                                 bpe_codec        = self.nmtrain_model.bpe_codec)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model()
@@ -51,7 +58,6 @@ class MaximumLikelihoodTrainer:
     watcher = nmtrain.watcher.TrainingWatcher(state,
                                               self.nmtrain_model.src_vocab,
                                               self.nmtrain_model.trg_vocab,
-                                              self.data_manager.total_trg_words(),
                                               self.early_stop_num)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
@@ -66,7 +72,7 @@ class MaximumLikelihoodTrainer:
     snapshot_threshold = self.nmtrain_model.specification.save_snapshot
 
     # If test data is provided, prepare the appropriate watcher
-    if data.has_test_data():
+    if data.has_test_data:
       self.test_state = nmtrain.model.TestState()
       test_watcher = nmtrain.watcher.TestWatcher(self.test_state,
                                                  self.nmtrain_model.src_vocab,
@@ -87,15 +93,17 @@ class MaximumLikelihoodTrainer:
     for ep in range(state.finished_epoch, self.maximum_epoch):
       ep_arrangement = data.shuffle()
       watcher.begin_epoch()
-      for src_batch, trg_batch in data.train_data:
-        assert(src_batch.id == trg_batch.id)
+      for batch in data.train_data:
+        src_batch, trg_batch = batch.final_data
         # Prepare for training
+        watcher.batch_begin()
         batch_loss = classifier.train(model, src_batch, trg_batch,
                                       bptt=bptt,
                                       bptt_len=self.bptt_len)
         watcher.batch_update(loss=batch_loss.data,
-                             batch_size=len(trg_batch.data[0]),
-                             col_size=len(trg_batch.data)-1)
+                             batch_size=len(trg_batch[0]),
+                             col_size=len(trg_batch)-1,
+                             id=batch.id)
         bptt(batch_loss)
 
         # Saving snapshots
@@ -109,21 +117,22 @@ class MaximumLikelihoodTrainer:
       gc.collect()
 
       # Evaluation on Development set
-      if data.has_dev_data():
+      if data.has_dev_data:
         nmtrain.environment.set_test()
         watcher.begin_evaluation()
-        for src_sent, trg_sent in data.dev_data:
+        for batch in data.dev_data:
+          src_sent, trg_sent = batch.final_data
           # Prepare for evaluation
           watcher.start_prediction()
           loss = classifier.eval(model, src_sent, trg_sent)
           # TODO(philip30): If we want to do prediction during dev-set 
           # call the prediction method here
           watcher.end_prediction(loss = loss)
-        watcher.end_evaluation(data.src_dev, data.trg_dev, self.nmtrain_model.trg_vocab)
+        watcher.end_evaluation(data.dev_data, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
       # Incremental testing if wished
-      if data.has_test_data():
+      if data.has_test_data:
         nmtrain.environment.set_test()
         tester = nmtrain.Tester(data=data, watcher=test_watcher,
                                 trg_vocab=self.nmtrain_model.trg_vocab,

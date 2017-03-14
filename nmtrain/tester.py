@@ -13,7 +13,8 @@ class Tester(object):
 
   def test(self, model, word_penalty, gen_limit, beam_size):
     self.watcher.begin_evaluation()
-    for src_sent, trg_sent in self.data.test_data:
+    for batch in self.data.test_data:
+      src_sent, trg_sent = batch.final_data
       self.watcher.start_prediction()
       if self.eval_ppl and trg_sent is not None:
         loss = self.classifier.eval(model, src_sent, trg_sent)
@@ -35,6 +36,5 @@ class Tester(object):
                                   prediction    = predict_output.prediction,
                                   attention     = predict_output.attention,
                                   probabilities = predict_output.probabilities)
-    self.watcher.end_evaluation(self.data.src_test,
-                                self.data.trg_test,
+    self.watcher.end_evaluation(self.data.test_data,
                                 self.trg_vocab)
