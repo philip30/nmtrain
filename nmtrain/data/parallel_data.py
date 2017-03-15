@@ -51,7 +51,7 @@ def data_generator(src_data, trg_data):
 
 # Represent ParallelCorpus
 class ParallelData(object):
-  def __init__(self, src, trg, src_voc, trg_voc, mode, batch_manager,
+  def __init__(self, src, trg, mode, batch_manager,
                wordid_converter=None, n_items=1, analyzer=None, filterer=None,
                sorter=None, bpe_codec=None):
     # The information about the location of its data

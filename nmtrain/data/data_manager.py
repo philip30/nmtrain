@@ -32,8 +32,6 @@ class DataManager(object):
     # Loading Training Data
     self.train_data = ParallelData(src              = src,
                                    trg              = trg,
-                                   src_voc          = src_voc,
-                                   trg_voc          = trg_voc,
                                    batch_manager    = nmtrain.data.BatchManager(batch_strategy),
                                    mode             = nmtrain.enumeration.DataMode.TRAIN,
                                    n_items          = batch_size,
@@ -47,8 +45,6 @@ class DataManager(object):
     if src_dev and trg_dev:
       self.dev_data = ParallelData(src              = src_dev,
                                    trg              = trg_dev,
-                                   src_voc          = src_voc,
-                                   trg_voc          = trg_voc,
                                    mode             = nmtrain.enumeration.DataMode.TEST,
                                    n_items          = 1,
                                    batch_manager    = nmtrain.data.BatchManager("sent"),
@@ -59,8 +55,6 @@ class DataManager(object):
     if src_test and trg_test:
       self.test_data = ParallelData(src              = src_test,
                                     trg              = trg_test,
-                                    src_voc          = src_voc,
-                                    trg_voc          = trg_voc,
                                     batch_manager    = nmtrain.data.BatchManager("sent"),
                                     mode             = nmtrain.enumeration.DataMode.TEST,
                                     n_items          = 1,
@@ -73,8 +67,6 @@ class DataManager(object):
     test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc)
     self.test_data = ParallelData(src              = src,
                                   trg              = ref,
-                                  src_voc          = src_voc,
-                                  trg_voc          = trg_voc,
                                   batch_manager    = nmtrain.data.BatchManager("sent"),
                                   mode             = nmtrain.enumeration.DataMode.TEST,
                                   n_items          = 1,

@@ -17,9 +17,9 @@ class Vocabulary(object):
     self.check_rare = None
 
     if add_unk:
-      self.add_word(UNK)
+      self.add_word(UNK, include_rare=True)
     if add_eos:
-      self.add_word(EOS)
+      self.add_word(EOS, include_rare=True)
 
   def add_word(self, word, include_rare=False):
     if not include_rare and self.check_rare(word):
