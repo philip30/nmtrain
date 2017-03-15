@@ -58,6 +58,12 @@ class Vocabulary(object):
     else:
       return self[word]
 
+  def check_special_id(self, word_id):
+    return word_id == self.unk_id() or word_id == self.eos_id()
+
+  def check_special_word(self, word):
+    return word == self.unk() or word == self.eos()
+
   def unk_id(self): return self[UNK]
   def eos_id(self): return self[EOS]
   def unk(self): return UNK

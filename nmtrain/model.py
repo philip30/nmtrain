@@ -4,6 +4,7 @@ import sys
 import nmtrain
 import nmtrain.models
 import nmtrain.log as log
+import nmtrain.util as util
 
 # This spec attribute define the number of parameters of network.
 # It should not be changed. If model is loaded, then these settings will be 
@@ -133,28 +134,15 @@ def parse_optimizer(optimizer_str):
     opt_param = optimizer_str[1]
   # Select optimizer
   if opt == "adam":
-    param = parse_parameter(opt_param, {
+    param = util.parse_parameter(opt_param, {
       "alpha":float, "beta1":float, "beta2": float, "eps": float})
     return chainer.optimizers.Adam(**param)
   elif opt == "sgd":
-    param = parse_parameter(opt_param, {
+    param = util.parse_parameter(opt_param, {
       "lr": float})
     return chainer.optimizers.SGD(**param)
   else:
     raise ValueError("Unrecognized optimizer:", opt)
-
-def parse_parameter(opt_param, param_mapping):
-  if len(opt_param) == 0:
-    return {}
-  param = {}
-  for param_str in opt_param.split(","):
-    param_str = param_str.split("=")
-    assert len(param_str) == 2, "Bad parameter line: %s" % (opt_param)
-    if param_str[0] not in param_mapping:
-      raise ValueError("Unrecognized parameter:", param_str)
-    else:
-      param[param_str[0]] = param_mapping[param_str[0]](param_str[1])
-  return param
 
 def load_bpe_codec(src_bpe_codec, trg_bpe_codec):
   if len(src_bpe_codec) > 0 and len(trg_bpe_codec) > 0:

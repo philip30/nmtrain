@@ -30,6 +30,8 @@ parser.add_argument("--max_sent_length", type=int, default=300, help="Maximum le
 # Data loading configuration
 parser.add_argument("--batch_strategy", type=str, choices=["word", "sent"], default="sent")
 parser.add_argument("--sort_method", type=str, choices=["lentrg"], default="lentrg")
+# Unknown training
+parser.add_argument("--unknown_training", type=str, default="normal")
 # Configuration
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")

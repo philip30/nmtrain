@@ -11,22 +11,23 @@ from nmtrain.data.parallel_data import ParallelData
 """ This class is a manager of data. It holds all the corpora that are loaded from the file with various setting. """
 class DataManager(object):
   def load_train(self, src, trg, src_voc, trg_voc,
-                 src_dev         = None,
-                 trg_dev         = None,
-                 src_test        = None,
-                 trg_test        = None,
-                 batch_size      = 1,
-                 unk_cut         = 0,
-                 src_max_vocab   = -1,
-                 trg_max_vocab   = -1,
-                 max_sent_length = -1,
-                 sort_method     = "lentrg",
-                 batch_strategy  = "sent",
-                 bpe_codec       = None):
+                 src_dev          = None,
+                 trg_dev          = None,
+                 src_test         = None,
+                 trg_test         = None,
+                 batch_size       = 1,
+                 unk_cut          = 0,
+                 src_max_vocab    = -1,
+                 trg_max_vocab    = -1,
+                 max_sent_length  = -1,
+                 sort_method      = "lentrg",
+                 batch_strategy   = "sent",
+                 unknown_trainer  = None,
+                 bpe_codec        = None):
     sorter = nmtrain.data.sorter.from_string(sort_method)
     analyzer = nmtrain.data.analyzer.ParallelCountAnalyzer(src_max_vocab, trg_max_vocab, unk_cut)
     filterer = nmtrain.data.preprocessor.FilterSentence(max_sent_length)
-    train_converter = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc, analyzer)
+    train_converter = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc, analyzer, unknown_trainer)
     test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc)
 
     # Loading Training Data

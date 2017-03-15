@@ -14,7 +14,7 @@ class Tester(object):
   def test(self, model, word_penalty, gen_limit, beam_size):
     self.watcher.begin_evaluation()
     for batch in self.data.test_data:
-      src_sent, trg_sent = batch.final_data
+      src_sent, trg_sent = batch.normal_data
       self.watcher.start_prediction()
       if self.eval_ppl and trg_sent is not None:
         loss = self.classifier.eval(model, src_sent, trg_sent)

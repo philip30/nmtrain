@@ -20,6 +20,8 @@ class MaximumLikelihoodTrainer:
     self.bptt_len       = args.bptt_len
     self.early_stop_num = args.early_stop
     self.save_models    = args.save_models
+    # Unknown Trainers
+    self.unknown_trainer = nmtrain.data.unknown_trainer.from_string(args.unknown_training)
     # Location of output model
     self.model_file = args.model_out
     # SGD lr decay factor
@@ -46,6 +48,7 @@ class MaximumLikelihoodTrainer:
                                  max_sent_length  = args.max_sent_length,
                                  sort_method      = args.sort_method,
                                  batch_strategy   = args.batch_strategy,
+                                 unknown_trainer  = self.unknown_trainer,
                                  bpe_codec        = self.nmtrain_model.bpe_codec)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
@@ -93,24 +96,26 @@ class MaximumLikelihoodTrainer:
     for ep in range(state.finished_epoch, self.maximum_epoch):
       ep_arrangement = data.shuffle()
       watcher.begin_epoch()
-      for batch in data.train_data:
-        src_batch, trg_batch = batch.final_data
-        # Prepare for training
-        watcher.batch_begin()
-        batch_loss = classifier.train(model, src_batch, trg_batch,
-                                      bptt=bptt,
-                                      bptt_len=self.bptt_len)
-        watcher.batch_update(loss=batch_loss.data,
-                             batch_size=len(trg_batch[0]),
-                             col_size=len(trg_batch)-1,
-                             id=batch.id)
-        bptt(batch_loss)
+      for batch_retriever in self.unknown_trainer:
+        for batch in data.train_data:
+          src_batch, trg_batch = batch_retriever(batch)
+          # Prepare for training
+          watcher.batch_begin()
+          batch_loss = classifier.train(model, src_batch, trg_batch,
+                                        bptt=bptt,
+                                        bptt_len=self.bptt_len)
+          watcher.batch_update(loss=batch_loss.data,
+                               batch_size=len(trg_batch[0]),
+                               col_size=len(trg_batch)-1,
+                               id=batch.id)
+          bptt(batch_loss)
 
-        # Saving snapshots
-        if snapshot_threshold > 0:
-          snapshot_counter += len(trg_batch.data[0])
-          if snapshot_counter > snapshot_threshold:
-            save("-snapshot")
+          # Saving snapshots
+          if snapshot_threshold > 0:
+            snapshot_counter += len(trg_batch.data[0])
+            if snapshot_counter > snapshot_threshold:
+              snapeshot_counter = 0
+              save("-snapshot")
 
       watcher.end_epoch(ep_arrangement)
 
@@ -121,7 +126,7 @@ class MaximumLikelihoodTrainer:
         nmtrain.environment.set_test()
         watcher.begin_evaluation()
         for batch in data.dev_data:
-          src_sent, trg_sent = batch.final_data
+          src_sent, trg_sent = batch.normal_data
           # Prepare for evaluation
           watcher.start_prediction()
           loss = classifier.eval(model, src_sent, trg_sent)

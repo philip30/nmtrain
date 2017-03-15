@@ -7,6 +7,7 @@ import nmtrain.optimization
 import nmtrain.chner
 import nmtrain.bpe
 import nmtrain.post_processor
+import nmtrain.util
 
 from nmtrain.lexicon import Lexicon
 from nmtrain.watcher import TrainingWatcher, TestWatcher
