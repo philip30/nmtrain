@@ -21,14 +21,17 @@ class Vocabulary(object):
     if add_eos:
       self.add_word(EOS)
 
-  def add_word(self, word):
-    word_id = self.word_to_id.get(word, len(self.word_to_id))
-    self.word_to_id[word]    = word_id
-    self.id_to_word[word_id] = word
-    return word_id
+  def add_word(self, word, include_rare=False):
+    if not include_rare and self.check_rare(word):
+      return self.unk_id()
+    else:
+      word_id = self.word_to_id.get(word, len(self.word_to_id))
+      self.word_to_id[word]    = word_id
+      self.id_to_word[word_id] = word
+      return word_id
 
-  def add_sentence(self, sentence):
-    return list(self.add_word(word) for word in sentence)
+  def add_sentence(self, sentence, include_rare=False):
+    return list(self.add_word(word, include_rare) for word in sentence)
 
   def set_word(self, word, word_id):
     self.word_to_id[word]    = word_id
@@ -53,8 +56,6 @@ class Vocabulary(object):
     if word not in self:
       return self.unk_id()
     else:
-      if self.check_rare is not None and self.check_rare(word):
-        return self.unk_id()
       return self[word]
 
   def unk_id(self): return self[UNK]
