@@ -8,7 +8,7 @@ def init_env(gpu=-1, seed=2):
   nmtrain.environment.init_gpu(-1)
   nmtrain.environment.init_random(3)
 
-def basic_train_args(model_architecture="encdec"):
+def basic_train_args(model_architecture="encdec", src="train.ja", trg="train.en"):
   class Args(object):
     def getattr(self, key):
       if hasattr(self, key):
@@ -35,8 +35,8 @@ def basic_train_args(model_architecture="encdec"):
   args.max_vocab = 10000000000
   # Dummy test file
   this_script_dir = os.path.dirname(os.path.realpath(__file__))
-  args.src = os.path.join(this_script_dir, "data", "train.ja")
-  args.trg = os.path.join(this_script_dir, "data", "train.en")
+  args.src = os.path.join(this_script_dir, "data", src)
+  args.trg = os.path.join(this_script_dir, "data", trg)
   args.model_out = temp_model_file()
   return args
 
