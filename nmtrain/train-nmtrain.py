@@ -22,16 +22,17 @@ parser.add_argument("--epoch", type=int, default=10, help="Number of max epoch t
 parser.add_argument("--depth", type=int, default=1, help="Depth of the network.")
 parser.add_argument("--unk_cut", type=int, default=0, help="Threshold for words in corpora to be treated as unknown.")
 parser.add_argument("--dropout", type=float, default=0.2, help="Dropout ratio for LSTM.")
+parser.add_argument("--embedding_dropout", type=float, default=0.0, help="Dropout ratio for embedding")
 parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9,beta2=0.999,eps=1e-8", help="Optimizer used for BPTT")
-parser.add_argument("--src_max_vocab", type=int, default=50000, help="Maximum src vocabulary size in the model")
-parser.add_argument("--trg_max_vocab", type=int, default=50000, help="Maximum trg vocabulary size in the model")
+parser.add_argument("--src_max_vocab", type=int, default=-1, help="Maximum src vocabulary size in the model")
+parser.add_argument("--trg_max_vocab", type=int, default=-1, help="Maximum trg vocabulary size in the model")
 parser.add_argument("--early_stop", type=int, default=100, help="How many iterations should the model patiently keeps training before it stop due to low dev ppl")
-parser.add_argument("--max_sent_length", type=int, default=300, help="Maximum length of training sentences in both sides")
+parser.add_argument("--max_sent_length", type=int, default=-1, help="Maximum length of training sentences in both sides")
 # Data loading configuration
 parser.add_argument("--batch_strategy", type=str, choices=["word", "sent"], default="sent")
 parser.add_argument("--sort_method", type=str, choices=["lentrg"], default="lentrg")
 # Unknown training
-parser.add_argument("--unknown_training", type=str, default="normal")
+parser.add_argument("--unknown_training", type=str, default="normal", choices=["normal", "redundancy", "word_dropout", "sentence_dropout"])
 # Configuration
 parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")
@@ -68,7 +69,7 @@ parser.add_argument("--lexicon_method", type=str, choices=["bias"], default="bia
 # Incremental Testing Setting
 parser.add_argument("--test_beam", default=1, type=int, help="Beam used for beam search")
 parser.add_argument("--test_word_penalty", default=0, type=float, help="Word penalty in beam search")
-parser.add_argument("--test_gen_limit", default=300, type=int, help="Generation limit of prediction during testing")
+parser.add_argument("--test_gen_limit", default=50, type=int, help="Generation limit of prediction during testing")
 args = parser.parse_args()
 
 def main(args):

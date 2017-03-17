@@ -62,6 +62,8 @@ def from_string(string):
   elif method == "sentence_dropout":
     param = util.parse_parameter(param_str, {"ratio": float})
     return UnknownSentenceDropoutTrainer(**param)
-  else:
+  elif method == "normal":
     return UnknownNormalTrainer()
+  else:
+    raise ValueError("Unknown unknown_training method:", method)
 
