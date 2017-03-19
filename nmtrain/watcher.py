@@ -137,7 +137,7 @@ class TestWatcher(object):
       self.state.bleu_scores.append(calculate_bleu(self.predictions, ref, trg_vocab))
       self.state.perplexities.append(math.exp(self.test_loss / self.test_loss_ctr))
     # Creating evaluation string
-    eval_string = "Time=%.2f mins" % (self.state.time() / 60)
+    eval_string = "Time=%.2f mins" % (self.state.last_time() / 60)
     if ref is not None:
       eval_string += " " + ("BLEU=%s, test_ppl=%f" % (str(self.state.bleu()), self.state.ppl()))
 
