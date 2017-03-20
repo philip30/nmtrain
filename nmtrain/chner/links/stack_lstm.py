@@ -16,7 +16,7 @@ class StackLSTM(chainer.ChainList):
       else:
         size = out_size
       lstm.append(chainer.links.StatelessLSTM(size, out_size))
-    
+
     # None array for quick reset
     self.none_arr = tuple([None for _ in range(self.depth)])
 
@@ -37,6 +37,9 @@ class StackLSTM(chainer.ChainList):
       lstm_in = x if i == 0 else h[i-1]
       c_new, h_new = self[i](self.c[i], self.h[i], lstm_in)
       h_new = chainer.functions.dropout(h_new,
+                                        ratio=self.drop_ratio,
+                                        train=environment.is_train())
+      c_new = chainer.functions.dropout(c_new,
                                         ratio=self.drop_ratio,
                                         train=environment.is_train())
       c.append(c_new)

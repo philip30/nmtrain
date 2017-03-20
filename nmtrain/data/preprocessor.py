@@ -2,14 +2,14 @@ class NMTDataPreprocessor(object):
   def __call__(self, data, codec):
     data.annotate("tokenized", self.tokenize(data))
     if codec is not None:
-      data.annotate("encoded", self.bpe_encode(data))
+      data.annotate("encoded", self.bpe_encode(data, codec))
     return data.content()
 
   def tokenize(self, data):
     return data.original.strip().lower().split()
 
   def bpe_encode(self, data, codec):
-    return self.codec.segment(data.tokenized)
+    return codec.segment(data.tokenized)
 
 class FilterSentence(object):
   def __init__(self, max_sent_length=-1):
