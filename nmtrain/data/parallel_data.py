@@ -74,6 +74,8 @@ class ParallelData(object):
       trg_data = load_data(trg, trg_codec)
       # They need to be equal, otherwise they are not parallel data
       assert(len(src_data) == len(trg_data))
+    else:
+      trg_data = None
 
     ### Filter + Sort data
     if mode == nmtrain.enumeration.DataMode.TRAIN:
