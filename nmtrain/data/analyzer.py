@@ -13,11 +13,9 @@ class ParallelCountAnalyzer(object):
     self.src_analyzer(src for src, trg in data)
     self.trg_analyzer(trg for src, trg in data)
 
-  @functools.lru_cache(maxsize=4096)
   def is_src_rare(self, src_word):
     return self.src_analyzer.is_rare_word(src_word, self.src_max_vocab, self.unk_freq_threshold)
 
-  @functools.lru_cache(maxsize=4096)
   def is_trg_rare(self, trg_word):
     return self.trg_analyzer.is_rare_word(trg_word, self.trg_max_vocab, self.unk_freq_threshold)
 

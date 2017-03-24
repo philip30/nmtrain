@@ -90,11 +90,11 @@ class NmtrainModel:
     print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
     print("Trained Sentences:", self.training_state.trained_sentence, file=sys.stderr)
     if self.specification.model_architecture == "attn":
-        print("Attn input Feeding : ", self.specification.input_feeding, file=sys.stderr)
-        print("Attn strategy      : ", self.specification.attention_type, file=sys.stderr)
+      print("Attn input Feeding : ", self.specification.input_feeding, file=sys.stderr)
+      print("Attn strategy      : ", self.specification.attention_type, file=sys.stderr)
     if self.specification.lexicon:
-        print("Lexicon         : ", self.specification.lexicon)
-        print("Lexicon Alpha   : ", self.specification.lexicon_alpha)
+      print("Lexicon         : ", self.specification.lexicon)
+      print("Lexicon Alpha   : ", self.specification.lexicon_alpha)
 
   @property
   def xp(self):

@@ -6,12 +6,12 @@ import nmtrain.chner
 
 class RNN_NMT(object):
   """ Recurrent neural network neural machine translation"""
-  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0):
+  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0, output_buffer=None):
     batch_loss  = 0
     bptt_ctr    = 0
     model.encode(src_batch)
 
-    for trg_word in trg_batch:
+    for i, trg_word in enumerate(trg_batch):
       y_t = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
       batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
@@ -23,6 +23,11 @@ class RNN_NMT(object):
         if bptt_ctr == bptt_len:
           bptt(batch_loss)
           bptt_ctr = 0
+
+      if output_buffer is not None:
+        word = chainer.functions.argmax(output.y, axis=1)
+        word.to_cpu()
+        output_buffer[i] = word.data
 
     return batch_loss / len(trg_batch)
 
