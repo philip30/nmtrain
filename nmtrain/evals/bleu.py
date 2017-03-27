@@ -41,10 +41,18 @@ class BLEU(object):
             true_positive += min(word_count, ref_stat[i][word])
         denom += sum(hyp_stat[i].values())
       self.stats.append((true_positive, denom))
-      self.precisions.append((true_positive + smooth_val)/(denom + smooth_val))
+      if denom + smooth_val == 0:
+        precision = 0
+      else:
+        precision = (true_positive + smooth_val) / (denom + smooth_val)
+
+      self.precisions.append(precision)
     # Calculate brevity penalty
     if hyp_length < ref_length:
-      self.brevity_penalty= math.exp(1 - (ref_length / hyp_length))
+      if hyp_length == 0:
+        self.brevity_penalty = 0
+      else:
+        self.brevity_penalty= math.exp(1 - (ref_length / hyp_length))
 
     # Calculate score
     if any(x < 1e-6 for x in self.precisions):

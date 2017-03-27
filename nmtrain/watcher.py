@@ -7,11 +7,10 @@ import nmtrain.evals as eval
 import nmtrain.log as log
 
 class TrainingWatcher(object):
-  def __init__(self, state, src_vocab, trg_vocab, total_trg_words, early_stop_num):
+  def __init__(self, state, src_vocab, trg_vocab, early_stop_num):
     self.state = state
     self.src_vocab = src_vocab
     self.trg_vocab = trg_vocab
-    self.total_trg_words = total_trg_words
     self.early_stop = early_stop_num
 
   # TRAIN SET
@@ -28,23 +27,29 @@ class TrainingWatcher(object):
     # Verbose
     log.info("Start Epoch %d" % (self.state.finished_epoch + 1))
 
-  def batch_update(self, loss=0, batch_size=1, col_size=1):
+  def batch_begin(self):
+    self.batch_time = time.time()
+
+  def batch_update(self, id, loss=0, batch_size=1, col_size=1):
     ppl = math.exp(float(loss))
     self.epoch_loss += loss
     self.epoch_update_counter += 1
     self.state.trained_sentence += batch_size
-    log.info("[%d] Sentence trained: %d, Batch_PPL=%f, column size=%d" % (self.state.finished_epoch + 1, self.state.trained_sentence, ppl, col_size))
+    log.info("[%d] Sentence trained: %d, Batch(PPL=%.3f, size=(%d,%d), wps=%d, id=%d)" % (self.state.finished_epoch + 1,
+                                                                                        self.state.trained_sentence,
+                                                                                        ppl,
+                                                                                        batch_size, col_size,
+                                                                                        abs((batch_size * col_size) / (time.time() - self.batch_time)),
+                                                                                        id))
 
   def end_epoch(self, new_data_arrangement):
     self.state.finished_epoch += 1
     self.state.batch_indexes = new_data_arrangement
     self.state.time_spent.append(time.time() - self.time)
     self.state.perplexities.append(math.exp(self.epoch_loss / self.epoch_update_counter))
-    self.state.wps_time.append(self.total_trg_words / self.state.last_time())
-    log.info("Epoch %d finished! ppl=%.4f, time=%.4f mins, wps=%.4f" % (self.state.finished_epoch,
-                                                                        self.state.ppl(),
-                                                                        self.state.last_time() / 60,
-                                                                        self.state.wps()))
+    log.info("Epoch %d finished! ppl=%.3f, time=%.4f mins" % (self.state.finished_epoch,
+                                                              self.state.ppl(),
+                                                              self.state.last_time() / 60))
   # DEV SET
   # Sentence-wise prediction
   def start_prediction(self):
@@ -65,7 +70,7 @@ class TrainingWatcher(object):
     self.predictions = []
     log.info("Begin Evaluation...")
 
-  def end_evaluation(self, src_dev, trg_dev, trg_vocab):
+  def end_evaluation(self, dev_data, trg_vocab):
     if len(self.predictions) != 0:
       self.state.bleu_scores.append(calculate_bleu(self.predictions,
                                                    trg_dev,
@@ -124,16 +129,17 @@ class TestWatcher(object):
     self.test_loss_ctr  = 0
     self.attentions     = []
 
-  def end_evaluation(self, src, ref, trg_vocab):
+  def end_evaluation(self, test_data, trg_vocab):
     log.info("Decoding Finished, starting evaluation if reference is provided.")
     self.state.time_spent.append(time.time() - self.time)
+    ref = test_data.trg_path
     if ref is not None:
       self.state.bleu_scores.append(calculate_bleu(self.predictions, ref, trg_vocab))
       self.state.perplexities.append(math.exp(self.test_loss / self.test_loss_ctr))
     # Creating evaluation string
-    eval_string = "Time=%.2f mins" % (self.state.time() / 60)
+    eval_string = "Time=%.2f mins" % (self.state.last_time() / 60)
     if ref is not None:
-      eval_string += " " + ("BLEU=%s, test_ppl=%f" % (str(self.state.bleu()), self.state.ppl()))
+      eval_string += " " + ("BLEU=%s, test_ppl=%.3f" % (str(self.state.bleu()), self.state.ppl()))
 
     log.info("Evaluation Finished!", eval_string)
 

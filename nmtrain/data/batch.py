@@ -1,62 +1,71 @@
 import numpy
 
 import nmtrain
-import nmtrain.data.transformer as transformer
 
 class Batch(object):
   """ Class to represent batch """
   def __init__(self, batch_id, data):
     self.id   = batch_id
     self.data = data
-    # Offset is used to identify the location of particular item in the whole dataset
-    # location = offset + index
-    self.sentence_id = None
 
   def __iter__(self):
     return iter(self.data)
+
+  def __getitem__(self, index):
+    return self.data[index]
+
+  def __len__(self):
+    return len(self.data)
 
 class BatchManager(object):
   """ Class to manage batch reveal the indexes to public and retrieve
       the index by looking it in the map.
   """
 
-  def __init__(self):
+  def __init__(self, strategy="sent"):
     # Hold the batch indexes
     self.batch_indexes    = []
     # Mapping from id -> batch
     self.batch_map  = {}
+    self.strategy   = strategy
 
   # stream  : data stream
   # n_items : number of items in batch
-  def load(self, stream, n_items=1, post_process=None):
+  def load(self, stream, n_items=1, postprocessor=None):
     assert(n_items >= 1)
 
     partial_batch = lambda: None
-    partial_batch.id   = 0
-    partial_batch.data = []
-    partial_batch.sentence_id = []
+    partial_batch.id      = 0
+    partial_batch.data    = []
+    partial_batch.length  = 0
+    partial_batch.max_len = 0
 
     def new_batch():
-      if post_process is not None:
-        post_process(partial_batch)
-
       batch = Batch(batch_id = partial_batch.id,
-          data = partial_batch.data)
-      batch.sentence_id = partial_batch.sentence_id
+                    data     = partial_batch.data)
+      if postprocessor is not None:
+        postprocessor(batch)
+
       # Added the new batch
       self.batch_indexes.append(partial_batch.id)
       self.batch_map[partial_batch.id] = batch
       # Reset the state of patial_batch
-      partial_batch.sentence_id = []
       partial_batch.data = []
       partial_batch.id  += 1
+      partial_batch.length = 0
+
+    if self.strategy == "word":
+      length_assess = lambda sent: len(sent)
+    else:
+      length_assess = lambda sent: 1
 
     # Creating batch
     for i, data in enumerate(stream):
-      partial_batch.data.append(data)
-      partial_batch.sentence_id.append(i)
-      if len(partial_batch.data) == n_items:
+      length = length_assess(data)
+      if length + partial_batch.length > n_items and partial_batch.length != 0:
         new_batch()
+      partial_batch.data.append(data)
+      partial_batch.length += length
 
     if len(partial_batch.data) != 0:
       new_batch()
@@ -78,3 +87,4 @@ class BatchManager(object):
   def __iter__(self):
     for index in self.batch_indexes:
       yield self.batch_map[index]
+

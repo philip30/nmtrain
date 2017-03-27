@@ -6,12 +6,12 @@ import nmtrain.chner
 
 class RNN_NMT(object):
   """ Recurrent neural network neural machine translation"""
-  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0):
+  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0, output_buffer=None):
     batch_loss  = 0
     bptt_ctr    = 0
-    model.encode(src_batch.data)
+    model.encode(src_batch)
 
-    for trg_word in trg_batch.data:
+    for i, trg_word in enumerate(trg_batch):
       y_t = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
       batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
@@ -24,18 +24,23 @@ class RNN_NMT(object):
           bptt(batch_loss)
           bptt_ctr = 0
 
-    return batch_loss / len(trg_batch.data)
+      if output_buffer is not None:
+        word = chainer.functions.argmax(output.y, axis=1)
+        word.to_cpu()
+        output_buffer[i] = word.data
+
+    return batch_loss / len(trg_batch)
 
   def eval(self, model, src_sent, trg_sent):
     loss = 0
     # Start Prediction
-    model.encode(src_sent.data)
-    for trg_word in trg_sent.data:
+    model.encode(src_sent)
+    for trg_word in trg_sent:
       y_t    = nmtrain.environment.VariableArray(model, trg_word)
       output = model.decode()
       loss  += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
-    return float(loss.data) / len(trg_sent.data)
+    return float(loss.data) / len(trg_sent)
 
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,
@@ -67,7 +72,7 @@ class RNN_NMT(object):
     worst_prob = 0
     cur_id = 1
     # Start Prediction
-    model.encode(src_sent.data)
+    model.encode(src_sent)
     for i in range(gen_limit):
       # Expand all the beams
       new_beam = []

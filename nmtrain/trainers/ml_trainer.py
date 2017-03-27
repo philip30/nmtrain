@@ -1,11 +1,13 @@
 import numpy
 import gc
+import math
 
 import nmtrain
 import nmtrain.data
 import nmtrain.model
 import nmtrain.serializer
 import nmtrain.watcher
+import nmtrain.reporter
 import nmtrain.log as log
 
 class MaximumLikelihoodTrainer:
@@ -20,6 +22,8 @@ class MaximumLikelihoodTrainer:
     self.bptt_len       = args.bptt_len
     self.early_stop_num = args.early_stop
     self.save_models    = args.save_models
+    # Unknown Trainers
+    self.unknown_trainer = nmtrain.data.unknown_trainer.from_string(args.unknown_training)
     # Location of output model
     self.model_file = args.model_out
     # SGD lr decay factor
@@ -31,15 +35,23 @@ class MaximumLikelihoodTrainer:
     self.test_gen_limit    = args.test_gen_limit
     # Load in the real data
     log.info("Loading Data")
-    self.data_manager.load_train(src=args.src, trg=args.trg,
-                                 src_voc=self.nmtrain_model.src_vocab,
-                                 trg_voc=self.nmtrain_model.trg_vocab,
-                                 src_dev=args.src_dev, trg_dev=args.trg_dev,
-                                 src_test=args.src_test, trg_test=args.trg_test,
-                                 batch_size=args.batch, unk_cut=args.unk_cut,
-                                 src_max_vocab=args.src_max_vocab,
-                                 trg_max_vocab=args.trg_max_vocab,
-                                 max_sent_length=args.max_sent_length)
+    self.data_manager.load_train(src              = args.src,
+                                 trg              = args.trg,
+                                 src_voc          = self.nmtrain_model.src_vocab,
+                                 trg_voc          = self.nmtrain_model.trg_vocab,
+                                 src_dev          = args.src_dev,
+                                 trg_dev          = args.trg_dev,
+                                 src_test         = args.src_test,
+                                 trg_test         = args.trg_test,
+                                 batch_size       = args.batch,
+                                 unk_cut          = args.unk_cut,
+                                 src_max_vocab    = args.src_max_vocab,
+                                 trg_max_vocab    = args.trg_max_vocab,
+                                 max_sent_length  = args.max_sent_length,
+                                 sort_method      = args.sort_method,
+                                 batch_strategy   = args.batch_strategy,
+                                 unknown_trainer  = self.unknown_trainer,
+                                 bpe_codec        = self.nmtrain_model.bpe_codec)
     log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model()
@@ -51,8 +63,11 @@ class MaximumLikelihoodTrainer:
     watcher = nmtrain.watcher.TrainingWatcher(state,
                                               self.nmtrain_model.src_vocab,
                                               self.nmtrain_model.trg_vocab,
-                                              self.data_manager.total_trg_words(),
                                               self.early_stop_num)
+    # Reporter
+    reporter = nmtrain.reporter.TrainingReporter(self.nmtrain_model.specification,
+                                                 self.nmtrain_model.src_vocab,
+                                                 self.nmtrain_model.trg_vocab)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
     # Our data manager
@@ -66,7 +81,7 @@ class MaximumLikelihoodTrainer:
     snapshot_threshold = self.nmtrain_model.specification.save_snapshot
 
     # If test data is provided, prepare the appropriate watcher
-    if data.has_test_data():
+    if data.has_test_data:
       self.test_state = nmtrain.model.TestState()
       test_watcher = nmtrain.watcher.TestWatcher(self.test_state,
                                                  self.nmtrain_model.src_vocab,
@@ -74,6 +89,10 @@ class MaximumLikelihoodTrainer:
 
     def bptt(batch_loss):
       """ Backpropagation through time """
+      if math.isnan(float(batch_loss.data)):
+        nmtrain.log.warning("Loss is NaN, skipping update.")
+        return
+
       model.cleargrads()
       batch_loss.backward()
       batch_loss.unchain_backward()
@@ -87,43 +106,59 @@ class MaximumLikelihoodTrainer:
     for ep in range(state.finished_epoch, self.maximum_epoch):
       ep_arrangement = data.shuffle()
       watcher.begin_epoch()
-      for src_batch, trg_batch in data.train_data:
-        assert(src_batch.id == trg_batch.id)
-        # Prepare for training
-        batch_loss = classifier.train(model, src_batch, trg_batch,
-                                      bptt=bptt,
-                                      bptt_len=self.bptt_len)
-        watcher.batch_update(loss=batch_loss.data,
-                             batch_size=len(trg_batch.data[0]),
-                             col_size=len(trg_batch.data)-1)
-        bptt(batch_loss)
+      for batch_retriever in self.unknown_trainer:
+        for batch in data.train_data:
+          src_batch, trg_batch = batch_retriever(batch)
+          # Reporting placeholder
+          if not reporter.is_reporting:
+            output_buffer = None
+          else:
+            output_buffer = numpy.zeros_like(trg_batch, dtype=numpy.int32)
 
-        # Saving snapshots
-        if snapshot_threshold > 0:
-          snapshot_counter += len(trg_batch.data[0])
-          if snapshot_counter > snapshot_threshold:
-            save("-snapshot")
+          # Prepare for training
+          watcher.batch_begin()
+          batch_loss = classifier.train(model, src_batch, trg_batch,
+                                        bptt=bptt,
+                                        bptt_len=self.bptt_len,
+                                        output_buffer=output_buffer)
+          # Generate summary of batch training and keep track of it
+          watcher.batch_update(loss=batch_loss.data,
+                               batch_size=len(trg_batch[0]),
+                               col_size=len(trg_batch)-1,
+                               id=batch.id)
+          # Report per sentence training if wished
+          reporter.train_report(src_batch, trg_batch, output_buffer)
+          # BPTT
+          bptt(batch_loss)
+
+          # Saving snapshots
+          if snapshot_threshold > 0:
+            snapshot_counter += len(trg_batch.data[0])
+            if snapshot_counter > snapshot_threshold:
+              snapeshot_counter = 0
+              save("-snapshot")
 
       watcher.end_epoch(ep_arrangement)
 
       gc.collect()
 
       # Evaluation on Development set
-      if data.has_dev_data():
+      if data.has_dev_data:
         nmtrain.environment.set_test()
         watcher.begin_evaluation()
-        for src_sent, trg_sent in data.dev_data:
+        for batch in data.dev_data:
+          src_sent, trg_sent = batch.normal_data
           # Prepare for evaluation
           watcher.start_prediction()
           loss = classifier.eval(model, src_sent, trg_sent)
           # TODO(philip30): If we want to do prediction during dev-set 
           # call the prediction method here
           watcher.end_prediction(loss = loss)
-        watcher.end_evaluation(data.src_dev, data.trg_dev, self.nmtrain_model.trg_vocab)
+        watcher.end_evaluation(data.dev_data, self.nmtrain_model.trg_vocab)
         nmtrain.environment.set_train()
 
       # Incremental testing if wished
-      if data.has_test_data():
+      if data.has_test_data:
         nmtrain.environment.set_test()
         tester = nmtrain.Tester(data=data, watcher=test_watcher,
                                 trg_vocab=self.nmtrain_model.trg_vocab,

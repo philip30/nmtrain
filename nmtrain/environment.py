@@ -9,7 +9,6 @@ verbosity = 0
 run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
 mem_optimization_level = 0
-bpe_codec = None, None
 
 def init(args, run_mode):
   init_run_mode(run_mode)
@@ -50,10 +49,6 @@ def init_run_mode(run_mode_val):
 def init_mem_optimization_level(opt_level):
   global mem_optimization_level
   mem_optimization_level = opt_level
-
-def init_bpe_codec(bpe_codec_obj):
-  global bpe_codec
-  bpe_codec = bpe_codec_obj
 
 def is_train():
   return run_mode == nmtrain.enumeration.RunMode.TRAIN

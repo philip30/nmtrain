@@ -5,7 +5,7 @@ import unittest
 class TestBatchManager(unittest.TestCase):
   def setUp(self):
     numpy.random.seed(17)
-    self.manager = nmtrain.BatchManager()
+    self.manager = nmtrain.data.BatchManager()
 
   def test_load_batch_data(self):
     """ Test load batch data.
@@ -67,24 +67,33 @@ class TestBatchManager(unittest.TestCase):
 
   def test_transform_integer(self):
     class TransformInteger:
-      def transform(self, s):
-        if s == "1st":
-          return 1
-        elif s == "2nd":
-          return 2
-        elif s == "3rd":
-          return 3
-        elif s == "4th":
-          return 4
-        else:
-          return 5
-      def transform_corpus(self, corpus):
-        pass
+      def __call__(self, partial_batch):
+        def transform(data):
+          if data == "1st":
+            return 1
+          elif data == "2nd":
+            return 2
+          elif data == "3rd":
+            return 3
+          elif data == "4th":
+            return 4
+          else:
+            return 5
+        for i, data in enumerate(partial_batch.data):
+          partial_batch.data[i] = transform(data)
     data = ["1st", "2nd", "3rd", "4th", "5th"]
     expected = [1, 2, 3, 4, 5]
-    self.manager.load(data, n_items=1, data_transformer=TransformInteger())
+    self.manager.load(data, n_items=1, postprocessor=TransformInteger())
     for i, batch in enumerate(self.manager):
       self.assertEqual(batch.data[0], expected[i])
+
+  def test_word_data(self):
+    data = ["1", "12", "123", "12345","123456", "12345678"]
+    expected = [["1", "12", "123"], ["12345"], ["123456"], ["12345678"]]
+    manager = nmtrain.data.BatchManager(strategy="word")
+    manager.load(data, n_items=6)
+    for batch, expected in zip(manager, expected):
+      self.assertEqual(batch.data, expected)
 
 if __name__ == "__main__":
   unittest.main()

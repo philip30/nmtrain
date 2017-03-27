@@ -53,7 +53,8 @@ def main(args):
   data_manager.load_test(src     = args.src,
                          src_voc = model.src_vocab,
                          trg_voc = model.trg_vocab,
-                         ref     = args.ref)
+                         ref     = args.ref,
+                         bpe_codec = model.bpe_codec)
   log.info("Loading Finished.")
 
   # Begin Testing
