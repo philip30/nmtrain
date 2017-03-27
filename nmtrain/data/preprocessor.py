@@ -22,8 +22,8 @@ class FilterSentence(object):
     ret = []
     for data_point in data:
       for single_data in data_point:
-        if len(single_data) > self.max_sent_length:
+        if single_data is not None and len(single_data) > self.max_sent_length:
           break
       else:
-        ret.append(data_point)
+        ret.append(single_data)
     return ret

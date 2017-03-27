@@ -6,6 +6,7 @@ import nmtrain.log as log
 import nmtrain.enumeration
 import nmtrain.classifiers
 import nmtrain.trainers
+import nmtrain.arguments as builder
 
 """ Arguments """
 parser = argparse.ArgumentParser("NMT model trainer")
@@ -15,8 +16,13 @@ parser.add_argument("--orig_src", type=str, required=True)
 parser.add_argument("--orig_trg", type=str, required=True)
 parser.add_argument("--dest_src", type=str, default=None)
 parser.add_argument("--dest_trg", type=str, default=None)
-parser.add_argument("--gpu", type=int, default=-1)
-parser.add_argument("--batch", type=int, default=1)
+builder.add_max_sent_length(parser)
+builder.add_seed(parser)
+builder.add_sort_method(parser)
+builder.add_gpu(parser)
+builder.add_batch(parser)
+builder.add_generation_limit(parser)
+builder.add_memory_optimization(parser)
 args = parser.parse_args()
 
 def main(args):

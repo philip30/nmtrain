@@ -12,5 +12,6 @@ import nmtrain.util
 from nmtrain.lexicon import Lexicon
 from nmtrain.watcher import TrainingWatcher, TestWatcher
 from nmtrain.model import NmtrainModel
+from nmtrain.model_seqgan import NmtrainSeqGANModel
 from nmtrain.vocabulary import Vocabulary
 from nmtrain.tester import Tester

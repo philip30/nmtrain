@@ -80,6 +80,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     if self.input_feeding:
       decoder_update = self.feeding_transform(self.ht) + decoder_update
     self.h = self.decoder(decoder_update)
+    return self.h
 
   def set_state(self, state):
     self.h, self.ht, state = state

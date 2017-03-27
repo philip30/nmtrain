@@ -23,7 +23,7 @@ class NmtrainSeqGANModel(nmtrain.NmtrainModel):
     super(NmtrainSeqGANModel, self).describe()
 
 def from_spec(specification):
-  model = nmtrain.models.discriminators.RNNTargetDiscriminator(specification.embed,
+  model = nmtrain.models.discriminators.RNNTargetDiscriminator(specification.hidden,
                                                                specification.hidden,
                                                                0.0)
   return model

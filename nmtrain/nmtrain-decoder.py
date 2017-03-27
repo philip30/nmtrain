@@ -14,13 +14,13 @@ parser = argparse.ArgumentParser("NMT decoder")
 # Required
 parser.add_argument("--src", type=str, required=True)
 # Configuration
-parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, nargs="+", required=True, help="Init the model with the pretrained model.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
-parser.add_argument("--gen_limit", type=int, default=50, help="Maximum Target Output Length.")
 parser.add_argument("--beam", type=int, default=1, help="Beam size in searching.")
 parser.add_argument("--word_penalty", type=float, default=0.0, help="Word penalty in beam search")
-parser.add_argument("--memory_optimization", type=int, default=0)
+builder.add_gpu(parser)
+builder.add_memory_optimization(parser)
+builder.add_generation_limit(parser)
 # Ensemble
 parser.add_argument("--ensemble_op", type=str, choices=["linear", "logsum"], default="linear")
 # Evaluation

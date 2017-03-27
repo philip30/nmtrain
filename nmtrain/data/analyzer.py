@@ -10,8 +10,8 @@ class ParallelCountAnalyzer(object):
     self.unk_freq_threshold = unk_freq_threshold
 
   def __call__(self, data):
-    self.src_analyzer(src for src, trg in data)
-    self.trg_analyzer(trg for src, trg in data)
+    self.src_analyzer(src for src, trg in data if src is not None)
+    self.trg_analyzer(trg for src, trg in data if trg is not None)
 
   def is_src_rare(self, src_word):
     return self.src_analyzer.is_rare_word(src_word, self.src_max_vocab, self.unk_freq_threshold)

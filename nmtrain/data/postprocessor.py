@@ -17,7 +17,8 @@ class WordIdConverter(object):
     for par_sent in finished_batch.data:
       src = par_sent.src_sent
       trg = par_sent.trg_sent
-      src_max_len = max(len(src), src_max_len)
+      if src is not None:
+        src_max_len = max(len(src), src_max_len)
       if trg is not None:
         trg_max_len = max(len(trg), trg_max_len)
 
@@ -29,9 +30,10 @@ class WordIdConverter(object):
 
     # Function to parse data to word id and stuff it
     def process_data(data, max_len, sentence, vocab):
+      is_parse = self.analyzer is None or vocab.is_frozen()
       if sentence is not None:
         stuffs = [vocab.eos_id()] * (max_len - len(sentence))
-        if self.analyzer is None:
+        if is_parse:
           wids   = vocab.parse_sentence(sentence)
         else:
           wids   = vocab.add_sentence(sentence, include_rare=include_rare)

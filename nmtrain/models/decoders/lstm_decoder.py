@@ -22,6 +22,7 @@ class LSTMDecoder(chainer.Chain):
 
   def update(self, next_word):
     self.h = self.decoder(self.output_embed(next_word))
+    return self.h
 
   def set_state(self, state):
     self.h, state = state

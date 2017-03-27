@@ -15,6 +15,7 @@ class Vocabulary(object):
     self.word_to_id = {}
     self.id_to_word = {}
     self.check_rare = None
+    sel.frozen = False
 
     if add_unk:
       self.add_word(UNK, include_rare=True)
@@ -74,6 +75,12 @@ class Vocabulary(object):
 
   def set_check_rare(self, check_rare):
     self.check_rare = check_rare
+
+  def set_frozen(self, frozen):
+    self.frozen = frozen
+
+  def is_frozen(self):
+    return self.frozen
 
   # Operators
   def __getitem__(self, word):
