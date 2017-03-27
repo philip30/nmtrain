@@ -5,7 +5,7 @@ import nmtrain
 class NmtrainSeqGANModel(nmtrain.NmtrainModel):
   def __init__(self, args):
     super(NmtrainSeqGANModel, self).__init__(args)
-    if args.init_model:
+    if args.init_seqgan_model:
       pass
     else:
       self.discriminator_model = from_spec(self.specification)
@@ -23,8 +23,8 @@ class NmtrainSeqGANModel(nmtrain.NmtrainModel):
     super(NmtrainSeqGANModel, self).describe()
 
 def from_spec(specification):
-  model = nmtrain.models.discriminators.RNNTargetDiscriminator(specification.hidden,
+  model = nmtrain.models.discriminators.RNNTargetDiscriminator(specification.embed,
                                                                specification.hidden,
-                                                               0.0)
+                                                               specification.dropout)
   return model
 

@@ -12,6 +12,7 @@ import nmtrain.arguments as builder
 parser = argparse.ArgumentParser("NMT model trainer")
 # Required
 parser.add_argument("--init_model", type=str, required=True)
+parser.add_argument("--init_seqgan_model", type=str)
 parser.add_argument("--orig_src", type=str, required=True)
 parser.add_argument("--orig_trg", type=str, required=True)
 parser.add_argument("--dest_src", type=str, default=None)

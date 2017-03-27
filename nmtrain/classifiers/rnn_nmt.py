@@ -36,15 +36,15 @@ class RNN_NMT(object):
     batch_size = src_batch.shape[1]
 
     ret = []
-    for _ in range(generation_limit):
+    for i in range(generation_limit):
       output = model.decode()
-      words = chainer.functions.argmax(output.y, axis=1)
-      model.update(words)
+      words  = chainer.functions.argmax(output.y, axis=1)
+      embed, h = model.update(words)
       words.to_cpu()
-      ret.append(words.data)
+      ret.append(embed)
       if all(word == eos_id for word in words.data):
         break
-    return numpy.array(ret, dtype=numpy.int32)
+    return ret
 
   def eval(self, model, src_sent, trg_sent):
     loss = 0

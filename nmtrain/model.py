@@ -9,10 +9,8 @@ import nmtrain.util as util
 # This spec attribute define the number of parameters of network.
 # It should not be changed. If model is loaded, then these settings will be 
 # loaded from the previous model
-OVERWRITE_SPEC = ["hidden", "embed", "depth", "model_architecture", "batch",
-                  "unk_cut", "dropout", "src_max_vocab", "trg_max_vocab", "max_sent_length",
-                  "init_model", "seed", "attention_type", "input_feeding", "lexicon_method",
-                  "lexicon_alpha"]
+OVERWRITE_SPEC = ["batch", "src", "trg", "src_test", "trg_test", "src_dev", "trg_dev", "test_beam", "test_word_penalty",\
+                  "model_out", "epoch", "init_model"]
 
 class NmtrainModel:
   """
@@ -27,8 +25,8 @@ class NmtrainModel:
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
       for spec in OVERWRITE_SPEC:
-        if hasattr(self.specification, spec):
-          setattr(args, spec, getattr(self.specification, spec))
+        if hasattr(args, spec):
+          setattr(self.specification, spec, getattr(args, spec))
       self.name = args.init_model
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)

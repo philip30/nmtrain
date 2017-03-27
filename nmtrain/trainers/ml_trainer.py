@@ -17,39 +17,41 @@ class MaximumLikelihoodTrainer:
     # previous training specification.
     self.nmtrain_model = nmtrain.NmtrainModel(args)
     self.data_manager  = nmtrain.data.DataManager()
+    # Specification
+    specification       = self.nmtrain_model.specification
     # Training Parameters
-    self.maximum_epoch  = args.epoch
-    self.bptt_len       = args.bptt_len
-    self.early_stop_num = args.early_stop
-    self.save_models    = args.save_models
+    self.maximum_epoch  = specification.epoch
+    self.bptt_len       = specification.bptt_len
+    self.early_stop_num = specification.early_stop
+    self.save_models    = specification.save_models
     # Unknown Trainers
-    self.unknown_trainer = nmtrain.data.unknown_trainer.from_string(args.unknown_training)
+    self.unknown_trainer = nmtrain.data.unknown_trainer.from_string(specification.unknown_training)
     # Location of output model
-    self.model_file = args.model_out
+    self.model_file = specification.model_out
     # SGD lr decay factor
-    self.sgd_lr_decay_factor = args.sgd_lr_decay_factor
-    self.sgd_lr_decay_after  = args.sgd_lr_decay_after
+    self.sgd_lr_decay_factor = specification.sgd_lr_decay_factor
+    self.sgd_lr_decay_after  = specification.sgd_lr_decay_after
     # Testing configuration
-    self.test_beam         = args.test_beam
-    self.test_word_penalty = args.test_word_penalty
-    self.test_gen_limit    = args.test_gen_limit
+    self.test_beam         = specification.test_beam
+    self.test_word_penalty = specification.test_word_penalty
+    self.test_gen_limit    = specification.test_gen_limit
     # Load in the real data
     log.info("Loading Data")
-    self.data_manager.load_train(src              = args.src,
-                                 trg              = args.trg,
+    self.data_manager.load_train(src              = specification.src,
+                                 trg              = specification.trg,
                                  src_voc          = self.nmtrain_model.src_vocab,
                                  trg_voc          = self.nmtrain_model.trg_vocab,
-                                 src_dev          = args.src_dev,
-                                 trg_dev          = args.trg_dev,
-                                 src_test         = args.src_test,
-                                 trg_test         = args.trg_test,
-                                 batch_size       = args.batch,
-                                 unk_cut          = args.unk_cut,
-                                 src_max_vocab    = args.src_max_vocab,
-                                 trg_max_vocab    = args.trg_max_vocab,
-                                 max_sent_length  = args.max_sent_length,
-                                 sort_method      = args.sort_method,
-                                 batch_strategy   = args.batch_strategy,
+                                 src_dev          = specification.src_dev,
+                                 trg_dev          = specification.trg_dev,
+                                 src_test         = specification.src_test,
+                                 trg_test         = specification.trg_test,
+                                 batch_size       = specification.batch,
+                                 unk_cut          = specification.unk_cut,
+                                 src_max_vocab    = specification.src_max_vocab,
+                                 trg_max_vocab    = specification.trg_max_vocab,
+                                 max_sent_length  = specification.max_sent_length,
+                                 sort_method      = specification.sort_method,
+                                 batch_strategy   = specification.batch_strategy,
                                  unknown_trainer  = self.unknown_trainer,
                                  bpe_codec        = self.nmtrain_model.bpe_codec)
     log.info("Loading Finished.")

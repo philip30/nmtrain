@@ -1,6 +1,7 @@
 import chainer
 import numpy
 import functools
+import math
 
 import nmtrain
 
@@ -50,57 +51,61 @@ class SequenceGANTrainer(object):
 
   def train(self, classifier):
     #1. Pretrain the discriminator
-    nmtrain.log.info("Pretraining discriminator")
-    data_generator = list(self.generate_both_data(classifier))
-    print(self.train_discriminator(data_generator))
+    nmtrain.log.info("Pretraining discriminator for 10 epochs")
+    self.train_discriminator(classifier, epoch=10)
 
-  def train_discriminator(self, data_generator, epoch=10):
+  def train_discriminator(self, classifier, epoch):
     discriminator = self.seqgan_model.discriminator_model
-    optimizer = self.seqgan_model.seqgan_optimizer
-    xp = self.seqgan_model.chainer_model.xp
+    optimizer     = self.seqgan_model.seqgan_optimizer
+    xp            = self.seqgan_model.chainer_model.xp
 
     def bptt(loss):
+      discriminator.cleargrads()
       loss.backward()
       loss.unchain_backward()
       optimizer.update()
 
+    # Begin of Generating Samples
+    samples = []
+    nmtrain.environment.set_test()
+    ### Generating Negative Samples 
+    for i, batch in enumerate(self.orig_dm.train_data):
+      src_batch, trg_batch = batch.normal_data
+      samples.append((classifier.generate(self.generator, src_batch, self.eos_id), 1))
+    ### Generating Positive Samples
+    for i, batch in enumerate(self.orig_dm.train_data):
+      src_batch, trg_batch = batch.normal_data
+      embedding = []
+      for trg in trg_batch:
+        embed = self.target_embedding(trg)
+        embed.to_cpu()
+        embedding.append(embed)
+      samples.append((embedding, 0))
+    # End of Generating Samples
+    nmtrain.environment.set_train()
+
+    # Shuffle Sample
+    numpy.random.shuffle(samples)
+
     # Begin Discriminator Training
-    discriminator.cleargrads()
     loss = 0
     for ep in range(epoch):
       epoch_loss = 0
-      for data_size, (src_batch, trg_batch, label) in enumerate(data_generator):
-        batch_size = trg_batch.shape[1]
+      for trg_embedding, label in samples:
+        batch_size = trg_embedding[0].shape[0]
         ground_truth = self.create_label(xp, batch_size, label)
         # Discriminate the target
-        output = discriminator(src_batch, trg_batch, self.target_embedding)
+        output = discriminator(trg_embedding)
         # Calculate Loss
         loss = chainer.functions.softmax_cross_entropy(output, ground_truth)
         bptt(loss)
 
         epoch_loss += loss
-      epoch_loss /= data_size
-      print(epoch_loss.data)
+      epoch_loss /= len(samples)
+      nmtrain.log.info("Discriminator train epoch#%d: PPL=%.3f" % (ep+1, math.exp(epoch_loss.data)))
 
     return loss
 
   def create_label(self, xp, size, label):
     return xp.array([label for _ in range(size)], dtype= numpy.int32)
-
-  def generate_samples(self, data, classifier, label, volatile):
-    for batch in data.train_data:
-      if volatile:
-        nmtrain.environment.set_test()
-      src_batch, trg_batch = batch.normal_data
-      trg_gen = classifier.generate(self.generator, src_batch, self.eos_id, generation_limit=self.gen_limit)
-      nmtrain.environment.set_train()
-      yield src_batch, trg_gen, label
-
-  def generate_both_data(self, classifier, negative_volatile=True, positive_volatile=True):
-    for item in self.generate_samples(self.orig_dm, classifier, 0, negative_volatile):
-      yield item
-
-    for batch in self.dest_dm.train_data:
-      src_batch, trg_batch = batch.normal_data
-      yield src_batch, trg_batch, 1
 
