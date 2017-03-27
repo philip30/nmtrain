@@ -46,6 +46,9 @@ class Vocabulary(object):
       ret = ret[:ret.index(EOS)]
     return " ".join(ret)
 
+  def raw_sentence(self, word_ids):
+    return " ".join([self.word(word_id) for word_id in word_ids])
+
   def parse_sentence(self, words):
     return list(self.parse_word(word) for word in words)
 

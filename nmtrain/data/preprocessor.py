@@ -6,7 +6,7 @@ class NMTDataPreprocessor(object):
     return data.content()
 
   def tokenize(self, data):
-    return data.original.strip().lower().split()
+    return data.original.strip().split()
 
   def bpe_encode(self, data, codec):
     return codec.segment(data.tokenized)

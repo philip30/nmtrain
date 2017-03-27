@@ -70,6 +70,8 @@ parser.add_argument("--lexicon_method", type=str, choices=["bias"], default="bia
 parser.add_argument("--test_beam", default=1, type=int, help="Beam used for beam search")
 parser.add_argument("--test_word_penalty", default=0, type=float, help="Word penalty in beam search")
 parser.add_argument("--test_gen_limit", default=50, type=int, help="Generation limit of prediction during testing")
+# ETC
+parser.add_argument("--report", action="store_true", help="Whether to report the training or not")
 args = parser.parse_args()
 
 def main(args):

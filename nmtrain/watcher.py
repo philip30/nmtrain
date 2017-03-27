@@ -35,7 +35,7 @@ class TrainingWatcher(object):
     self.epoch_loss += loss
     self.epoch_update_counter += 1
     self.state.trained_sentence += batch_size
-    log.info("[%d] Sentence trained: %d, Batch(PPL=%f, size=(%d,%d), wps=%d, id=%d)" % (self.state.finished_epoch + 1,
+    log.info("[%d] Sentence trained: %d, Batch(PPL=%.3f, size=(%d,%d), wps=%d, id=%d)" % (self.state.finished_epoch + 1,
                                                                                         self.state.trained_sentence,
                                                                                         ppl,
                                                                                         batch_size, col_size,
@@ -47,7 +47,7 @@ class TrainingWatcher(object):
     self.state.batch_indexes = new_data_arrangement
     self.state.time_spent.append(time.time() - self.time)
     self.state.perplexities.append(math.exp(self.epoch_loss / self.epoch_update_counter))
-    log.info("Epoch %d finished! ppl=%.4f, time=%.4f mins" % (self.state.finished_epoch,
+    log.info("Epoch %d finished! ppl=%.3f, time=%.4f mins" % (self.state.finished_epoch,
                                                               self.state.ppl(),
                                                               self.state.last_time() / 60))
   # DEV SET
@@ -139,7 +139,7 @@ class TestWatcher(object):
     # Creating evaluation string
     eval_string = "Time=%.2f mins" % (self.state.last_time() / 60)
     if ref is not None:
-      eval_string += " " + ("BLEU=%s, test_ppl=%f" % (str(self.state.bleu()), self.state.ppl()))
+      eval_string += " " + ("BLEU=%s, test_ppl=%.3f" % (str(self.state.bleu()), self.state.ppl()))
 
     log.info("Evaluation Finished!", eval_string)
 

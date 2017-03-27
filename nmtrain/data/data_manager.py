@@ -73,6 +73,7 @@ class DataManager(object):
                                   n_items          = 1,
                                   bpe_codec        = bpe_codec,
                                   wordid_converter = test_converter)
+    return self.test_data
 
   # Training data arrange + shuffle
   def arrange(self, indexes):

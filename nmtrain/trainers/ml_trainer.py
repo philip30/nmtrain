@@ -1,11 +1,13 @@
 import numpy
 import gc
+import math
 
 import nmtrain
 import nmtrain.data
 import nmtrain.model
 import nmtrain.serializer
 import nmtrain.watcher
+import nmtrain.reporter
 import nmtrain.log as log
 
 class MaximumLikelihoodTrainer:
@@ -62,6 +64,10 @@ class MaximumLikelihoodTrainer:
                                               self.nmtrain_model.src_vocab,
                                               self.nmtrain_model.trg_vocab,
                                               self.early_stop_num)
+    # Reporter
+    reporter = nmtrain.reporter.TrainingReporter(self.nmtrain_model.specification,
+                                                 self.nmtrain_model.src_vocab,
+                                                 self.nmtrain_model.trg_vocab)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
     # Our data manager
@@ -83,6 +89,10 @@ class MaximumLikelihoodTrainer:
 
     def bptt(batch_loss):
       """ Backpropagation through time """
+      if math.isnan(float(batch_loss.data)):
+        nmtrain.log.warning("Loss is NaN, skipping update.")
+        return
+
       model.cleargrads()
       batch_loss.backward()
       batch_loss.unchain_backward()
@@ -99,15 +109,26 @@ class MaximumLikelihoodTrainer:
       for batch_retriever in self.unknown_trainer:
         for batch in data.train_data:
           src_batch, trg_batch = batch_retriever(batch)
+          # Reporting placeholder
+          if not reporter.is_reporting:
+            output_buffer = None
+          else:
+            output_buffer = numpy.zeros_like(trg_batch, dtype=numpy.int32)
+
           # Prepare for training
           watcher.batch_begin()
           batch_loss = classifier.train(model, src_batch, trg_batch,
                                         bptt=bptt,
-                                        bptt_len=self.bptt_len)
+                                        bptt_len=self.bptt_len,
+                                        output_buffer=output_buffer)
+          # Generate summary of batch training and keep track of it
           watcher.batch_update(loss=batch_loss.data,
                                batch_size=len(trg_batch[0]),
                                col_size=len(trg_batch)-1,
                                id=batch.id)
+          # Report per sentence training if wished
+          reporter.train_report(src_batch, trg_batch, output_buffer)
+          # BPTT
           bptt(batch_loss)
 
           # Saving snapshots

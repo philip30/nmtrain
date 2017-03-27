@@ -56,6 +56,12 @@ class NmtrainModel:
       self.chainer_model = from_spec(self.specification, self.src_vocab, self.trg_vocab, self.lexicon)
       self.optimizer.setup(self.chainer_model)
 
+      # Initializing model
+      initializer = chainer.initializers.Uniform(scale=0.1)
+      for name, array in self.chainer_model.namedparams():
+        nmtrain.log.info("Initializing", name, "with range (-0.1, 0.1)")
+        initializer(array.data)
+
     if hasattr(self, "optimizer"):
       self.optimizer.add_hook(chainer.optimizer.GradientClipping(self.specification.gradient_clipping))
 
@@ -84,11 +90,11 @@ class NmtrainModel:
     print("Finished Iters :", self.training_state.finished_epoch, file=sys.stderr)
     print("Trained Sentences:", self.training_state.trained_sentence, file=sys.stderr)
     if self.specification.model_architecture == "attn":
-        print("Attn input Feeding : ", self.specification.input_feeding, file=sys.stderr)
-        print("Attn strategy      : ", self.specification.attention_type, file=sys.stderr)
+      print("Attn input Feeding : ", self.specification.input_feeding, file=sys.stderr)
+      print("Attn strategy      : ", self.specification.attention_type, file=sys.stderr)
     if self.specification.lexicon:
-        print("Lexicon         : ", self.specification.lexicon)
-        print("Lexicon Alpha   : ", self.specification.lexicon_alpha)
+      print("Lexicon         : ", self.specification.lexicon)
+      print("Lexicon Alpha   : ", self.specification.lexicon_alpha)
 
   @property
   def xp(self):
