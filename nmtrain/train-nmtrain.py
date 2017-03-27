@@ -32,6 +32,7 @@ builder.add_sort_method(parser)
 builder.add_batch(parser)
 builder.add_gpu(parser)
 builder.add_max_sent_length(parser)
+builder.add_seed(parser)
 # Unknown training
 parser.add_argument("--unknown_training", type=str, default="normal", choices=["normal", "redundancy", "word_dropout", "sentence_dropout"])
 # Configuration
@@ -39,7 +40,7 @@ parser.add_argument("--init_model", type=str, help="Init the model with the pret
 parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], default="attn", help="Type of model being trained.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 # Optimization
-builder.add_memory_optimization()
+builder.add_memory_optimization(parser)
 # Save Models
 parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
 parser.add_argument("--save_snapshot", type=int, default=0, help="Save snapshot of model every n sentence of sentence in training")

@@ -8,6 +8,7 @@ import nmtrain
 import nmtrain.model
 import nmtrain.classifiers
 import nmtrain.log as log
+import nmtrain.arguments as builder
 
 """ Arguments """
 parser = argparse.ArgumentParser("NMT decoder")

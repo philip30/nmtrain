@@ -10,7 +10,7 @@ import nmtrain.util as util
 # It should not be changed. If model is loaded, then these settings will be 
 # loaded from the previous model
 OVERWRITE_SPEC = ["batch", "src", "trg", "src_test", "trg_test", "src_dev", "trg_dev", "test_beam", "test_word_penalty",\
-                  "model_out", "epoch", "init_model"]
+                  "model_out", "epoch", "init_model", "gpu"]
 
 class NmtrainModel:
   """
@@ -24,9 +24,14 @@ class NmtrainModel:
     # Init Model
     if args.init_model:
       nmtrain.serializer.load(self, args.init_model)
+      # Overwrite some specification from the command terminal
       for spec in OVERWRITE_SPEC:
         if hasattr(args, spec):
           setattr(self.specification, spec, getattr(args, spec))
+      # Added the remaining commands
+      for key, value in args.__dict__.items():
+        if not hasattr(self.specification, key):
+          setattr(self.specification, key, value)
       self.name = args.init_model
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)

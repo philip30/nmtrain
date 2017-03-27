@@ -15,7 +15,7 @@ class Vocabulary(object):
     self.word_to_id = {}
     self.id_to_word = {}
     self.check_rare = None
-    sel.frozen = False
+    self.frozen = False
 
     if add_unk:
       self.add_word(UNK, include_rare=True)

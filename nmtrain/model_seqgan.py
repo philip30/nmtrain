@@ -6,6 +6,7 @@ class NmtrainSeqGANModel(nmtrain.NmtrainModel):
   def __init__(self, args):
     super(NmtrainSeqGANModel, self).__init__(args)
     if args.init_seqgan_model:
+      # TODO(philip30): Added pretrained seqgan model here?
       pass
     else:
       self.discriminator_model = from_spec(self.specification)
