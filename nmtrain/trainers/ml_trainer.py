@@ -1,5 +1,6 @@
 import numpy
 import gc
+import math
 
 import nmtrain
 import nmtrain.data
@@ -88,6 +89,10 @@ class MaximumLikelihoodTrainer:
 
     def bptt(batch_loss):
       """ Backpropagation through time """
+      if math.isnan(float(batch_loss.data)):
+        nmtrain.log.warning("Loss is NaN, skipping update.")
+        return
+
       model.cleargrads()
       batch_loss.backward()
       batch_loss.unchain_backward()
