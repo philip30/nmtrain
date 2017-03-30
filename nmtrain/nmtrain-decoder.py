@@ -6,6 +6,7 @@ import sys
 
 import nmtrain
 import nmtrain.model
+import nmtrain.lexicon
 import nmtrain.classifiers
 import nmtrain.log as log
 
@@ -20,7 +21,7 @@ parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 parser.add_argument("--gen_limit", type=int, default=50, help="Maximum Target Output Length.")
 parser.add_argument("--beam", type=int, default=1, help="Beam size in searching.")
 parser.add_argument("--word_penalty", type=float, default=0.0, help="Word penalty in beam search")
-parser.add_argument("--memory_optimization", type=int, default=0)
+parser.add_argument("--unk_lexicon", type=str, help="Unknown lexicon of p(E|F) to replace unknown words.")
 # Ensemble
 parser.add_argument("--ensemble_op", type=str, choices=["linear", "logsum"], default="linear")
 # Evaluation
@@ -57,11 +58,18 @@ def main(args):
                          bpe_codec = model.bpe_codec)
   log.info("Loading Finished.")
 
+  if args.unk_lexicon:
+    unk_lexicon = nmtrain.lexicon.unk_replace_lexicon_from_file(args.unk_lexicon)
+  else:
+    unk_lexicon = None
+
   # Begin Testing
   tester = nmtrain.Tester(data=data_manager, watcher=watcher,
+                          src_vocab=model.src_vocab,
                           trg_vocab=model.trg_vocab,
                           classifier=classifier,
-                          predict=True, eval_ppl=(args.ref is not None))
+                          predict=True, eval_ppl=(args.ref is not None),
+                          unk_lexicon=unk_lexicon)
 
   if model.__class__.__name__ == "NmtrainModel":
     model = model.chainer_model

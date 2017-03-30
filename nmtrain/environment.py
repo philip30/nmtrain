@@ -12,8 +12,10 @@ mem_optimization_level = 0
 
 def init(args, run_mode):
   init_run_mode(run_mode)
-  init_gpu(args.gpu)
-  init_mem_optimization_level(args.memory_optimization)
+  if hasattr(args, "gpu"):
+    init_gpu(args.gpu)
+  if hasattr(args, "memory_optimization"):
+    init_mem_optimization_level(args.memory_optimization)
   if hasattr(args, "seed"):
     if args.seed == 0:
       args.seed = random.randint(1, 1e6)
@@ -28,8 +30,6 @@ def init_gpu(gpu_num):
     if gpu_num >= 0:
       gpu = gpu_num
       chainer.cuda.get_device(gpu_num).use()
-    else:
-      xp = numpy
   return gpu_num
 
 def init_random(seed):

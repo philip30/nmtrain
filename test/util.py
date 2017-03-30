@@ -10,11 +10,7 @@ def init_env(gpu=-1, seed=2):
 
 def basic_train_args(model_architecture="encdec", src="train.ja", trg="train.en"):
   class Args(object):
-    def getattr(self, key):
-      if hasattr(self, key):
-        return self.__dict__[key]
-      else:
-        return None
+    pass
   args = Args()
   args.model_architecture = "encdec"
   args.embed  = 50
@@ -25,14 +21,33 @@ def basic_train_args(model_architecture="encdec", src="train.ja", trg="train.en"
   args.bptt_len = 1
   args.batch = 1
   args.optimizer = "adam"
-  args.init_model = ""
-  args.src_dev = ""
-  args.trg_dev = ""
-  args.src_test = ""
-  args.trg_test = ""
+  args.init_model = None
+  args.src_dev = None
+  args.trg_dev = None
+  args.src_test = None
+  args.trg_test = None
   args.early_stop = 0
   args.unk_cut = 0
   args.max_vocab = 10000000000
+  args.src_bpe_codec = ""
+  args.trg_bpe_codec = ""
+  args.save_models = False
+  args.unknown_training = "normal"
+  args.sgd_lr_decay_factor = 1.0
+  args.sgd_lr_decay_after = 10
+  args.test_beam = 1
+  args.test_word_penalty = 0.1
+  args.test_gen_limit = 20
+  args.src_max_vocab = 1000
+  args.trg_max_vocab = 1000
+  args.max_sent_length = 20
+  args.sort_method = "lentrg"
+  args.batch_strategy = "sentence"
+  args.gradient_clipping = 5.0
+  args.save_snapshot = 10000
+  args.seed = -1
+  args.lexicon = None
+
   # Dummy test file
   this_script_dir = os.path.dirname(os.path.realpath(__file__))
   args.src = os.path.join(this_script_dir, "data", src)

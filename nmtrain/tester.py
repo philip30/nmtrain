@@ -3,13 +3,16 @@ import numpy
 import nmtrain
 
 class Tester(object):
-  def __init__(self, data, classifier, watcher, trg_vocab, predict=True, eval_ppl=True):
+  def __init__(self, data, classifier, watcher, src_vocab, trg_vocab,
+               predict=True, eval_ppl=True, unk_lexicon=None):
     self.data      = data
     self.predict   = predict
     self.eval_ppl  = eval_ppl
     self.watcher   = watcher
+    self.src_vocab = src_vocab
     self.trg_vocab = trg_vocab
     self.classifier = classifier
+    self.unk_lexicon = unk_lexicon
 
   def test(self, model, word_penalty, gen_limit, beam_size):
     self.watcher.begin_evaluation()
@@ -26,7 +29,7 @@ class Tester(object):
                                                  word_penalty = word_penalty,
                                                  gen_limit    = gen_limit,
                                                  beam         = beam_size)
-        nmtrain.post_processor.post_process(predict_output, self.trg_vocab)
+        nmtrain.post_processor.post_process(predict_output, self.trg_vocab, self.unk_lexicon, batch, self.src_vocab)
       else:
         predict_output = lambda: None
         predict_output.prediction = None

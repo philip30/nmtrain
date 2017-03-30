@@ -161,6 +161,7 @@ class MaximumLikelihoodTrainer:
       if data.has_test_data:
         nmtrain.environment.set_test()
         tester = nmtrain.Tester(data=data, watcher=test_watcher,
+                                src_vocab=self.nmtrain_model.src_vocab,
                                 trg_vocab=self.nmtrain_model.trg_vocab,
                                 classifier=classifier,
                                 predict=True, eval_ppl=True)
