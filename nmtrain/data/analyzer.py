@@ -62,5 +62,7 @@ class CountAnalyzer(object):
       word_id = vocabulary.parse_word(word)
       if not vocabulary.check_special_id(word_id):
         dct[word_id] = count
+      else:
+        dct[word_id] = 1e6
     return dct
 
