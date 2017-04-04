@@ -56,3 +56,11 @@ class CountAnalyzer(object):
       rare = rare or self.word_count[word] <= unk_freq_threshold
     return rare
 
+  def count_word_id_map(self, vocabulary):
+    dct = {}
+    for word, count in self.word_count.items():
+      word_id = vocabulary.parse_word(word)
+      if not vocabulary.check_special_id(word_id):
+        dct[word_id] = count
+    return dct
+

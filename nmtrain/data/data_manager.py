@@ -29,6 +29,8 @@ class DataManager(object):
     filterer = nmtrain.data.preprocessor.FilterSentence(max_sent_length)
     train_converter = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc, analyzer, unknown_trainer)
     test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc)
+    # Retain some properties
+    self.analyzer = analyzer
 
     # Loading Training Data
     self.train_data = ParallelData(src              = src,

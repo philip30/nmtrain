@@ -80,6 +80,11 @@ class MaximumLikelihoodTrainer:
     snapshot_counter = 0
     snapshot_threshold = self.nmtrain_model.specification.save_snapshot
 
+    # Special case for word_dropout unknown trainer
+    if self.unknown_trainer.__class__ == nmtrain.data.unknown_trainer.UnknownWordDropoutTrainer:
+      self.unknown_trainer.src_freq_map = data.analyzer.src_analyzer.count_word_id_map(self.nmtrain_model.src_vocab)
+      self.unknown_trainer.trg_freq_map = data.analyzer.trg_analyzer.count_word_id_map(self.nmtrain_model.trg_vocab)
+
     # If test data is provided, prepare the appropriate watcher
     if data.has_test_data:
       self.test_state = nmtrain.model.TestState()
