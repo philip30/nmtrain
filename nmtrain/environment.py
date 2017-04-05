@@ -9,11 +9,14 @@ verbosity = 0
 run_mode = nmtrain.enumeration.RunMode.TRAIN
 gpu = -1
 mem_optimization_level = 0
+random_state = {}
 
 def init(args, run_mode):
   init_run_mode(run_mode)
-  init_gpu(args.gpu)
-  init_mem_optimization_level(args.memory_optimization)
+  if hasattr(args, "gpu"):
+    init_gpu(args.gpu)
+  if hasattr(args, "memory_optimization"):
+    init_mem_optimization_level(args.memory_optimization)
   if hasattr(args, "seed"):
     if args.seed == 0:
       args.seed = random.randint(1, 1e6)
@@ -28,15 +31,15 @@ def init_gpu(gpu_num):
     if gpu_num >= 0:
       gpu = gpu_num
       chainer.cuda.get_device(gpu_num).use()
-    else:
-      xp = numpy
   return gpu_num
 
 def init_random(seed):
+  global random_state
   if seed != 0:
     if hasattr(chainer.cuda, "cupy"):
       chainer.cuda.cupy.random.seed(seed)
     numpy.random.seed(seed)
+    random_state["numpy_init"] = numpy.random.get_state()
 
 def init_verbosity(verbosity_level):
   global verbosity

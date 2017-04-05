@@ -34,7 +34,7 @@ builder.add_gpu(parser)
 builder.add_max_sent_length(parser)
 builder.add_seed(parser)
 # Unknown training
-parser.add_argument("--unknown_training", type=str, default="normal", choices=["normal", "redundancy", "word_dropout", "sentence_dropout"])
+parser.add_argument("--unknown_training", type=str, default="normal")
 # Configuration
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")
 parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], default="attn", help="Type of model being trained.")
@@ -94,6 +94,11 @@ def sanity_check(args):
     log.fatal("Unknown Cut should be >= 0")
   if args.dropout < 0 or args.dropout > 1:
     log.fatal("Dropout should be 0 <= dropout <= 1")
+
+  if args.unknown_training == "sentence_dropout":
+    if args.src_max_vocab == -1 and args.trg_max_vocab == -1 and args.unk_cut == 0:
+      nmtrain.log.info("Sentence dropout training. Setting cut to -1 because no unk option is specified.")
+      args.unk_cut = 1
 
 if __name__ == "__main__":
   main(args)

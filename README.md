@@ -46,6 +46,9 @@ Description:
 - ```sgd_lr_decay_after``` is a constant integer that specified that LR is always decayed after that specified epoch.
 - ```gradient_clippping``` normalize the gradient that is bigger than the specified amount.
 
+Batching Strategy:
+- Optionally, you can also count the batch size by the number of words. This is done by specifying ```--batch_strategy word```. 
+
 ## Early Stopping & Evaluation
 You can use the development set to specify early stopping.
 In order to do so, you need to specify both:

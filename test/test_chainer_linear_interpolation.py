@@ -14,6 +14,7 @@ from chainer.testing import attr
 from chainer.testing import condition
 
 import nmtrain.chner
+from unittest import skipIf
 from nmtrain.chner.links.linear_interpolation import LinearInterpolation, sigmoid
 
 class TestLinearInterpolation(unittest.TestCase):

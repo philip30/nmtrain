@@ -3,7 +3,7 @@ class NMTDataPreprocessor(object):
     data.annotate("tokenized", self.tokenize(data))
     if codec is not None:
       data.annotate("encoded", self.bpe_encode(data, codec))
-    return data.content()
+    return data
 
   def tokenize(self, data):
     return data.original.strip().split()

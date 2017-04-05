@@ -23,7 +23,7 @@ class Vocabulary(object):
       self.add_word(EOS, include_rare=True)
 
   def add_word(self, word, include_rare=False):
-    if not include_rare and self.check_rare(word):
+    if not include_rare and self.check_rare is not None and self.check_rare(word):
       return self.unk_id()
     else:
       word_id = self.word_to_id.get(word, len(self.word_to_id))

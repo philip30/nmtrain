@@ -1,4 +1,5 @@
 import numpy
+import math
 
 import nmtrain.util as util
 
@@ -22,16 +23,29 @@ class UnknownRedundancyTrainer(UnknownTrainer):
     yield lambda batch: batch.unk_data
 
 class UnknownWordDropoutTrainer(UnknownTrainer):
-  def __init__(self, dropout_ratio=0.2):
-    self.ratio = dropout_ratio
+  def __init__(self, gamma=2):
+    assert(gamma > 0 and type(gamma) == int), "Invalid Gamma value."
+    self.src_freq_map = None
+    self.trg_freq_map = None
+    self.gamma = gamma
 
-  def dropout_word(self, batch):
-    flag = numpy.random.rand(*batch.shape) >= self.ratio
+  def dropout_word(self, batch, freq_map):
+    flag = numpy.zeros_like(batch)
+    for row in range(len(batch)):
+      for col in range(len(batch[row])):
+        word = batch[row][col]
+        if word in freq_map:
+          if numpy.random.random() < math.log(freq_map[word]) / self.gamma:
+            flag[row][col] = 1
+          else:
+            flag[row][col] = 0
+        else:
+          flag[row][col] = 0
     return batch * flag
 
   def __iter__(self):
-    yield lambda batch: (self.dropout_word(batch.normal_data[0]), \
-                         self.dropout_word(batch.normal_data[1]))
+    yield lambda batch: (self.dropout_word(batch.normal_data[0], self.src_freq_map), \
+                         self.dropout_word(batch.normal_data[1], self.trg_freq_map))
 
 class UnknownSentenceDropoutTrainer(UnknownTrainer):
   def __init__(self, dropout_ratio=0.2):
@@ -57,7 +71,7 @@ def from_string(string):
   if method == "redundancy":
     return UnknownRedundancyTrainer()
   elif method == "word_dropout":
-    param = util.parse_parameter(param_str, {"ratio": float})
+    param = util.parse_parameter(param_str, {"gamma": int})
     return UnknownWordDropoutTrainer(**param)
   elif method == "sentence_dropout":
     param = util.parse_parameter(param_str, {"ratio": float})

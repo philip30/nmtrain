@@ -1,4 +1,5 @@
 import chainer
+import numpy
 import sys
 
 import nmtrain
@@ -61,8 +62,7 @@ class NmtrainModel:
 
       # Initializing model
       initializer = chainer.initializers.Uniform(scale=0.1)
-      for name, array in self.chainer_model.namedparams():
-        nmtrain.log.info("Initializing", name, "with range (-0.1, 0.1)")
+      for name, array in sorted(self.chainer_model.namedparams()):
         initializer(array.data)
 
     if hasattr(self, "optimizer"):

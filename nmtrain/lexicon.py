@@ -56,3 +56,15 @@ def lexicon_from_file(lexicon_file, src_voc, trg_voc):
     lexicon_prob[src][trg_voc.unk_id()] = unk_prob
   return lexicon_prob
 
+def unk_replace_lexicon_from_file(lexicon_file):
+  max_rep  = {}
+  max_prob = {}
+  with open(lexicon_file) as lex_fp:
+    for line in lex_fp:
+      trg, src, prob = line.strip().split()
+      prob = float(prob)
+      if src not in max_prob or max_prob[src] < prob:
+        max_prob[src] = prob
+        max_rep[src] = trg
+  return max_rep
+
