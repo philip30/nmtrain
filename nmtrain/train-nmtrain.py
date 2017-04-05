@@ -7,6 +7,7 @@ import nmtrain.log as log
 import nmtrain.enumeration
 import nmtrain.classifiers
 import nmtrain.trainers
+import nmtrain.arguments as builder
 
 """ Arguments """
 parser = argparse.ArgumentParser("NMT model trainer")
@@ -17,7 +18,6 @@ parser.add_argument("--model_out", type=str, required=True)
 # Parameters
 parser.add_argument("--hidden", type=int, default=128, help="Size of hidden layer.")
 parser.add_argument("--embed", type=int, default=128, help="Size of embedding vector.")
-parser.add_argument("--batch", type=int, default=64, help="Number of (src) sentences in batch.")
 parser.add_argument("--epoch", type=int, default=10, help="Number of max epoch to train the model.")
 parser.add_argument("--depth", type=int, default=1, help="Depth of the network.")
 parser.add_argument("--unk_cut", type=int, default=0, help="Threshold for words in corpora to be treated as unknown.")
@@ -27,20 +27,20 @@ parser.add_argument("--optimizer", type=str, default="adam:alpha=0.001,beta1=0.9
 parser.add_argument("--src_max_vocab", type=int, default=-1, help="Maximum src vocabulary size in the model")
 parser.add_argument("--trg_max_vocab", type=int, default=-1, help="Maximum trg vocabulary size in the model")
 parser.add_argument("--early_stop", type=int, default=100, help="How many iterations should the model patiently keeps training before it stop due to low dev ppl")
-parser.add_argument("--max_sent_length", type=int, default=-1, help="Maximum length of training sentences in both sides")
 # Data loading configuration
-parser.add_argument("--batch_strategy", type=str, choices=["word", "sent"], default="sent")
-parser.add_argument("--sort_method", type=str, choices=["lentrg"], default="lentrg")
+builder.add_sort_method(parser)
+builder.add_batch(parser)
+builder.add_gpu(parser)
+builder.add_max_sent_length(parser)
+builder.add_seed(parser)
 # Unknown training
 parser.add_argument("--unknown_training", type=str, default="normal")
 # Configuration
-parser.add_argument("--gpu", type=int, default=-1, help="Specify GPU to be used, negative for using CPU.")
 parser.add_argument("--init_model", type=str, help="Init the model with the pretrained model.")
 parser.add_argument("--model_architecture",type=str,choices=["encdec","attn"], default="attn", help="Type of model being trained.")
-parser.add_argument("--seed", type=int, default=0, help="Seed for RNG. 0 for totally random seed.")
 parser.add_argument("--verbosity", type=int, default=0, help="Verbosity level.")
 # Optimization
-parser.add_argument("--memory_optimization", type=int, default=0, help="Memory optimization level, 0 for no optimization. Effect running time.")
+builder.add_memory_optimization(parser)
 # Save Models
 parser.add_argument("--save_models", action="store_true", help="Whether to save all models incrementally or not.")
 parser.add_argument("--save_snapshot", type=int, default=0, help="Save snapshot of model every n sentence of sentence in training")
