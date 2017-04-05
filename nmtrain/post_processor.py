@@ -3,14 +3,17 @@ import nmtrain
 
 def post_process(prediction_output, trg_vocab, unk_lexicon, batch, src_vocab):
   batch_src_sent = batch.data[0].src_sent
-  source_sent = batch_src_sent.tokenized + [src_vocab.eos()]
+  if hasattr(batch_src_sent, "encoded"):
+    source_sent = batch_src_sent.encoded
+  else:
+    source_sent = batch_src_sent.tokenized
+  source_sent = source_sent + [src_vocab.eos()]
   prediction  = list(map(trg_vocab.word, prediction_output.prediction))
   # Check the availability of attention
   if hasattr(prediction_output, "attention"):
     attention_matrix = prediction_output.attention.transpose()
   else:
     attention_matrix = None
-
   # Merging BPE
   prediction, attention_matrix = merge_bpe(prediction, attention_matrix, normalize=True)
   merge_src, attention_matrix = merge_bpe(source_sent, attention_matrix.transpose() if attention_matrix is not None else None)
