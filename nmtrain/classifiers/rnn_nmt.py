@@ -31,6 +31,21 @@ class RNN_NMT(object):
 
     return batch_loss / len(trg_batch)
 
+  def generate(self, model, src_batch, eos_id, generation_limit=128):
+    model.encode(src_batch)
+    batch_size = src_batch.shape[1]
+
+    ret = []
+    for i in range(generation_limit):
+      output = model.decode()
+      words  = chainer.functions.argmax(output.y, axis=1)
+      embed, h = model.update(words)
+      words.to_cpu()
+      ret.append(embed)
+      if all(word == eos_id for word in words.data):
+        break
+    return ret
+
   def eval(self, model, src_sent, trg_sent):
     loss = 0
     # Start Prediction

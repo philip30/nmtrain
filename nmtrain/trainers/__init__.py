@@ -1,1 +1,2 @@
 from nmtrain.trainers.ml_trainer import MaximumLikelihoodTrainer
+from nmtrain.trainers.seqgan_trainer import SequenceGANTrainer
