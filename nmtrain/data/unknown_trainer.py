@@ -1,5 +1,6 @@
 import numpy
 import math
+import functools
 
 import nmtrain.util as util
 
@@ -23,33 +24,46 @@ class UnknownRedundancyTrainer(UnknownTrainer):
     yield lambda batch: batch.unk_data
 
 class UnknownWordDropoutTrainer(UnknownTrainer):
-  def __init__(self, gamma=2):
+  def __init__(self, gamma=5):
     assert(gamma > 0 and type(gamma) == int), "Invalid Gamma value."
     self.src_freq_map = None
     self.trg_freq_map = None
     self.gamma = gamma
 
-  def dropout_word(self, batch, freq_map):
+  def dropout_word(self, batch, freq_map, total_count):
     flag = numpy.zeros_like(batch)
     for row in range(len(batch)):
       for col in range(len(batch[row])):
         word = batch[row][col]
         if word in freq_map:
-          if numpy.random.random() < math.log(freq_map[word]) / self.gamma:
+          if numpy.random.random() < self.dropout_prob(freq_map[word], total_count):
             flag[row][col] = 1
           else:
             flag[row][col] = 0
         else:
           flag[row][col] = 0
     return batch * flag
+  
+  @functools.lru_cache(maxsize=1)
+  def src_sum(self):
+    return sum(self.src_freq_map.values())
+  
+  @functools.lru_cache(maxsize=1)
+  def trg_sum(self):
+    return sum(self.trg_freq_map.values())
+  
+  @functools.lru_cache(maxsize=4096)
+  def dropout_prob(self, word_freq, total_count):
+    return ((total_count - word_freq) / total_count) ** self.gamma
 
   def __iter__(self):
-    yield lambda batch: (self.dropout_word(batch.normal_data[0], self.src_freq_map), \
-                         self.dropout_word(batch.normal_data[1], self.trg_freq_map))
+    yield lambda batch: \
+            (self.dropout_word(batch.normal_data[0], self.src_freq_map, self.src_sum()), \
+             self.dropout_word(batch.normal_data[1], self.trg_freq_map, self.trg_sum()))
 
 class UnknownSentenceDropoutTrainer(UnknownTrainer):
-  def __init__(self, dropout_ratio=0.2):
-    self.ratio = dropout_ratio
+  def __init__(self, ratio=0.2):
+    self.ratio = ratio
 
   def dropout_sentence(self, batch):
     odds = numpy.random.uniform(low = 0.0, high = 1.0)
