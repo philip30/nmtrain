@@ -95,7 +95,7 @@ def sanity_check(args):
   if args.dropout < 0 or args.dropout > 1:
     log.fatal("Dropout should be 0 <= dropout <= 1")
 
-  if args.unknown_training == "sentence_dropout":
+  if args.unknown_training.startswith("sentence_dropout"):
     if args.src_max_vocab == -1 and args.trg_max_vocab == -1 and args.unk_cut == 0:
       nmtrain.log.info("Sentence dropout training. Setting cut to -1 because no unk option is specified.")
       args.unk_cut = 1

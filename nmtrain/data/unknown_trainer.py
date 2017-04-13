@@ -36,7 +36,8 @@ class UnknownWordDropoutTrainer(UnknownTrainer):
       for col in range(len(batch[row])):
         word = batch[row][col]
         if word in freq_map:
-          if numpy.random.random() < self.dropout_prob(freq_map[word], total_count):
+          do_prob = self.dropout_prob(freq_map[word], total_count)
+          if numpy.random.random() >= do_prob:
             flag[row][col] = 1
           else:
             flag[row][col] = 0
@@ -52,9 +53,11 @@ class UnknownWordDropoutTrainer(UnknownTrainer):
   def trg_sum(self):
     return sum(self.trg_freq_map.values())
   
-  @functools.lru_cache(maxsize=4096)
+  # 2 MB cache
+  @functools.lru_cache(maxsize=2 ** 20)
   def dropout_prob(self, word_freq, total_count):
-    return ((total_count - word_freq) / total_count) ** self.gamma
+    prob_not_seen = 1 - (word_freq / total_count)
+    return math.exp(math.log(prob_not_seen) * total_count / self.gamma)
 
   def __iter__(self):
     yield lambda batch: \

@@ -37,11 +37,13 @@ class Lexicon(object):
 def lexicon_from_file(lexicon_file, src_voc, trg_voc):
   lexicon_prob = {}
   with open(lexicon_file) as lex_fp:
-    for line in lex_fp:
+    unparsed = 0
+    for i, line in enumerate(lex_fp):
       try:
-        trg, src, prob = line.strip().split()
+        trg, src, prob = line.rstrip().split()
       except:
-        raise ValueError("Failed to parse line for lexicon:", line)
+        unparsed += 1
+        continue
       trg = trg_voc.parse_word(trg)
       src = src_voc.parse_word(src)
       if trg != trg_voc.unk_id() and src != src_voc.unk_id():
@@ -49,6 +51,9 @@ def lexicon_from_file(lexicon_file, src_voc, trg_voc):
           lexicon_prob[src] = {}
         dict_prob = lexicon_prob[src]
         dict_prob[trg] = dict_prob.get(trg, 0.0) + float(prob)
+  if unparsed != 0:
+    nmtrain.log.warning("There are %d/%d parsed lines from the lexicon" % (i-unparsed, i))
+ 
   # Making sure the probability is correct
   for src, p_trg_given_src in lexicon_prob.items():
     unk_prob = 1 - sum(p_trg_given_src.values())
@@ -60,11 +65,18 @@ def unk_replace_lexicon_from_file(lexicon_file):
   max_rep  = {}
   max_prob = {}
   with open(lexicon_file) as lex_fp:
-    for line in lex_fp:
-      trg, src, prob = line.strip().split()
+    unparsed = 0
+    for i, line in enumerate(lex_fp):
+      try:
+        trg, src, prob = line.strip().split()
+      except:
+        unparsed += 1
+        continue
       prob = float(prob)
       if src not in max_prob or max_prob[src] < prob:
         max_prob[src] = prob
         max_rep[src] = trg
+  if unparsed != 0:
+    nmtrain.log.warning("There are %d/%d parsed lines from the lexicon" % (i-unparsed, i))
   return max_rep
 
