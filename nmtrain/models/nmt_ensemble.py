@@ -8,7 +8,7 @@ class EnsembleLinearInterpolateNMT(object):
     check_ensemble_ok(models)
     self.models = models
 
-    xp = nmtrain.environment.array_module()
+    xp = self.models[0].xp
     self.normalization_constant = xp.array(1.0 / len(self.models), dtype=numpy.float32)
 
   def encode(self, src_data):
