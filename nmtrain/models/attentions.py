@@ -21,10 +21,10 @@ class GeneralAttentionLayer(chainer.Chain):
 
 # MLP layer, as of Bahdanau+ 15
 class MLPAttentionLayer(chainer.Chain):
-  def __init__(self, hidden_size):
+  def __init__(self, hidden_size, attn_size):
     super(MLPAttentionLayer, self).__init__(
-      first_layer = chainer.links.Linear(2 * hidden_size, hidden_size),
-      second_layer = chainer.links.Linear(hidden_size, 1)
+      first_layer = chainer.links.Linear(2 * hidden_size, attn_size),
+      second_layer = chainer.links.Linear(attn_size, 1)
     )
 
   def __call__(self, S, h):

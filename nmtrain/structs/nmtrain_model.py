@@ -1,12 +1,14 @@
 import chainer
 import nmtrain
+import os
 
 class NmtrainModel(object):
   def __init__(self, config):
     self.config = config
     # Init Model
-    if hasattr(config, "init_model") and config.init_model:
-      nmtrain.serializer.load(self, config.init_model)
+    if len(config.init_model) != 0 and os.path.exists(config.init_model):
+      model_loader = nmtrain.serializers.TrainModelReader(self)
+      model_loader.load(config)
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True)
@@ -20,14 +22,16 @@ class NmtrainModel(object):
       self.optimizer.use_cleargrads()
 
   def finalize_model(self):
-    if self.lexicon is None and hasattr(self.config, "lexicon_config"):
-      if self.config.lexicon_config.path:
-        self.lexicon = nmtrain.Lexicon(self.config.lexicon_config.path,
-                                       self.src_vocab, self.trg_vocab,
-                                       self.config.lexicon_config.lexicon_alpha,
-                                       self.config.lexicon_config.method)
+    if self.lexicon is None and self.config.lexicon_config.path:
+      self.lexicon = nmtrain.structs.lexicon.Lexicon(self.src_vocab, self.trg_vocab,
+                                                     self.config.lexicon_config.alpha,
+                                                     self.config.lexicon_config.method,
+                                                     self.config.lexicon_config.path)
     else:
       self.lexicon = None
+
+    if not hasattr(self, "bpe_codec"):
+      self.bpe_codec = None, None
 
     if self.chainer_model is None:
       self.chainer_model = from_spec(self.config.network_config, self.config.learning_config,
@@ -72,8 +76,8 @@ def load_bpe_codec(config):
   if hasattr(config, "bpe_config") and \
       config.bpe_config.src_codec and \
       config.bpe_config.trg_codec:
-    return  nmtrain.bpe.BPE(config.bpe_config.src_codec), \
-            nmtrain.bpe.BPE(config.bpe_config.trg_codec)
+    return  nmtrain.third_party.bpe.BPE(config.bpe_config.src_codec), \
+            nmtrain.third_party.bpe.BPE(config.bpe_config.trg_codec)
   else:
     return None, None
 

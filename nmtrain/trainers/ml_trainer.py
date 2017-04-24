@@ -69,7 +69,7 @@ class MaximumLikelihoodTrainer:
     # Training with maximum likelihood estimation
     start_epoch = state.last_trained_epoch
     end_epoch   = learning_config.epoch
-
+    self.nmtrain_model.state.record_start_epoch(self.nmtrain_model.config)
     for ep in range(start_epoch, end_epoch):
       ep_arrangement = data.arrange(ep)
 
@@ -119,22 +119,21 @@ class MaximumLikelihoodTrainer:
       if ep + 1 >= learning_config.lr_decay.after_iteration or dev_ppl_decline:
         if optimizer.__class__.__name__ == "SGD":
           optimizer.lr *= learning_config.lr_decay.factor
-          nmtrain.log.info("SGD LR:", optimizer.lr)
+          nmtrain.log.info("Decreasing lr by %f, now sgd lr: %f" % (learning_config.lr_decay.factor, optimizer.lr))
         elif optimizer.__class__.__name__ == "Adam":
           optimizer.alpha *= learning_config.lr_decay.factor
-          nmtrain.log.info("Adam alpha:", optimizer.alpha)
+          nmtrain.log.info("Decreasing alpha by %f, now adam lr: %f", (learning_config.lr_decay.facdtor, optimizer.alpha))
 
       # Tell Chainer optimizer to increment the epoch
       optimizer.new_epoch()
       state.new_epoch()
 
-      # Save the model incrementally if wished
-#      if self.save_models:
-#        save("-" + str(state.finished_epoch))
-#
-#      # Stop Early, otherwise, save
-#      if watcher.should_early_stop():
-#        break
-#      elif watcher.should_save() and not self.save_models:
-#        save("")
+      # Save the model
+      outputer.train.save_model(self.nmtrain_model)
+
+      # Early stopping
+      ppl_worse_counter = learning_config.early_stop.ppl_worse_counter
+      if ppl_worse_counter != 0 and state.no_dev_ppl_improvement_after(ppl_worse_counter):
+        nmtrain.log.info("No dev ppl improvement after %d iterations. Finishing early." %(ppl_worse_counter))
+        break
 

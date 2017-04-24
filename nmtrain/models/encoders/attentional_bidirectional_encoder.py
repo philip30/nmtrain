@@ -25,7 +25,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
     self.add_link("encode_forward", StackLSTM(E, H, lstm_depth, dropouts.stack_lstm))
     self.add_link("encode_backward", StackLSTM(E, H, lstm_depth, dropouts.stack_lstm))
     self.add_link("encode_project", Linear(2 * H, H))
-    self.add_link("encode_init", Linear(H, H))
+    self.add_link("encode_init", Linear(H, E))
     # Attributes
     self.dropouts = dropouts
     self.lexicon  = lexicon

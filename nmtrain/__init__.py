@@ -19,13 +19,15 @@ state_pb = importer.load_module("state_pb2")
 import nmtrain.data
 import nmtrain.structs
 import nmtrain.environment
+import nmtrain.third_party
 import nmtrain.log
 import nmtrain.chner
 import nmtrain.util
+import nmtrain.serializers
 import nmtrain.models
-import nmtrain.serializer
 import nmtrain.outputers
 import nmtrain.testers
+
 
 from nmtrain.structs.vocabulary import Vocabulary
 from nmtrain.structs.nmtrain_model import NmtrainModel

@@ -4,6 +4,7 @@ import nmtrain
 import chainer
 
 from nmtrain.outputers.reporter import TrainReporter
+from nmtrain.serializers import TrainModelWriter
 from collections import defaultdict
 
 class Outputer(object):
@@ -35,7 +36,7 @@ class TrainOutputer(object):
       self.reporter = TrainReporter(add_stream(config.report.path, self.streams),
                                     config.report.attention,
                                     src_vocab, trg_vocab)
-
+    self.serializer      = TrainModelWriter(config.model_out, config.save_models)
     self.model_out       = config.model_out
     self.save_models     = config.save_models
     self.generate_report = config.report.generate
@@ -67,6 +68,9 @@ class TrainOutputer(object):
 
   def close(self):
     close_file_streams(self.streams)
+
+  def save_model(self, model):
+    self.serializer.save(model)
 
 class TestOutputer(object):
   def __init__(self, config, src_vocab, trg_vocab):

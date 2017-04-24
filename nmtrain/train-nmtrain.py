@@ -65,5 +65,9 @@ def sanity_check(config):
       nmtrain.log.info("Sentence Dropout training. Setting cut to 1 because no unknown option is specified.")
       data_config.unk_cut = 1
 
+  # Output config
+  output_config = config.output_config
+  log.fatal_if(len(output_config.train.model_out) == 0, "Please specify the output_config.train.model_out")
+
 if __name__ == "__main__":
   main(args)

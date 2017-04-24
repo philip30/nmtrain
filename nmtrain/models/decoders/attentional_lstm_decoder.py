@@ -21,9 +21,9 @@ class LSTMAttentionalDecoder(chainer.Chain):
     if attention_type == "dot":
       attention = attentions.DotAttentionLayer()
     elif attention_type == "general":
-      attention = attentions.GeneralAttentionLayer(hidden_units.attention)
+      attention = attentions.GeneralAttentionLayer(hidden_units.stack_lstm)
     elif attention_type == "mlp":
-      attention = attentions.MLPAttentionLayer(hidden_units.attention)
+      attention = attentions.MLPAttentionLayer(hidden_units.stack_lstm, hidden_units.attention)
     else:
       raise ValueError("Unknown Attention Type:", attention_type)
 

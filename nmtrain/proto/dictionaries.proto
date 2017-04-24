@@ -1,16 +1,14 @@
 syntax = "proto3";
 
 message Vocabulary {
-  map<int64, string> id_to_word = 1;
-  map<string, int64> word_to_id = 2;
+  map<int32, string> id_to_word = 1;
+  map<string, int32> word_to_id = 2;
 }
 
 message Lexicon {
-
-
+  message LexiconVector {
+    map<int32, double> data = 1;
+  }
+  map<int32, LexiconVector> lexicon = 1;
 }
 
-message BPECodec {
-
-
-}

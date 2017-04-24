@@ -1,5 +1,6 @@
 syntax = "proto3";
 
+import "train_config.proto";
 import "updates.proto";
 
 message BatchIndex {
@@ -8,6 +9,7 @@ message BatchIndex {
 
 message TrainState {
   uint32 finished_epoch = 1;
+  map<uint32, TrainingConfig> start_epochs = 2;
 }
 
 message NmtrainState {
