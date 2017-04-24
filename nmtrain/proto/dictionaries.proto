@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+message Vocabulary {
+  map<int64, string> id_to_word = 1;
+  map<string, int64> word_to_id = 2;
+}
+
+message Lexicon {
+
+
+}
+
+message BPECodec {
+
+
+}

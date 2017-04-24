@@ -1,0 +1,131 @@
+# GPU to use
+gpu: -1
+
+# Corpus Information
+corpus {
+  train_data {
+    source: ""
+    target: ""
+  }
+  dev_data {
+    source: ""
+    target: ""
+  }
+  test_data {
+    source: ""
+    target: ""
+  }
+}
+
+# Continue Training?
+init_model: ""
+
+# Output-files
+output_config {
+  train {
+    model_out: ""
+    save_models: false
+    report {
+      generate: false
+      path: ""
+      attention: false
+    }
+  }
+  dev {
+    output_prefix: ""
+    generate_attention: false
+  }
+  test {
+    output_prefix: ""
+    generate_attention: false
+  }
+}
+
+network_config {
+  model: "attn"
+  attention_type: "mlp"
+  depth: 1
+  input_feeding: true
+
+  hidden_units {
+    attention: 512
+    embed: 512
+    stack_lstm: 512
+  }
+}
+
+learning_config {
+  dropout {
+    stack_lstm: 0.2
+    encode_embed: 0.2
+    decode_embed: 0.2
+    encode: 0.2
+    decode: 0.0
+  }
+  optimizer {
+    type: "adam"
+    params {
+      adam {
+        alpha: 0.001
+        beta1: 0.9
+        beta2: 0.999
+        eps: 0.00000001
+      }
+    }
+  }
+  early_stop {
+    ppl_worse_counter: 3
+  }
+  lr_decay {
+    factor: 0.5
+    after_iteration: 15 
+  }
+  gradient_clipping: 5.0
+  bptt_len: 50
+  epoch: 15 
+}
+
+data_config {
+  batch: 2048
+  batch_strategy: "word"
+  max_sent_length: 80
+  src_max_vocab: -1
+  trg_max_vocab: -1
+  unk_cut: 0 
+  sort_method: "lentrg"
+  unknown_training {
+    method: "normal"
+    dropout_ratio: 0.0
+    corpus_divider: 1.0
+  } 
+}
+
+bpe_config {
+  src_codec: ""
+  trg_codec: ""
+}
+
+lexicon_config {
+  path: ""
+  method: "bias"
+  alpha: 0.001
+}
+
+test_config {
+  beam: 1
+  generation_limit: 80
+  word_penalty: 0.5
+  evaluation {
+    bleu {
+      annotation: "bleu"
+      ngram: 4
+      smooth: 0
+    }
+    eval_ppl: true
+  }
+  post_process {
+    unknown_replacement {
+      lexicon_path: ""
+    }
+  }
+}

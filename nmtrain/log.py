@@ -21,6 +21,10 @@ def fatal(*message, verbosity_level=0):
     print("[ERROR]", datetime.datetime.now(), *message, file=sys.stderr)
     sys.stderr.flush()
 
+def fatal_if(condition, *message, verbosity_level=0):
+  if condition:
+    fatal(*message, verbosity_level)
+
 def silence(value=True):
   global SILENCE
   SILENCE = value

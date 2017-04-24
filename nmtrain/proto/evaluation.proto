@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+message BLEU {
+  string annotation = 1;
+  int32 ngram = 2;
+  int32 smooth = 3;
+}
+
+message Evaluation {
+   repeated BLEU bleu = 1;
+   bool eval_ppl = 2;
+}

@@ -1,3 +1,4 @@
+import nmtrain
 
 UNK = "<UNK>"
 EOS = "<EOS>"
@@ -12,8 +13,12 @@ class Vocabulary(object):
   """
 
   def __init__(self, add_unk=False, add_eos=False):
-    self.word_to_id = {}
-    self.id_to_word = {}
+    # The real data goes here
+    self.data = nmtrain.dictionary_pb.Vocabulary()
+    # Pointer to data
+    self.word_to_id = self.data.word_to_id
+    self.id_to_word = self.data.id_to_word
+    # Attributes
     self.check_rare = None
     self.frozen = False
 
@@ -54,7 +59,7 @@ class Vocabulary(object):
     return list(self.parse_word(word) for word in words)
 
   def word(self, word_id):
-    return self.id_to_word.get(word_id, UNK)
+    return self.id_to_word.get(int(word_id), UNK)
 
   def parse_word(self, word):
     if word not in self:

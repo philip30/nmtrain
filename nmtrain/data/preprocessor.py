@@ -25,5 +25,5 @@ class FilterSentence(object):
         if single_data is not None and len(single_data) > self.max_sent_length:
           break
       else:
-        ret.append(single_data)
+        ret.append(data_point)
     return ret

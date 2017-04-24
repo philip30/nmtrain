@@ -86,3 +86,4 @@ def get_pairs(word):
 
 def codec_from_file(self, codes, separator="@@"):
   return BPE(codes, separator)
+

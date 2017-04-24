@@ -1,11 +1,11 @@
 import numpy
 
 class WordIdConverter(object):
-  def __init__(self, src_vocab, trg_vocab, analyzer=None, unknown_trainer=None):
+  def __init__(self, src_vocab, trg_vocab, analyzer=None, include_rare=False):
     self.src_vocab       = src_vocab
     self.trg_vocab       = trg_vocab
     self.analyzer        = analyzer
-    self.unknown_trainer = unknown_trainer
+    self.include_rare    = include_rare
 
     if analyzer is not None:
       self.src_vocab.set_check_rare(analyzer.is_src_rare)
@@ -25,9 +25,6 @@ class WordIdConverter(object):
     src_data = []
     trg_data = []
 
-    # Unknown training only if the specified method != "normal"
-    include_rare = self.unknown_trainer is not None and self.unknown_trainer.include_rare
-
     # Function to parse data to word id and stuff it
     def process_data(data, max_len, sentence, vocab):
       is_parse = self.analyzer is None or vocab.is_frozen()
@@ -36,7 +33,7 @@ class WordIdConverter(object):
         if is_parse:
           wids   = vocab.parse_sentence(sentence)
         else:
-          wids   = vocab.add_sentence(sentence, include_rare=include_rare)
+          wids   = vocab.add_sentence(sentence, include_rare=self.include_rare)
         wids.extend(stuffs)
         wids.append(vocab.eos_id())
         data.append(wids)
@@ -56,7 +53,7 @@ class WordIdConverter(object):
 
     # This data is a normal_data with unknown.
     # This data should be equal to normal_data
-    if include_rare:
+    if self.include_rare:
       def process_batch(batch, vocab):
         if batch is None:
           return None

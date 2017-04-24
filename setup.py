@@ -5,7 +5,9 @@ sys.path.append("./nmtrain")
 
 install_requires = [
   'Chainer>=1.18',
-  'numpy>=1.9.0'
+  'numpy>=1.9.0',
+  'tabulate>=0.7.7',
+  'wcwidth>=0.1.7'
 ]
 
 setup(

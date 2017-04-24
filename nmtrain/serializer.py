@@ -6,7 +6,6 @@ import shutil
 import tempfile
 import zipfile
 
-import nmtrain.model
 import nmtrain.log as log
 
 # File names

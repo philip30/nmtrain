@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "updates.proto";
+
+message BatchIndex {
+  repeated uint64 value = 1;
+}
+
+message TrainState {
+  uint32 finished_epoch = 1;
+}
+
+message NmtrainState {
+ 
+  repeated EpochUpdate train_updates = 1;
+
+  repeated EpochUpdate dev_updates = 2;
+
+  repeated EpochUpdate test_updates = 3;
+
+  map<string, double> test_score = 4;
+
+  TrainState train_state = 5;
+}

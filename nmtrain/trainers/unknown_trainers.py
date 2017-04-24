@@ -17,17 +17,12 @@ class UnknownNormalTrainer(UnknownTrainer):
   def __iter__(self):
     yield lambda batch: batch.normal_data
 
-class UnknownRedundancyTrainer(UnknownTrainer):
-  def __iter__(self):
-    yield lambda batch: batch.normal_data
-    yield lambda batch: batch.unk_data
-
 class UnknownWordDropoutTrainer(UnknownTrainer):
-  def __init__(self, gamma=2):
-    assert(gamma > 0 and type(gamma) == int), "Invalid Gamma value."
+  def __init__(self, corpus_divider=1):
+    assert(corpus_divider > 0 and type(corpus_divider) == int), "Invalid Gamma value."
     self.src_freq_map = None
     self.trg_freq_map = None
-    self.gamma = gamma
+    self.corpus_divider = corpus_divider
 
   def dropout_word(self, batch, freq_map):
     flag = numpy.zeros_like(batch)
@@ -35,7 +30,7 @@ class UnknownWordDropoutTrainer(UnknownTrainer):
       for col in range(len(batch[row])):
         word = batch[row][col]
         if word in freq_map:
-          if numpy.random.random() < math.log(freq_map[word]) / self.gamma:
+          if numpy.random.random() < math.log(freq_map[word]) / self.corpus_divider:
             flag[row][col] = 1
           else:
             flag[row][col] = 0
@@ -61,21 +56,12 @@ class UnknownSentenceDropoutTrainer(UnknownTrainer):
   def __iter__(self):
     yield lambda batch: self.dropout_sentence(batch)
 
-def from_string(string):
-  col = string.split(":")
-  method = col[0]
-  if len(col) == 1:
-    param_str = ""
-  else:
-    param_str = col[1]
-  if method == "redundancy":
-    return UnknownRedundancyTrainer()
-  elif method == "word_dropout":
-    param = util.parse_parameter(param_str, {"gamma": int})
-    return UnknownWordDropoutTrainer(**param)
+def from_config(config):
+  method = config.method
+  if method == "word_dropout":
+    return UnknownWordDropoutTrainer(corpus_divider = config.corpus_divider)
   elif method == "sentence_dropout":
-    param = util.parse_parameter(param_str, {"ratio": float})
-    return UnknownSentenceDropoutTrainer(**param)
+    return UnknownSentenceDropoutTrainer(dropout_ratio = config.dropout_ratio)
   elif method == "normal":
     return UnknownNormalTrainer()
   else:
