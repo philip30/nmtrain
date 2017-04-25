@@ -29,7 +29,7 @@ class RNN_NMT(object):
       if self.bptt_len > 0:
         bptt_ctr += 1
         if bptt_ctr == self.bptt_len:
-          bptt(batch_loss)
+          self.bptt(batch_loss)
           bptt_ctr = 0
 
       if outputer:
