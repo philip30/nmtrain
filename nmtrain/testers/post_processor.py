@@ -9,7 +9,7 @@ class TestPostProcessor(object):
 
     # Unk Lexicon
     if pp_config.unknown_replacement.lexicon_path:
-      self.unk_lexicon = nmtrain.lexicon.unk_replace_lexicon_from_file(pp_config.unknown_replacement.lexicon_path)
+      self.unk_lexicon = nmtrain.structs.lexicon.unk_replace_lexicon_from_file(pp_config.unknown_replacement.lexicon_path)
     else:
       nmtrain.log.info("No Unknown Lexicon provided, skipping unknown replacement post processing.")
       self.unk_lexicon = None

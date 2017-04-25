@@ -8,6 +8,7 @@ class EnsembleLinearInterpolateNMT(object):
   def __init__(self, config, models):
     check_ensemble_ok(models)
     self.models = models
+    if len(models) != len(config.weight):
       nmtrain.log.warning("len(models) != len(weights) : %d != %d. Uniformly distributing weights" % (len(models), len(config.weight)))
       weights = [1/len(models) for _ in len(models)]
     else:

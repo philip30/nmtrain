@@ -1,4 +1,4 @@
-import google.protobuf as protobuf
+import google.protobuf.text_format as text_format
 
 def parse_parameter(opt_param, param_mapping):
   if len(opt_param) == 0:
@@ -14,7 +14,7 @@ def parse_parameter(opt_param, param_mapping):
   return param
 
 def parse_proto_str(proto_str, proto_object):
-  protobuf.text_format.Merge(str(proto_str), proto_object)
+  text_format.Merge(str(proto_str), proto_object)
   return proto_object
 
 def open_proto_str(proto_dir, proto_object):
