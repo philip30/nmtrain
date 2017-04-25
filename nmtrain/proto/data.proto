@@ -1,15 +1,24 @@
 syntax = "proto3";
 
-message ParallelData {
-  string source = 1;
-  string target = 2;
-  string reference = 3;
+message DataConfig {
+  uint32 batch = 1;
+  uint32 max_sent_length = 2;
+  int32 src_max_vocab = 3;
+  int32 trg_max_vocab = 4;
+  uint32 unk_cut = 5;
+  string sort_method = 6;
+  string batch_strategy = 7;
+  UnknownTraining unknown_training = 8;
+  BPEConfig bpe_config = 9;
 }
 
-message Corpus {
-  ParallelData train_data = 1;
-  ParallelData dev_data = 2;
-  ParallelData test_data = 3;
-  string src_lang = 4;
-  string trg_lang = 5;
+message UnknownTraining {
+  string method = 1;
+  double dropout_ratio = 2;
+  double corpus_divider = 3;
+} 
+
+message BPEConfig {
+  string src_codec = 1;
+  string trg_codec = 2;
 }

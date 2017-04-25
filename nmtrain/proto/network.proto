@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+message NetworkConfig {
+  string model = 1;
+  string attention_type = 2;
+  uint32 depth = 4; 
+  bool input_feeding = 5;
+  HiddenUnit hidden_units = 3;
+}
+
+message HiddenUnit {
+  uint32 stack_lstm = 1;
+  uint32 embed = 2;
+  uint32 attention = 3;
+}

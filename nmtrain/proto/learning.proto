@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+import "optimizer.proto";
+
+message LearningConfig {  
+  Dropout dropout = 1;
+  Optimizer optimizer = 2;
+  EarlyStop early_stop = 3;
+  LRDecay lr_decay = 4;
+  double gradient_clipping = 5;
+  double bptt_len = 6;
+  uint32 epoch = 7;
+}
+
+message Dropout {
+  double stack_lstm = 1;
+  double encode_embed = 2;
+  double decode_embed = 3;
+  double encode = 4;
+  double decode = 5;
+} 
+
+message EarlyStop {
+  uint32 ppl_worse_counter = 1;
+}
+
+message LRDecay {
+  uint32 after_iteration = 1;
+  double factor = 2;
+}

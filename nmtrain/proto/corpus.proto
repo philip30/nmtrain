@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+message ParallelData {
+  string source = 1;
+  string target = 2;
+  string reference = 3;
+}
+
+message Corpus {
+  ParallelData train_data = 1;
+  ParallelData dev_data = 2;
+  ParallelData test_data = 3;
+  string src_lang = 4;
+  string trg_lang = 5;
+}

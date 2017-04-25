@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "data.proto";
+import "corpus.proto";
 import "output.proto";
 import "evaluation.proto";
 import "post_process.proto";
