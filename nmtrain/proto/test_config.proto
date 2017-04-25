@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+import "data.proto";
+import "output.proto";
+import "evaluation.proto";
+import "post_process.proto";
+import "ensemble.proto";
+
+message ModelConfig {
+  string init_model = 1;
+}
+
+message InitModel {
+  repeated string model = 1;
+  Ensemble ensemble = 2;
+}
+
+message TestConfig {
+  uint32 beam = 1;
+  uint32 generation_limit = 2;
+  double word_penalty = 3;
+  TestOutput output = 4;
+  ParallelData test_data = 5;
+  Evaluation evaluation = 6;
+  TestPostProcess post_process = 7;
+  InitModel init_model = 8; 
+}
+

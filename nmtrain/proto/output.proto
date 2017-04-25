@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+message TrainOutput {
+  message GenerateReport {
+    bool generate = 1;
+    string path = 2;
+    bool attention = 3;
+  }
+  string model_out = 1;
+  bool save_models = 2;
+  GenerateReport report = 3;
+}
+
+message TestOutput {
+  string output_prefix  = 1;
+  bool generate_attention = 2;
+}
+

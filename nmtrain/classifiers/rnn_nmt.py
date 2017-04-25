@@ -2,41 +2,64 @@ import chainer
 import numpy
 import math
 
-import nmtrain.chner
-
 class RNN_NMT(object):
+  def __init__(self):
+    self.bptt = None
+    self.bptt_len = 0
+
+  def configure_bptt(self, bptt_func, bptt_len):
+    self.bptt = bptt_func
+    self.bptt_len = bptt_len
+
   """ Recurrent neural network neural machine translation"""
-  def train(self, model, src_batch, trg_batch, bptt, bptt_len=0, output_buffer=None):
+  def train(self, model, src_batch, trg_batch, outputer=None):
     batch_loss  = 0
     bptt_ctr    = 0
     model.encode(src_batch)
 
+    if outputer:
+      outputer.begin_collection(src=src_batch, ref=trg_batch)
     for i, trg_word in enumerate(trg_batch):
-      y_t = nmtrain.environment.VariableArray(model, trg_word)
+      y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.OFF)
       output = model.decode()
       batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
 
       # Truncated BPTT
-      if bptt_len > 0:
+      if self.bptt_len > 0:
         bptt_ctr += 1
-        if bptt_ctr == bptt_len:
+        if bptt_ctr == self.bptt_len:
           bptt(batch_loss)
           bptt_ctr = 0
 
-      if output_buffer is not None:
-        word = chainer.functions.argmax(output.y, axis=1)
-        word.to_cpu()
-        output_buffer[i] = word.data
+      if outputer:
+        outputer(output)
+    if outputer:
+      outputer.end_collection()
 
     return batch_loss / len(trg_batch)
+
+  def generate(self, model, src_batch, eos_id, generation_limit=128):
+    model.encode(src_batch)
+    batch_size = src_batch.shape[1]
+
+    ret = []
+    for i in range(generation_limit):
+      output = model.decode()
+      words  = chainer.functions.argmax(output.y, axis=1)
+      embed, h = model.update(words)
+      words.to_cpu()
+      ret.append(embed)
+      if all(word == eos_id for word in words.data):
+        break
+    return ret
 
   def eval(self, model, src_sent, trg_sent):
     loss = 0
     # Start Prediction
     model.encode(src_sent)
     for trg_word in trg_sent:
-      y_t    = nmtrain.environment.VariableArray(model, trg_word)
+      y_t    = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.ON)
       output = model.decode()
       loss  += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
@@ -57,9 +80,6 @@ class RNN_NMT(object):
         self.attention   = attention
         self.word_prob   = word_prob
         self.parent      = parent
-
-      def __str__(self):
-        return ", ".join([str(self.id), nmtrain.environment.trg_vocab.word(self.word), str(self.probability), str(self.parent.id)])
 
     # The n-argmax function
     def n_argmax(array, top):
@@ -86,7 +106,7 @@ class RNN_NMT(object):
         else:
           if state.word is not None:
             model.set_state(state.model_state)
-            word_var = nmtrain.environment.Variable(model.xp.array([state.word], dtype=numpy.int32))
+            word_var = chainer.Variable(model.xp.array([state.word], dtype=numpy.int32), volatile=chainer.ON)
             model.update(word_var)
 
           # Produce the output

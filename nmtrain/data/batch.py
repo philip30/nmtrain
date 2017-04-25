@@ -71,20 +71,10 @@ class BatchManager(object):
       new_batch()
 
   def arrange(self, indexes):
-    self.batch_indexes = indexes
+    self.batch_indexes = list(indexes)
 
-  def shuffle(self):
-    state_map = nmtrain.environment.random_state
-    previous_state = numpy.random.get_state()
-    if "numpy_shuffle" not in state_map:
-      state = state_map["numpy_init"]
-    else:
-      state = state_map["numpy_shuffle"]
-    numpy.random.set_state(state)
-    # Ensure the order of shuffle is same accross all seeds
-    numpy.random.shuffle(self.batch_indexes)
-    state_map["numpy_shuffle"] = numpy.random.get_state()
-    numpy.random.set_state(previous_state)
+  def shuffle(self, random):
+    random.shuffle(self.batch_indexes)
     return self.batch_indexes
 
   # Operators

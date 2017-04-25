@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+message BatchUpdate {
+  uint64 batchid = 1;
+  map<string, double> score = 2;
+  double time = 3;
+  uint32 trained_words = 4;
+  uint32 trained_sentence = 5;
+}
+
+message EpochUpdate {
+  double time = 1;
+  map<string, double> score = 2;
+  repeated BatchUpdate batch_updates = 3;
+  uint64 trained_words = 4;
+  uint64 trained_sentence = 5;
+}
+

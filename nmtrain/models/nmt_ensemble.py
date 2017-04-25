@@ -1,15 +1,23 @@
+import chainer
 import chainer.functions as F
 import numpy
 
 import nmtrain
 
 class EnsembleLinearInterpolateNMT(object):
-  def __init__(self, models):
+  def __init__(self, config, models):
     check_ensemble_ok(models)
     self.models = models
-
-    xp = self.models[0].xp
-    self.normalization_constant = xp.array(1.0 / len(self.models), dtype=numpy.float32)
+      nmtrain.log.warning("len(models) != len(weights) : %d != %d. Uniformly distributing weights" % (len(models), len(config.weight)))
+      weights = [1/len(models) for _ in len(models)]
+    else:
+      if abs(sum(config.weight) - 1) > 1e6:
+        nmtrain.log.warning("Sum weights (%f) != 1.0. Uniformly distributing weights" % (sum(config.weight)))
+        weights = [1/len(models) for _ in len(models)]
+      else:
+        weights = config.weight
+    self.weights = weights
+    self.xp = self.models[0].chainer_model.xp
 
   def encode(self, src_data):
     for model in self.models:
@@ -25,17 +33,16 @@ class EnsembleLinearInterpolateNMT(object):
       model.chainer_model.set_state(model_state)
 
   def decode(self):
-    arr_sum = None
-    a = None
+    y = 0
+    a = 0
     for i, model in enumerate(self.models):
       output = model.chainer_model.decode()
-      if i == 0:
-        arr_sum = output.y
-        if hasattr(output, "a"): a = output.a
+      y += F.scale(output.y, chainer.Variable(self.xp.array(self.weights[i], dtype=numpy.float32), volatile=chainer.ON))
+      if hasattr(output, "a"):
+        a += F.scale(output.a, chainer.Variable(self.xp.array(self.weights[i], dtype=numpy.float32), volatile=chainer.ON))
       else:
-        arr_sum += output.y
-    prob = F.scale(arr_sum, nmtrain.environment.Variable(self.normalization_constant))
-    return nmtrain.models.decoders.Output(y=prob, a=a)
+        a = None
+    return nmtrain.models.decoders.Output(y=y, a=a)
 
   def state(self):
     states = []
@@ -43,26 +50,15 @@ class EnsembleLinearInterpolateNMT(object):
       states.append(model.chainer_model.state())
     return states
 
+  def set_train(self, value):
+    for model in self.models:
+      model.chainer_model.set_train(value)
+
   def __getattr__(self, key):
     if key in self.__dict__:
       return self.__dict__[key]
     else:
       return getattr(self.models[0], key)
-
-class EnsembleLogSumNMT(EnsembleLinearInterpolateNMT):
-  def decode(self):
-    arr_sum = None
-    a = None
-    for i, model in enumerate(self.models):
-      output = model.chainer_model.decode()
-      output.y = F.log(output.y)
-      if i == 0:
-        arr_sum = output.y
-        if hasattr(output, "a"): a = output.a
-      else:
-        arr_sum += output.y
-    prob = F.exp(F.scale(arr_sum, nmtrain.environment.Variable(self.normalization_constant)))
-    return nmtrain.models.decoders.Output(y=prob, a=a)
 
 def check_ensemble_ok(models):
   assert(len(models) > 0)

@@ -31,27 +31,37 @@ class ParallelSentence(object):
     self.trg_sent = trg_sent
 
   def __len__(self):
-    return len(self.trg_sent)
+    if self.trg_sent is not None:
+      return len(self.trg_sent)
+    elif self.src_sent is not None:
+      return len(self.src_sent)
+    else:
+      return 0
 
   def __iter__(self):
     yield self.src_sent
-    if self.trg_sent is not None:
-      yield self.trg_sent
+    yield self.trg_sent
 
   def __str__(self):
     return str(self.src_sent) + " ||| " + str(self.trg_sent)
 
 # Generate a pair of sentence given parallel corpus
 def data_generator(src_data, trg_data):
-  for i in range(len(src_data)):
-    if trg_data is not None:
-      yield ParallelSentence(src_data[i], trg_data[i])
-    else:
-      yield ParallelSentence(src_data[i], None)
+  if src_data is not None and trg_data is not None:
+    for src, trg in zip(src_data, trg_data):
+      yield ParallelSentence(src, trg)
+  elif src_data is not None:
+    for src in src_data:
+      yield ParallelSentence(src, None)
+  elif trg_data is not None:
+    for trg in trg_data:
+      yield ParallelSentence(None, trg)
+  else:
+    raise ValueError("Both of src_data and trg_data is None??")
 
 # Represent ParallelCorpus
 class ParallelData(object):
-  def __init__(self, src, trg, mode, batch_manager,
+  def __init__(self, src, trg, batch_manager,
                wordid_converter=None, n_items=1, analyzer=None, filterer=None,
                sorter=None, bpe_codec=None):
     # The information about the location of its data
@@ -69,21 +79,27 @@ class ParallelData(object):
       return corpus
 
     src_codec, trg_codec = (None, None) if bpe_codec is None else bpe_codec
-    src_data = load_data(src, src_codec)
+    src_data, trg_data = None, None
+    if src is not None:
+      src_data = load_data(src, src_codec)
     if trg is not None:
       trg_data = load_data(trg, trg_codec)
-      # They need to be equal, otherwise they are not parallel data
+    # They need to be equal, otherwise they are not parallel data
+    if src_data is not None and trg_data is not None:
       assert(len(src_data) == len(trg_data))
-    else:
-      trg_data = None
 
-    ### Filter + Sort data
-    if mode == nmtrain.enumeration.DataMode.TRAIN:
-      data = filterer(data_generator(src_data, trg_data))
+    ### Filter data
+    data = data_generator(src_data, trg_data)
+    if filterer is not None:
+      data = filterer(data)
+    else:
+      data = list(data)
+
+    ### Sort data
+    if sorter is not None:
       data = sorter(data)
-    else:
-      data = list(data_generator(src_data, trg_data))
 
+    ### Analyze data
     if analyzer is not None:
       analyzer(data)
 

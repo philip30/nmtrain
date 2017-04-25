@@ -18,17 +18,12 @@ class UnknownNormalTrainer(UnknownTrainer):
   def __iter__(self):
     yield lambda batch: batch.normal_data
 
-class UnknownRedundancyTrainer(UnknownTrainer):
-  def __iter__(self):
-    yield lambda batch: batch.normal_data
-    yield lambda batch: batch.unk_data
-
 class UnknownWordDropoutTrainer(UnknownTrainer):
-  def __init__(self, gamma=5):
-    assert(gamma > 0 and type(gamma) == int), "Invalid Gamma value."
+  def __init__(self, corpus_divider=1):
+    assert(corpus_divider > 0 and type(corpus_divider) == int), "Invalid Gamma value."
     self.src_freq_map = None
     self.trg_freq_map = None
-    self.gamma = gamma
+    self.corpus_divider = corpus_divider
 
   def dropout_word(self, batch, freq_map, total_count):
     flag = numpy.zeros_like(batch)
@@ -57,7 +52,7 @@ class UnknownWordDropoutTrainer(UnknownTrainer):
   @functools.lru_cache(maxsize=2 ** 20)
   def dropout_prob(self, word_freq, total_count):
     prob_not_seen = 1 - (word_freq / total_count)
-    return math.exp(math.log(prob_not_seen) * total_count / self.gamma)
+    return math.exp(math.log(prob_not_seen) * total_count / self.corpus_divider)
 
   def __iter__(self):
     yield lambda batch: \
@@ -78,21 +73,12 @@ class UnknownSentenceDropoutTrainer(UnknownTrainer):
   def __iter__(self):
     yield lambda batch: self.dropout_sentence(batch)
 
-def from_string(string):
-  col = string.split(":")
-  method = col[0]
-  if len(col) == 1:
-    param_str = ""
-  else:
-    param_str = col[1]
-  if method == "redundancy":
-    return UnknownRedundancyTrainer()
-  elif method == "word_dropout":
-    param = util.parse_parameter(param_str, {"gamma": int})
-    return UnknownWordDropoutTrainer(**param)
+def from_config(config):
+  method = config.method
+  if method == "word_dropout":
+    return UnknownWordDropoutTrainer(corpus_divider = config.corpus_divider)
   elif method == "sentence_dropout":
-    param = util.parse_parameter(param_str, {"ratio": float})
-    return UnknownSentenceDropoutTrainer(**param)
+    return UnknownSentenceDropoutTrainer(dropout_ratio = config.dropout_ratio)
   elif method == "normal":
     return UnknownNormalTrainer()
   else:

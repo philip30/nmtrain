@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+import "data.proto";
+import "output.proto";
+import "optimizer.proto";
+import "test_config.proto";
+
+message DataConfig {
+  message UnknownTraining {
+    string method = 1;
+    double dropout_ratio = 2;
+    double corpus_divider = 3;
+  } 
+  uint32 batch = 1;
+  uint32 max_sent_length = 2;
+  int32 src_max_vocab = 3;
+  int32 trg_max_vocab = 4;
+  uint32 unk_cut = 5;
+  string sort_method = 6;
+  string batch_strategy = 7;
+  UnknownTraining unknown_training = 8;
+  BPEConfig bpe_config = 9;
+}
+
+message NetworkConfig {
+  message HiddenUnit {
+    uint32 stack_lstm = 1;
+    uint32 embed = 2;
+    uint32 attention = 3;
+  }
+  string model = 1;
+  string attention_type = 2;
+  uint32 depth = 4; 
+  bool input_feeding = 5;
+  HiddenUnit hidden_units = 3;
+}
+
+message LearningConfig {
+  message Dropout {
+    double stack_lstm = 1;
+    double encode_embed = 2;
+    double decode_embed = 3;
+    double encode = 4;
+    double decode = 5;
+  } 
+  message EarlyStop {
+    uint32 ppl_worse_counter = 1;
+  }
+  message LRDecay {
+    uint32 after_iteration = 1;
+    double factor = 2;
+  }
+  
+  Dropout dropout = 1;
+  Optimizer optimizer = 2;
+  EarlyStop early_stop = 3;
+  LRDecay lr_decay = 4;
+  double gradient_clipping = 5;
+  double bptt_len = 6;
+  uint32 epoch = 7;
+}
+
+message OutputConfig {
+  TrainOutput train = 1;
+  TestOutput dev = 2;
+  TestOutput test = 3;
+}
+
+message LexiconConfig {
+  string path = 1;
+  double alpha = 2;
+  string method = 3;
+}
+
+message BPEConfig {
+  string src_codec = 1;
+  string trg_codec = 2;
+}
+
+message TrainingConfig {
+  uint64 seed = 1;
+  int32 gpu = 2;
+  Corpus corpus = 3;
+  LearningConfig learning_config = 4;
+  NetworkConfig network_config = 5;
+  DataConfig data_config = 6;
+  OutputConfig output_config = 8;
+  string init_model = 9;
+
+  // Other Config
+  BPEConfig bpe_config = 10;
+  TestConfig test_config = 11;
+  LexiconConfig lexicon_config = 12;
+}

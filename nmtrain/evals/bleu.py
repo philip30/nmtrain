@@ -4,7 +4,7 @@ import sys
 
 from collections import defaultdict
 
-def calculate_bleu_corpus (hypothesis, reference, ngram=4, smooth=0, verbose=False):
+def calculate_bleu_corpus(hypothesis, reference, ngram=4, smooth=0, verbose=False):
   hyp_stats = []
   ref_stats = []
   for hyp, ref in itertools.zip_longest(hypothesis, reference):

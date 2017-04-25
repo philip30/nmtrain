@@ -1,3 +1,5 @@
+import google.protobuf as protobuf
+
 def parse_parameter(opt_param, param_mapping):
   if len(opt_param) == 0:
     return {}
@@ -10,3 +12,12 @@ def parse_parameter(opt_param, param_mapping):
     else:
       param[param_str[0]] = param_mapping[param_str[0]](param_str[1])
   return param
+
+def parse_proto_str(proto_str, proto_object):
+  protobuf.text_format.Merge(str(proto_str), proto_object)
+  return proto_object
+
+def open_proto_str(proto_dir, proto_object):
+  with open(proto_dir, "r") as fp:
+    return parse_proto_str(fp.read(), proto_object)
+

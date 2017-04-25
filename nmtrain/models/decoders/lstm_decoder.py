@@ -1,27 +1,36 @@
 import chainer
-
 import nmtrain
 
-class LSTMDecoder(chainer.Chain):
-  def __init__(self, out_size, embed_size, hidden_size, dropout_ratio, lstm_depth):
-    super(LSTMDecoder, self).__init__(
-      decoder       = nmtrain.chner.StackLSTM(embed_size, hidden_size, lstm_depth, dropout_ratio),
-      affine_vocab  = chainer.links.Linear(hidden_size, out_size),
-      output_embed  = chainer.links.EmbedID(out_size, embed_size),
-      state_init    = chainer.links.Linear(hidden_size, embed_size)
-    )
+from chainer.links import EmbedID
+from chainer.links import Linear
+from chainer.functions import dropout
+from nmtrain.chner import StackLSTM
 
-  def __call__(self):
-    mem_optimize = nmtrain.optimization.chainer_mem_optimize
-    y =  mem_optimize(self.affine_vocab, chainer.functions.tanh(self.h), level=1)
+class LSTMDecoder(chainer.Chain):
+  def __init__(self, out_size, hidden_units, dropouts, lstm_depth):
+    super(LSTMDecoder, self).__init__()
+    E = hidden_units.embed
+    H = hidden_units.stack_lstm
+    D = lstm_depth
+    # Links
+    self.add_link("decoder", StackLSTM(E, H, D, dropouts.stack_lstm))
+    self.add_link("affine_vocab", Linear(H, out_size))
+    self.add_link("output_embed", EmbedID(out_size, E))
+    self.add_link("state_init", Linear(H, E))
+    # Attributes
+    self.dropouts = dropouts
+
+  def __call__(self, is_train):
+    y =  self.affine_vocab(chainer.functions.tanh(self.h))
     return nmtrain.models.decoders.Output(y=y)
 
-  def init(self, h):
+  def init(self, h, is_train):
     self.decoder.reset_state()
-    self.h = self.decoder(self.state_init(h))
+    self.h = self.decoder(self.state_init(h), is_train)
 
-  def update(self, next_word):
-    self.h = self.decoder(self.output_embed(next_word))
+  def update(self, next_word, is_train):
+    self.h = self.decoder(self.output_embed(next_word), is_train)
+    return self.h
 
   def set_state(self, state):
     self.h, state = state

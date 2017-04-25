@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+message Parameters {
+  message Adam {
+    double alpha = 1;
+    double beta1 = 2;
+    double beta2 = 3;
+    double eps = 4;
+  }
+  message SGD {
+    double LR = 1;
+  }
+  Adam adam = 1;
+  SGD sgd = 2;
+}
+
+message Optimizer {
+  string type = 1;
+  Parameters params = 2;
+}

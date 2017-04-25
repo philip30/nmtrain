@@ -3,95 +3,52 @@ import gc
 import math
 
 import nmtrain
-import nmtrain.data
-import nmtrain.model
-import nmtrain.serializer
-import nmtrain.watcher
-import nmtrain.reporter
-import nmtrain.log as log
 
 class MaximumLikelihoodTrainer:
-  def __init__(self, args):
-    # If init_model is provided, args will be overwritten
-    # Inside the constructor of NmtrainModel using the 
-    # previous training specification.
-    self.nmtrain_model = nmtrain.NmtrainModel(args)
+  def __init__(self, config):
+    # NmtrainModel encapsulates the chainer model.
+    self.nmtrain_model = nmtrain.NmtrainModel(config)
+    # Data Manager take care of the data
     self.data_manager  = nmtrain.data.DataManager()
+    # Unknown Trainer for unknown word
+    self.unknown_trainer = nmtrain.trainers.unknown_trainers.from_config(config.data_config.unknown_training)
     # Training Parameters
-    self.maximum_epoch  = args.epoch
-    self.bptt_len       = args.bptt_len
-    self.early_stop_num = args.early_stop
-    self.save_models    = args.save_models
-    # Unknown Trainers
-    self.unknown_trainer = nmtrain.data.unknown_trainer.from_string(args.unknown_training)
-    # Location of output model
-    self.model_file = args.model_out
-    # SGD lr decay factor
-    self.sgd_lr_decay_factor = args.sgd_lr_decay_factor
-    self.sgd_lr_decay_after  = args.sgd_lr_decay_after
-    # Testing configuration
-    self.test_beam         = args.test_beam
-    self.test_word_penalty = args.test_word_penalty
-    self.test_gen_limit    = args.test_gen_limit
+    corpus          = config.corpus
     # Load in the real data
-    log.info("Loading Data")
-    self.data_manager.load_train(src              = args.src,
-                                 trg              = args.trg,
-                                 src_voc          = self.nmtrain_model.src_vocab,
-                                 trg_voc          = self.nmtrain_model.trg_vocab,
-                                 src_dev          = args.src_dev,
-                                 trg_dev          = args.trg_dev,
-                                 src_test         = args.src_test,
-                                 trg_test         = args.trg_test,
-                                 batch_size       = args.batch,
-                                 unk_cut          = args.unk_cut,
-                                 src_max_vocab    = args.src_max_vocab,
-                                 trg_max_vocab    = args.trg_max_vocab,
-                                 max_sent_length  = args.max_sent_length,
-                                 sort_method      = args.sort_method,
-                                 batch_strategy   = args.batch_strategy,
-                                 unknown_trainer  = self.unknown_trainer,
-                                 bpe_codec        = self.nmtrain_model.bpe_codec)
-    log.info("Loading Finished.")
+    nmtrain.log.info("Loading Data")
+    self.data_manager.load_train(config.corpus, config.data_config, self.nmtrain_model)
+    nmtrain.log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model()
 
-  def train(self, classifier):
-    state   = self.nmtrain_model.training_state
-    # Watcher is the supervisor of this training
-    # It will watch and record everything happens during training
-    watcher = nmtrain.watcher.TrainingWatcher(state,
-                                              self.nmtrain_model.src_vocab,
-                                              self.nmtrain_model.trg_vocab,
-                                              self.early_stop_num)
-    # Reporter
-    reporter = nmtrain.reporter.TrainingReporter(self.nmtrain_model.specification,
-                                                 self.nmtrain_model.src_vocab,
-                                                 self.nmtrain_model.trg_vocab)
+  def __call__(self, classifier):
+    state           = self.nmtrain_model.state
+    learning_config = self.nmtrain_model.config.learning_config
+    output_config   = self.nmtrain_model.config.output_config
+    test_config     = self.nmtrain_model.config.test_config
+    # The outputers is the one who is responsible in outputing the 
+    # results to screen, or other streams
+    outputer = nmtrain.outputers.Outputer(self.nmtrain_model.src_vocab, self.nmtrain_model.trg_vocab)
+    outputer.register_outputer("train", output_config.train)
+    outputer.register_outputer("dev", output_config.dev)
+    outputer.register_outputer("test", output_config.test)
+    # Updater
+    watcher = nmtrain.structs.watchers.Watcher(state)
+    # Tester
+    tester = nmtrain.testers.tester.Tester(watcher, classifier, self.nmtrain_model, outputer, test_config)
     # The original chainer model
     model   = self.nmtrain_model.chainer_model
     # Our data manager
     data    = self.data_manager
     # Chainer optimizer
     optimizer = self.nmtrain_model.optimizer
-    # Save function
-    save = lambda suffix: nmtrain.serializer.save(self.nmtrain_model, self.model_file + suffix)
-    # Snapshot save function
-    snapshot_counter = 0
-    snapshot_threshold = self.nmtrain_model.specification.save_snapshot
 
     # Special case for word_dropout unknown trainer
-    if self.unknown_trainer.__class__ == nmtrain.data.unknown_trainer.UnknownWordDropoutTrainer:
+    if self.unknown_trainer.__class__ == nmtrain.trainers.unknown_trainers.UnknownWordDropoutTrainer:
       self.unknown_trainer.src_freq_map = data.analyzer.src_analyzer.count_word_id_map(self.nmtrain_model.src_vocab)
       self.unknown_trainer.trg_freq_map = data.analyzer.trg_analyzer.count_word_id_map(self.nmtrain_model.trg_vocab)
 
-    # If test data is provided, prepare the appropriate watcher
-    if data.has_test_data:
-      self.test_state = nmtrain.model.TestState()
-      test_watcher = nmtrain.watcher.TestWatcher(self.test_state,
-                                                 self.nmtrain_model.src_vocab,
-                                                 self.nmtrain_model.trg_vocab)
-
+    # BPTT callback
     def bptt(batch_loss):
       """ Backpropagation through time """
       if math.isnan(float(batch_loss.data)):
@@ -103,100 +60,82 @@ class MaximumLikelihoodTrainer:
       batch_loss.unchain_backward()
       optimizer.update()
 
+    # Configure classfier
+    classifier.configure_bptt(bptt, learning_config.bptt_len)
+
     # Before Training Describe the model
-    self.nmtrain_model.describe()
+    nmtrain.log.info("\n", str(self.nmtrain_model.config))
 
     # Training with maximum likelihood estimation
-    data.arrange(state.batch_indexes)
-    for ep in range(state.finished_epoch, self.maximum_epoch):
-      ep_arrangement = data.shuffle()
-      watcher.begin_epoch()
-      for batch_retriever in self.unknown_trainer:
-        for batch in data.train_data:
+    start_epoch = state.last_trained_epoch
+    end_epoch   = learning_config.epoch
+    self.nmtrain_model.state.record_start_epoch(self.nmtrain_model.config)
+    for ep in range(start_epoch, end_epoch):
+      ep_arrangement = data.arrange(ep)
+
+      # Training Iterations
+      watcher.begin_train_epoch()
+      model.set_train(True)
+      for batch in data.train_data:
+        for batch_retriever in self.unknown_trainer:
           src_batch, trg_batch = batch_retriever(batch)
-          # Reporting placeholder
-          if not reporter.is_reporting:
-            output_buffer = None
-          else:
-            output_buffer = numpy.zeros_like(trg_batch, dtype=numpy.int32)
 
+          watcher.begin_batch()
           # Prepare for training
-          watcher.batch_begin()
-          batch_loss = classifier.train(model, src_batch, trg_batch,
-                                        bptt=bptt,
-                                        bptt_len=self.bptt_len,
-                                        output_buffer=output_buffer)
-          # Generate summary of batch training and keep track of it
-          watcher.batch_update(loss=batch_loss.data,
-                               batch_size=len(trg_batch[0]),
-                               col_size=len(trg_batch)-1,
-                               id=batch.id)
-          # Report per sentence training if wished
-          reporter.train_report(src_batch, trg_batch, output_buffer)
-          # BPTT
+          batch_loss = classifier.train(model, src_batch, trg_batch, outputer.train)
+          # BPTT 
           bptt(batch_loss)
+          # Generate summary of batch training and keep track of it
+          watcher.end_batch(loss=batch_loss.data,
+                            src_shape=src_batch.shape,
+                            trg_shape=trg_batch.shape,
+                            batch_id=batch.id)
+      watcher.end_train_epoch()
 
-          # Saving snapshots
-          if snapshot_threshold > 0:
-            snapshot_counter += len(trg_batch.data[0])
-            if snapshot_counter > snapshot_threshold:
-              snapeshot_counter = 0
-              save("-snapshot")
-
-      watcher.end_epoch(ep_arrangement)
-
+      # Cleaning up
       gc.collect()
 
       # Evaluation on Development set
+      model.set_train(False)
       if data.has_dev_data:
-        nmtrain.environment.set_test()
-        watcher.begin_evaluation()
-        for batch in data.dev_data:
-          src_sent, trg_sent = batch.normal_data
-          # Prepare for evaluation
-          watcher.start_prediction()
-          loss = classifier.eval(model, src_sent, trg_sent)
-          # TODO(philip30): If we want to do prediction during dev-set 
-          # call the prediction method here
-          watcher.end_prediction(loss = loss)
-        watcher.end_evaluation(data.dev_data, self.nmtrain_model.trg_vocab)
-        nmtrain.environment.set_train()
+        outputer.dev.begin_collection(ep)
+        tester(model    = model,
+               data     = data.dev_data,
+               mode     = nmtrain.testers.DEV,
+               outputer = outputer.dev)
+        outputer.dev.end_collection()
 
       # Incremental testing if wished
       if data.has_test_data:
-        nmtrain.environment.set_test()
-        tester = nmtrain.Tester(data=data, watcher=test_watcher,
-                                src_vocab=self.nmtrain_model.src_vocab,
-                                trg_vocab=self.nmtrain_model.trg_vocab,
-                                classifier=classifier,
-                                predict=True, eval_ppl=True)
-        tester.test(model = model,
-                    word_penalty = self.test_word_penalty,
-                    beam_size = self.test_beam,
-                    gen_limit = self.test_gen_limit)
-        nmtrain.environment.set_train()
+        outputer.test.begin_collection(ep)
+        tester(model    = model,
+               data     = data.test_data,
+               mode     = nmtrain.testers.TEST,
+               outputer = outputer.test)
+        outputer.test.end_collection()
 
       # Check if dev perplexities decline
-      dev_ppl_decline = False
-      if len(state.dev_perplexities) >= 2:
-        dev_ppl_decline = state.dev_perplexities[-1] > state.dev_perplexities[-2]
+      dev_ppl_decline = state.is_ppl_decline()
 
-      # SGD Decay
-      if ep + 1 >= self.sgd_lr_decay_after or dev_ppl_decline:
+      # LR Decay
+      if ep + 1 >= learning_config.lr_decay.after_iteration or dev_ppl_decline:
         if optimizer.__class__.__name__ == "SGD":
-          optimizer.lr *= self.sgd_lr_decay_factor
-          nmtrain.log.info("SGD LR:", optimizer.lr)
+          optimizer.lr *= learning_config.lr_decay.factor
+          nmtrain.log.info("Decreasing lr by %f, now sgd lr: %f" % (learning_config.lr_decay.factor, optimizer.lr))
         elif optimizer.__class__.__name__ == "Adam":
-          optimizer.alpha *= self.sgd_lr_decay_factor
-          nmtrain.log.info("Adam Alpha:", optimizer.alpha)
+          optimizer.alpha *= learning_config.lr_decay.factor
+          nmtrain.log.info("Decreasing alpha by %f, now adam lr: %f", (learning_config.lr_decay.facdtor, optimizer.alpha))
 
-      # Save the model incrementally if wished
-      if self.save_models:
-        save("-" + str(state.finished_epoch))
+      # Tell Chainer optimizer to increment the epoch
+      optimizer.new_epoch()
+      state.new_epoch()
 
-      # Stop Early, otherwise, save
-      if watcher.should_early_stop():
+      # Save the model
+      outputer.train.save_model(self.nmtrain_model)
+
+      # Early stopping
+      ppl_worse_counter = learning_config.early_stop.ppl_worse_counter
+      if ppl_worse_counter != 0 and state.no_dev_ppl_improvement_after(ppl_worse_counter):
+        nmtrain.log.info("No dev ppl improvement after %d iterations. Finishing early." %(ppl_worse_counter))
         break
-      elif watcher.should_save() and not self.save_models:
-        save("")
 
