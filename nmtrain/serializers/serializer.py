@@ -101,6 +101,8 @@ def load(reader, from_config):
   lexicon_path = os.path.join(tmpdir, LEXICON)
   if os.path.exists(lexicon_path):
     reader.load_lexicon(proto_load(lexicon_path, nmtrain.dictionary_pb.Lexicon()))
+  else:
+    reader.load_lexicon(None)
 
   # Loading BPE Codec
   bpe_path = os.path.join(tmpdir, BPE_CODEC)

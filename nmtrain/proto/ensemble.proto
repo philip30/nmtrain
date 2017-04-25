@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message LinearInterpolation {
+  repeated float weight = 1;
+}
+message Ensemble {
+  string method = 1;
+  LinearInterpolation linear_interpolation = 2;
+}

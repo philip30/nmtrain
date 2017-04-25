@@ -1,0 +1,41 @@
+beam: 8
+generation_limit: 80
+word_penalty: 0.5
+
+test_data {
+  # REQUIRED
+  source: ""
+  # REQUIRED
+  target: ""
+}
+
+output {
+  output_prefix: "STDOUT"
+  generate_attention: true
+}
+
+evaluation {
+  bleu {
+    annotation: "bleu"
+    ngram: 4
+    smooth: 0
+  }
+  eval_ppl: true
+}
+
+post_process {
+  unknown_replacement {
+    lexicon_path: ""
+  }
+}
+
+init_model {
+  # REQUIRED
+  model: ""
+  ensemble {
+    method: "lint"
+    linear_interpolation {
+      weight: 0.5
+    }
+  }
+}

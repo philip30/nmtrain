@@ -35,7 +35,7 @@ class TestBatchManager(unittest.TestCase):
   def test_shuffle(self):
     data = ["1st", "2nd", "3rd", "4th", "5th"]
     self.manager.load(data, n_items = 1)
-    self.manager.shuffle()
+    self.manager.shuffle(numpy.random.RandomState(seed=17))
     batches = self.manager
 
     self.assertEqual(batches[0].data[0], "5th")
@@ -48,7 +48,7 @@ class TestBatchManager(unittest.TestCase):
     data = ["1st", "2nd", "3rd", "4th", "5th"]
     expected = ["5th", "1st", "3rd", "4th", "2nd"]
     self.manager.load(data, n_items = 1)
-    self.manager.shuffle()
+    self.manager.shuffle(numpy.random.RandomState(seed=17))
     for i, batch in enumerate(self.manager):
       self.assertEqual(batch.data[0], expected[i])
 

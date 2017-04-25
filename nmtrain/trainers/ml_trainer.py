@@ -99,7 +99,8 @@ class MaximumLikelihoodTrainer:
       model.set_train(False)
       if data.has_dev_data:
         outputer.dev.begin_collection(ep)
-        tester(data     = data.dev_data,
+        tester(model    = model,
+               data     = data.dev_data,
                mode     = nmtrain.testers.DEV,
                outputer = outputer.dev)
         outputer.dev.end_collection()
@@ -107,7 +108,8 @@ class MaximumLikelihoodTrainer:
       # Incremental testing if wished
       if data.has_test_data:
         outputer.test.begin_collection(ep)
-        tester(data     = data.test_data,
+        tester(model    = model,
+               data     = data.test_data,
                mode     = nmtrain.testers.TEST,
                outputer = outputer.test)
         outputer.test.end_collection()

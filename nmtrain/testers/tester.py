@@ -10,12 +10,12 @@ class Tester(object):
   def __init__(self, watcher, classifier, model, outputer, config):
     self.watcher = watcher
     self.classifier = classifier
-    self.model = model
+    self.eos_id = model.trg_vocab.eos_id()
     self.evaluator = evaluator.Evaluator(config.evaluation)
     self.post_processor = TestPostProcessor(model.src_vocab, model.trg_vocab, config.post_process)
     self.config = config
 
-  def __call__(self, data, mode, outputer):
+  def __call__(self, model, data, mode, outputer):
     self.epoch(mode, "begin")
     self.evaluator.reset()
     ### Variables
@@ -27,13 +27,13 @@ class Tester(object):
       self.watcher.begin_batch()
       # Evaluating PPL with beam=1
       if eval_ppl and trg_sent is not None:
-        loss = self.classifier.eval(self.model.chainer_model, src_sent, trg_sent)
+        loss = self.classifier.eval(model, src_sent, trg_sent)
       else:
         loss = None
       # Doing prediction if other score is wished
       if predict:
-        predict_output = self.classifier.predict(self.model.chainer_model, src_sent,
-                                                 eos_id       = self.model.trg_vocab.eos_id(),
+        predict_output = self.classifier.predict(model, src_sent,
+                                                 eos_id       = self.eos_id,
                                                  word_penalty = self.config.word_penalty,
                                                  gen_limit    = self.config.generation_limit,
                                                  beam         = self.config.beam)

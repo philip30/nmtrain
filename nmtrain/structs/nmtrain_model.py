@@ -23,6 +23,7 @@ class NmtrainModel(object):
 
   def finalize_model(self):
     if self.lexicon is None and self.config.lexicon_config.path:
+      nmtrain.log.info("Constructing lexicon...")
       self.lexicon = nmtrain.structs.lexicon.Lexicon(self.src_vocab, self.trg_vocab,
                                                      self.config.lexicon_config.alpha,
                                                      self.config.lexicon_config.method,
@@ -34,11 +35,14 @@ class NmtrainModel(object):
       self.bpe_codec = None, None
 
     if self.chainer_model is None:
+      nmtrain.log.info("Constructing model...")
       self.chainer_model = from_spec(self.config.network_config, self.config.learning_config,
                                      self.src_vocab, self.trg_vocab, self.lexicon)
+      nmtrain.log.info("Setting up optimizer...")
       self.optimizer.setup(self.chainer_model)
 
       # Initializing model
+      nmtrain.log.info("Initializing weight uniformly [-0.1, 0.1]...")
       initializer = chainer.initializers.Uniform(scale=0.1)
       for name, array in sorted(self.chainer_model.namedparams()):
         initializer(array.data)
@@ -48,7 +52,9 @@ class NmtrainModel(object):
 
     # Put the model into GPU if used
     if nmtrain.environment.use_gpu():
+      nmtrain.log.info("Copying model to GPU")
       self.chainer_model.to_gpu(nmtrain.environment.gpu)
+    nmtrain.log.info("Model constructed!")
 
   def describe(self):
     pass
@@ -56,6 +62,10 @@ class NmtrainModel(object):
   @property
   def xp(self):
     return self.chainer_model.xp
+
+  @property
+  def nmtrain_state(self):
+    return self.state
 
 ## ROUTINES
 def parse_optimizer(optimizer):

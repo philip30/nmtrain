@@ -26,10 +26,13 @@ class Evaluator(object):
         key = bleu_config.annotation
         if key == "":
           key = "bleu-" + str(bleu_config.ngram) + ("-s(%d)" % bleu_config.smooth)
-        value = bleu.calculate_bleu_corpus(hypothesis = self.prediction,
+        bleu_obj = bleu.calculate_bleu_corpus(hypothesis = self.prediction,
                                            reference  = ref_generator(),
                                            ngram      = bleu_config.ngram,
                                            smooth     = bleu_config.smooth)
-        score[key] = value.value()
+        nmtrain.log.info("EVAL_BLEU =", str(bleu_obj))
+        score[key] = bleu_obj.value() * 100
+        score[key + "_bp"] = bleu_obj.brevity_penalty
 
     return score
+

@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 import nmtrain
 import chainer
 
@@ -86,12 +86,23 @@ class TestOutputer(object):
     else:
       nmtrain.log.info("Collecting output at: \"" + self.prefix + "\"")
 
-  def begin_collection(self, epoch):
+  def begin_collection(self, epoch=None):
     if self.prefix:
       os.makedirs(os.path.abspath(os.path.join(self.prefix, os.pardir)), exist_ok=True)
-      add_stream(self.prefix + "_" + str(epoch) + ".out", self.streams)
+      if self.prefix != "STDERR" and self.prefix != "STDOUT":
+        suffix_attn = ".attn"
+        suffix_out  = ".out"
+      else:
+        suffix_attn = ""
+        suffix_out  = ""
+      if epoch is not None:
+        epoch_middle = "_" + str(epoch)
+      else:
+        epoch_middle = ""
+
+      add_stream(self.prefix + epoch_middle + suffix_out, self.streams)
       if self.generate_attention:
-        add_stream(self.prefix + "_" + str(epoch) + ".attn", self.streams)
+        add_stream(self.prefix + epoch_middle + suffix_attn, self.streams)
         self.attention_writer = nmtrain.outputers.AttentionWriter(self.streams[-1], self.src_vocab, self.trg_vocab)
 
   def end_collection(self):

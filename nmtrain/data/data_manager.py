@@ -70,12 +70,14 @@ class DataManager(object):
     # return the training data
     return self.train_data
 
-  def load_test(self, src, src_voc, trg_voc, ref=None, bpe_codec=None):
-    test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_voc, trg_voc)
-    self.test_data = ParallelData(src              = src,
-                                  trg              = ref,
+  def load_test(self, data, nmtrain_model):
+    src_vocab = nmtrain_model.src_vocab
+    trg_vocab = nmtrain_model.trg_vocab
+    bpe_codec = nmtrain_model.bpe_codec
+    test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab)
+    self.test_data = ParallelData(src              = data.source,
+                                  trg              = data.target,
                                   batch_manager    = nmtrain.data.BatchManager("sent"),
-                                  mode             = nmtrain.enumeration.DataMode.TEST,
                                   n_items          = 1,
                                   bpe_codec        = bpe_codec,
                                   wordid_converter = test_converter)

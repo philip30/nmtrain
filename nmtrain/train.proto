@@ -1,5 +1,6 @@
 # GPU to use
 gpu: -1
+seed: 0
 
 # Corpus Information
 corpus {

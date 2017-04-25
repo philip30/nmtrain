@@ -73,6 +73,10 @@ class BatchManager(object):
   def arrange(self, indexes):
     self.batch_indexes = list(indexes)
 
+  def shuffle(self, random):
+    random.shuffle(self.batch_indexes)
+    return self.batch_indexes
+
   # Operators
   def __len__(self):
     return len(self.batch_indexes)
