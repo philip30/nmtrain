@@ -20,7 +20,6 @@ WEIGHT    = "mod.weight"
 LEXICON   = "mod.lexicon"
 BPE_CODEC = "mod.bpe_codec"
 NUMPY_RANDOM = "numpy.state"
-CUDA_RANDOM = "cuda.state"
 
 def save(model, out_file):
   tmpdir = tempfile.mkdtemp()
@@ -39,8 +38,6 @@ def save(model, out_file):
   # Saving training state
   proto_save(os.path.join(tmpdir, STATE), model.state.data)
   pickle_save(os.path.join(tmpdir, NUMPY_RANDOM), numpy.random.get_state())
-  if hasattr(chainer.cuda, "cupy"):
-    pickle_save(os.path.join(tmpdir, CUDA_RANDOM), chainer.cuda.cupy.random.get_state())
 
   # Saving Weight
   chainer.serializers.save_npz(os.path.join(tmpdir, WEIGHT), model.chainer_model)
@@ -65,7 +62,6 @@ def save(model, out_file):
     write_zip(zf, os.path.join(tmpdir, NUMPY_RANDOM))
     if model.lexicon is not None: write_zip(zf, os.path.join(tmpdir, LEXICON))
     if hasattr(model, "bpe_codec"): write_zip(zf, os.path.join(tmpdir, BPE_CODEC))
-    if hasattr(chainer.cuda, "cupy"): write_zip(zf, os.path.join(tmpdir, CUDA_RANDOM))
   finally:
     zf.close()
 
@@ -91,11 +87,8 @@ def load(reader, from_config):
   # Loading training state
   state = proto_load(os.path.join(tmpdir, STATE), nmtrain.state_pb.NmtrainState())
   numpy_state = os.path.join(tmpdir, NUMPY_RANDOM)
-  cuda_state = os.path.join(tmpdir, CUDA_RANDOM)
   reader.load_state(state)
   numpy.random.set_state(pickle_load(numpy_state))
-  if hasattr(chainer.cuda, "cupy"):
-    chainer.cuda.cupy.set_state(pickle_load(cuda_state))
 
   # Loading Lexicon
   lexicon_path = os.path.join(tmpdir, LEXICON)

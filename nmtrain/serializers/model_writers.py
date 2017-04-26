@@ -10,8 +10,10 @@ class TrainModelWriter(object):
     if self.save_models:
       cols = self.out_prefix.rsplit(".", 1)
       cols[0] += "-%02d" % (epoch)
-      if len(cols == 2):
+      if len(cols) == 2:
         name = cols[0] + "." + cols[1]
+        if cols[1] != "zip":
+          name += ".zip"
       else:
         name = cols[0] + ".zip"
     else:
