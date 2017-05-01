@@ -26,7 +26,6 @@ class RNN_NMT(object):
     model.encode(src_batch)
 
     if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
-
     for i, trg_word in enumerate(trg_batch):
       y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.OFF)
       output = model.decode()
@@ -42,7 +41,6 @@ class RNN_NMT(object):
 
       if outputer: outputer(output)
     if outputer: outputer.end_collection()
-
     return batch_loss / len(trg_batch)
 
   def train_mrt(self, model, src_batch, trg_batch, outputer=None):
@@ -179,7 +177,7 @@ class RNN_NMT(object):
     ## Collecting output
     cur_state  = beam_prediction[0]
     # attention
-    attention_available = hasattr(cur_state, "attention")
+    attention_available = cur_state.attention is not None
     attention = [] if attention_available else None
     # probability of each time step
     probabilities = [] if store_probabilities else None
@@ -198,12 +196,8 @@ class RNN_NMT(object):
     # Output: Attention
     if attention_available:
       output.attention = numpy.concatenate(list(reversed(attention)), axis=1)
-    else:
-      output.attention = None
     # Output: Word probabilities
     if store_probabilities:
       output.probabilities = numpy.concatenate(list(reversed(probabilities)), axis=1)
-    else:
-      output.probabilities = None
     return output
 

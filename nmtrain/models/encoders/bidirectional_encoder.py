@@ -32,8 +32,8 @@ class BidirectionalEncoder(chainer.Chain):
     # Perform encoding
     src_sent = self.xp.array(src_data, dtype=numpy.int32)
     for j in range(len(src_sent)):
-      fe = self.encode_forward(embed_dropout(self.embed(chainer.Variable(src_data[j], volatile=volatile))), is_train)
-      be = self.encode_backward(embed_dropout(self.embed(chainer.Variable(src_data[-j-1], volatile=volatile))), is_train)
+      fe = self.encode_forward(embed_dropout(self.embed(chainer.Variable(src_sent[j], volatile=volatile))), is_train)
+      be = self.encode_backward(embed_dropout(self.embed(chainer.Variable(src_sent[-j-1], volatile=volatile))), is_train)
     encoded = concat((fe,be), axis=1)
 
     return dropout(self.encode_project(encoded), ratio=self.dropouts.encode, train=is_train)

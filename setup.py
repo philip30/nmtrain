@@ -7,7 +7,6 @@ install_requires = [
   'Chainer>=1.18',
   'numpy>=1.9.0',
   'tabulate>=0.7.7',
-  'wcwidth',
   'protobuf>=3.1.0'
 ]
 
