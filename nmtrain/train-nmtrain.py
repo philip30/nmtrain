@@ -20,7 +20,7 @@ def main(args):
   nmtrain.environment.init(config)
 
   # Load up data
-  trainer = nmtrain.trainers.MaximumLikelihoodTrainer(config)
+  trainer = nmtrain.trainers.NMTTrainer(config)
   trainer(nmtrain.classifiers.RNN_NMT())
 
 def sanity_check(config):
@@ -33,15 +33,15 @@ def sanity_check(config):
     log.fatal_if(not os.path.exists(corpus.train_data.source), "Could not find:", corpus.train_data.source)
     log.fatal_if(not os.path.exists(corpus.train_data.target), "Could not find:", corpus.train_data.target)
   ## Dev Data
-  if not corpus.dev_data.source and not corpus.dev_data.target or \
-      not corpus.dev_data.target and not corpus.dev_data.source:
+  if not corpus.dev_data.source and corpus.dev_data.target or \
+     corpus.dev_data.target and not corpus.dev_data.source:
         log.fatal("Need to specify both source and target (or not at all) for dev data")
   elif corpus.dev_data.source and corpus.dev_data.target:
     log.fatal_if(not os.path.exists(corpus.dev_data.source), "Could not find:", corpus.dev_data.source)
     log.fatal_if(not os.path.exists(corpus.dev_data.target), "Could not find:", corpus.dev_data.target)
   ## Test Data
-  if not corpus.test_data.source and not corpus.test_data.target or \
-      not corpus.test_data.target and not corpus.test_data.source:
+  if not corpus.test_data.source and corpus.test_data.target or \
+     corpus.test_data.target and not corpus.test_data.source:
         log.fatal("Need to specify both source and target (or not at all) for test data")
   elif corpus.test_data.source and corpus.test_data.target:
     log.fatal_if(not os.path.exists(corpus.test_data.source), "Could not find:", corpus.test_data.source)

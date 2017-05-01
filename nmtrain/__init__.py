@@ -21,6 +21,7 @@ state_pb = importer.load_module("state_pb2")
 
 # Loading Rest of the modules
 import nmtrain.data
+import nmtrain.minrisk
 import nmtrain.structs
 import nmtrain.environment
 import nmtrain.third_party

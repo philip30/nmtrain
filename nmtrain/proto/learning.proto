@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "optimizer.proto";
+import "evaluation.proto";
 
 message LearningConfig {  
   Dropout dropout = 1;
@@ -10,6 +11,7 @@ message LearningConfig {
   double gradient_clipping = 5;
   double bptt_len = 6;
   uint32 epoch = 7;
+  Learning learning = 8;
 }
 
 message Dropout {
@@ -27,4 +29,16 @@ message EarlyStop {
 message LRDecay {
   uint32 after_iteration = 1;
   double factor = 2;
+}
+
+message Learning {
+  string method = 1;
+  MRT mrt = 2;
+}
+
+message MRT {
+  uint64 sampling_frequency = 1;
+  double sharpness = 2;
+  string eval_type = 3;
+  BLEU bleu = 4;
 }

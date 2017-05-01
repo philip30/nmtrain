@@ -62,8 +62,7 @@ class TrainOutputer(object):
 
   def collect_output(self, output, key):
     if hasattr(output, key):
-      targeted = getattr(output, key)
-      targeted.to_cpu()
+      targeted = chainer.functions.copy(getattr(output, key), -1)
       self.buffer[key].append(targeted.data)
 
   def close(self):

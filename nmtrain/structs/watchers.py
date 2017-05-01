@@ -34,11 +34,17 @@ class Watcher(object):
   def end_batch(self, loss, src_shape, trg_shape, batch_id):
     self.record_updates(loss, batch_id, trg_shape)
     wps = float(self.batch_update.trained_words) / self.batch_update.time
+
+    if loss >= 0:
+      loss_str = "ppl=%10.3f" % self.batch_update.score["ppl"]
+    else:
+      loss_str = "loss=%.10f" % self.batch_update.score["loss"]
+
     # Logging as needed
-    log.info("[%d] Processed: %8d, ppl=%10.3f, size=%3d,(%3d,%3d), wps=%.3f" \
+    log.info("[%d] Processed: %8d, %s, size=%3d,(%3d,%3d), wps=%.3f" \
              % (self.state.train_state.finished_epoch+1,
                 self.epoch_update.trained_sentence,
-                self.batch_update.score["ppl"],
+                loss_str,
                 src_shape[1], src_shape[0],
                 trg_shape[0], wps))
 

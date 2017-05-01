@@ -4,7 +4,7 @@ import math
 
 import nmtrain
 
-class MaximumLikelihoodTrainer:
+class NMTTrainer:
   def __init__(self, config):
     # NmtrainModel encapsulates the chainer model.
     self.nmtrain_model = nmtrain.NmtrainModel(config)
@@ -61,7 +61,7 @@ class MaximumLikelihoodTrainer:
       optimizer.update()
 
     # Configure classfier
-    classifier.configure_bptt(bptt, learning_config.bptt_len)
+    classifier.configure_learning(bptt, learning_config)
 
     # Before Training Describe the model
     nmtrain.log.info("\n", str(self.nmtrain_model.config))

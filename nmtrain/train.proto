@@ -81,6 +81,18 @@ learning_config {
     factor: 0.5
     after_iteration: 15 
   }
+  learning {
+    method: "mrt"
+    mrt {
+      sharpness: 0.005
+      sampling_frequency: 100
+      eval_type: "bleu"
+      bleu {
+        ngram: 4
+        smooth: 1
+      }
+    }
+  }
   gradient_clipping: 5.0
   bptt_len: 50
   epoch: 15 

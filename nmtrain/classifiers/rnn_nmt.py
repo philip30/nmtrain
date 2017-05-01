@@ -1,24 +1,32 @@
 import chainer
 import numpy
 import math
+import nmtrain
 
 class RNN_NMT(object):
   def __init__(self):
     self.bptt = None
     self.bptt_len = 0
 
-  def configure_bptt(self, bptt_func, bptt_len):
-    self.bptt = bptt_func
-    self.bptt_len = bptt_len
+  def configure_learning(self, bptt_func, learning_config):
+    self.bptt          = bptt_func
+    self.config        = learning_config
+    self.learning_type = learning_config.learning.method
+    if self.learning_type == "mrt":
+      nmtrain.log.info("Setting learning to minimum risk training")
+      self.train = self.train_mrt
+      self.minrisk   = nmtrain.minrisk.minrisk.MinimumRiskTraining(learning_config.learning.mrt)
+    else:
+      nmtrain.log.info("Setting learning to maximum likelihood training")
+      self.train = self.train_mle
 
-  """ Recurrent neural network neural machine translation"""
-  def train(self, model, src_batch, trg_batch, outputer=None):
+  def train_mle(self, model, src_batch, trg_batch, outputer=None):
     batch_loss  = 0
     bptt_ctr    = 0
     model.encode(src_batch)
 
-    if outputer:
-      outputer.begin_collection(src=src_batch, ref=trg_batch)
+    if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
+
     for i, trg_word in enumerate(trg_batch):
       y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.OFF)
       output = model.decode()
@@ -28,16 +36,41 @@ class RNN_NMT(object):
       # Truncated BPTT
       if self.bptt_len > 0:
         bptt_ctr += 1
-        if bptt_ctr == self.bptt_len:
+        if bptt_ctr == self.config.bptt_len:
           self.bptt(batch_loss)
           bptt_ctr = 0
 
-      if outputer:
-        outputer(output)
-    if outputer:
-      outputer.end_collection()
+      if outputer: outputer(output)
+    if outputer: outputer.end_collection()
 
     return batch_loss / len(trg_batch)
+
+  def train_mrt(self, model, src_batch, trg_batch, outputer=None):
+    loss = 0
+    bptt_ctr = 0
+    model.encode(src_batch)
+
+    if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
+
+    samples   = None
+    log_probs = None
+    for i, trg_word, in enumerate(trg_batch):
+      output = model.decode()
+      y_t    = model.xp.array(trg_word, dtype=numpy.int32)
+      sample, log_prob = self.minrisk(output.y, y_t)
+      sample = model.xp.expand_dims(sample, axis=2)
+      if samples is None:
+        samples = sample
+        log_probs = log_prob
+      else:
+        samples = model.xp.dstack((samples, sample))
+        log_probs += log_prob
+      model.update(chainer.Variable(y_t, volatile=chainer.OFF))
+
+      if outputer: outputer(output)
+    if outputer: outputer.end_collection()
+
+    return self.minrisk.calculate_risk(samples, trg_batch, log_probs)
 
   def generate(self, model, src_batch, eos_id, generation_limit=128):
     model.encode(src_batch)
@@ -173,3 +206,4 @@ class RNN_NMT(object):
     else:
       output.probabilities = None
     return output
+

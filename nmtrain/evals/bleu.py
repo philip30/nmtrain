@@ -1,10 +1,12 @@
 import math
+import numpy
 import itertools
+import functools
 import sys
 
-from collections import defaultdict
+from collections import defaultdict, deque
 
-def calculate_bleu_corpus(hypothesis, reference, ngram=4, smooth=0, verbose=False):
+def calculate_bleu_corpus(hypothesis, reference, ngram=4, smooth=0):
   hyp_stats = []
   ref_stats = []
   for hyp, ref in itertools.zip_longest(hypothesis, reference):
@@ -12,11 +14,29 @@ def calculate_bleu_corpus(hypothesis, reference, ngram=4, smooth=0, verbose=Fals
     #print("Comparing:\n\t%s\n\t%s" % (str(hyp), str(ref)), file=sys.stderr)
     # DEBUG END
     # Update the dictionary with the stats of n_grams
-    hyp_stats.append(n_gram_stats(sentence = hyp, gram = ngram))
-    ref_stats.append(n_gram_stats(sentence = ref, gram = ngram))
+    hyp_stats.append(ngram_stats(sentence = hyp, gram = ngram))
+    ref_stats.append(ngram_stats(sentence = ref, gram = ngram))
 
   # Calculating BLEU score
   return BLEU(hyp_stats, ref_stats, order=ngram, smooth=smooth)
+
+def calculate_bleu_sentence_fast(hypothesis, reference, ngram=4, smooth=1):
+  hyp_stats = numeric_ngram_stats(hypothesis, gram=ngram)
+  ref_stats = numeric_ngram_stats(reference, gram=ngram)
+  log_precision = 0
+  for i, (hyp_stat, ref_stat) in enumerate(zip(hyp_stats, ref_stats)):
+    tp, denom = 0, 0
+    for word, word_count in hyp_stat.items():
+      tp += min(word_count, ref_stat.get(word, 0))
+    denom = sum(hyp_stat.values())
+    log_precision += math.log((tp + smooth) / (denom + smooth))
+  if len(reference) != 0:
+    log_bp = 1 - (len(hypothesis) / len(reference))
+  else:
+    log_bp = 0
+  score =  math.exp(log_precision / ngram + log_bp)
+
+  return score
 
 class BLEU(object):
   def __init__(self, hyp_ngrams, ref_ngrams, order, smooth=0):
@@ -77,10 +97,24 @@ class BLEU(object):
     return str(self.score * 100) + " BP=%.4f" % (self.brevity_penalty) + \
            " (%s)" % (", ".join("%d/%d" % (tp, ln) for tp, ln in self.stats))
 
-def n_gram_stats(sentence, gram):
+def ngram_stats(sentence, gram):
   output_dict = defaultdict(lambda: defaultdict(int))
   for i in range(len(sentence)):
     for j in range(1, gram+1):
       if i+j < len(sentence) + 1:
         output_dict[j-1][" ".join(map(str, sentence[i:i+j]))] += 1
   return output_dict
+
+@functools.lru_cache(maxsize=512)
+def numeric_ngram_stats(sentence, gram):
+  stats = [defaultdict(int) for _ in range(gram)]
+  for ngram in range(gram):
+    window = deque()
+    for word in sentence:
+      window.append(word)
+      if len(window) > ngram+1:
+        window.popleft()
+      if len(window) == ngram+1:
+        stats[ngram][hash(tuple(window))] += 1
+  return stats
+
