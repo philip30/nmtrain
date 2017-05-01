@@ -61,7 +61,7 @@ class RNN_NMT(object):
         samples = sample
         log_probs = log_prob
       else:
-        samples = model.xp.dstack((samples, sample))
+        samples = numpy.dstack((samples, sample))
         log_probs += log_prob
       model.update(chainer.Variable(y_t, volatile=chainer.OFF))
 
@@ -103,10 +103,10 @@ class RNN_NMT(object):
     word_penalty = math.exp(word_penalty)
     # The beam used to represent state in beam search
     class BeamState:
-      def __init__(self, id, model_state, prob, word, attention, word_prob, parent):
+      def __init__(self, id, model_state, log_prob, word, attention, word_prob, parent):
         self.id          = id
         self.model_state = model_state
-        self.probability = prob
+        self.log_prob    = log_prob
         self.word        = word
         self.attention   = attention
         self.word_prob   = word_prob
@@ -118,7 +118,7 @@ class RNN_NMT(object):
       return numpy.argpartition(array, -top)[-top:]
 
     # The beams
-    beams = [BeamState(0, None, 1, None, None, None, None)]
+    beams = [BeamState(0, None, 0, None, None, None, None)]
     beam_prediction = []
     worst_prob = 0
     cur_id = 1
@@ -130,9 +130,9 @@ class RNN_NMT(object):
       for state in beams:
         if eos_id == state.word:
           if len(beam_prediction) == 0:
-            worst_prob = state.probability
+            worst_prob = state.log_prob
           else:
-            worst_prob = min(state.probability, worst_prob)
+            worst_prob = min(state.log_prob, worst_prob)
           beam_prediction.append(state)
         else:
           if state.word is not None:
@@ -152,16 +152,16 @@ class RNN_NMT(object):
           else:
             words = n_argmax(y_dist, beam)
           for word in words:
-            new_probability = y_dist[word] * word_penalty * state.probability
-            new_beam.append(BeamState(id=cur_id, model_state=current_model, prob=new_probability,
+            new_probability = math.log(y_dist[word]) + word_penalty + state.log_prob
+            new_beam.append(BeamState(id=cur_id, model_state=current_model, log_prob=new_probability,
                                       word=word, attention=attn_out,
                                       word_prob=word_prob, parent=state))
             cur_id += 1
       # First sort the beam
-      new_beam = sorted(new_beam, key = lambda state: state.probability, reverse=True)
+      new_beam = sorted(new_beam, key = lambda state: state.log_prob, reverse=True)
       # When the best hypothesis probability is worse than the best probability stop or
       # If no new state is generated
-      if len(new_beam) == 0 or new_beam[0].probability < worst_prob:
+      if len(new_beam) == 0 or new_beam[0].log_prob < worst_prob:
         break
       else:
         beams = new_beam[:beam]
@@ -171,7 +171,7 @@ class RNN_NMT(object):
       beam_prediction = [beams[0]]
     else:
       beam_prediction = sorted(beam_prediction,
-                               key=lambda state:state.probability,
+                               key=lambda state:state.log_prob,
                                reverse=True)
 
     ## Collecting output

@@ -44,13 +44,14 @@ class MinimumRiskTraining(object):
     return sample, log_prob
 
   def calculate_risk(self, batch_sample, batch_reference, log_probs):
-    xp = chainer.cuda.get_array_module(batch_sample)
-    risk = xp.zeros((batch_sample.shape[0], self.num_sample), dtype=numpy.float32)
+    xp = chainer.cuda.get_array_module(log_probs)
+    risk = numpy.zeros((batch_sample.shape[0], self.num_sample), dtype=numpy.float32)
     for risk_i, samples, reference in zip(risk, batch_sample, batch_reference.transpose()):
       reference = tuple(reference)
       for j in range(self.num_sample):
         risk_i[j] = self.loss(tuple(samples[j]), reference)
 
     prob = softmax(log_probs * self.sharpness)
-    return chainer.functions.sum(prob * chainer.Variable(risk, volatile=chainer.OFF)) / batch_sample.shape[0]
+    risk = chainer.Variable(xp.array(risk, dtype=numpy.float32), volatile=chainer.OFF)
+    return chainer.functions.sum(prob * risk) / batch_sample.shape[0]
 
