@@ -23,6 +23,7 @@ message TestConfig {
   ParallelData test_data = 5;
   Evaluation evaluation = 6;
   TestPostProcess post_process = 7;
-  InitModel init_model = 8; 
+  InitModel init_model = 8;
+  uint32 gpu = 9;
 }
 
