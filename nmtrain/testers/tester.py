@@ -17,6 +17,8 @@ class Tester(object):
 
   def __call__(self, model, data, mode, outputer):
     self.epoch(mode, "begin")
+    model.set_train(False)
+    self.classifier.set_train(False)
     self.evaluator.reset()
     ### Variables
     eval_ppl  = self.config.evaluation.eval_ppl
@@ -27,7 +29,7 @@ class Tester(object):
       self.watcher.begin_batch()
       # Evaluating PPL with beam=1
       if eval_ppl and trg_sent is not None:
-        loss = self.classifier.eval(model, src_sent, trg_sent)
+        loss = self.classifier.train(model, src_sent, trg_sent)
       else:
         loss = None
       # Doing prediction if other score is wished
@@ -41,7 +43,7 @@ class Tester(object):
         outputer(src_sent, predict_output, id=batch.id+1)
       else:
         predict_output = None
-      self.watcher.record_updates(loss     = loss,
+      self.watcher.record_updates(loss     = loss.data,
                                   score    = self.evaluator.assess_sentence_level(predict_output, batch),
                                   batch_id = batch.id,
                                   trg_shape = trg_sent.shape)

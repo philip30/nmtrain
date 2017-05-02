@@ -20,20 +20,25 @@ class RNN_NMT(object):
       nmtrain.log.info("Setting learning to maximum likelihood training")
       self.train = self.train_mle
 
+  def set_train(self, is_train):
+    self.is_train = is_train
+    self.minrisk.set_train(is_train)
+
   def train_mle(self, model, src_batch, trg_batch, outputer=None):
     batch_loss  = 0
     bptt_ctr    = 0
+    volatile    = chainer.OFF if self.is_train else chainer.ON
     model.encode(src_batch)
 
     if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
     for i, trg_word in enumerate(trg_batch):
-      y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.OFF)
+      y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=volatile)
       output = model.decode()
       batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
 
       # Truncated BPTT
-      if self.bptt_len > 0:
+      if train and self.bptt_len > 0:
         bptt_ctr += 1
         if bptt_ctr == self.config.bptt_len:
           self.bptt(batch_loss)
@@ -46,6 +51,7 @@ class RNN_NMT(object):
   def train_mrt(self, model, src_batch, trg_batch, outputer=None):
     loss = 0
     bptt_ctr = 0
+    volatile = chainer.OFF if self.is_train else chainer.ON
     model.encode(src_batch)
 
     if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
@@ -63,7 +69,7 @@ class RNN_NMT(object):
       else:
         samples = numpy.dstack((samples, sample))
         log_probs += log_prob
-      model.update(chainer.Variable(y_t, volatile=chainer.OFF))
+      model.update(chainer.Variable(y_t, volatile=volatile))
 
       if outputer: outputer(output)
     if outputer: outputer.end_collection()
@@ -84,17 +90,6 @@ class RNN_NMT(object):
       if all(word == eos_id for word in words.data):
         break
     return ret
-
-  def eval(self, model, src_sent, trg_sent):
-    loss = 0
-    # Start Prediction
-    model.encode(src_sent)
-    for trg_word in trg_sent:
-      y_t    = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=chainer.ON)
-      output = model.decode()
-      loss  += chainer.functions.softmax_cross_entropy(output.y, y_t)
-      model.update(y_t)
-    return float(loss.data) / len(trg_sent)
 
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,

@@ -42,7 +42,6 @@ def main(args):
   # If model is a single model
   if model.__class__.__name__ == "NmtrainModel":
     model = model.chainer_model
-  model.set_train(False)
   outputer.test.begin_collection()
   tester(model = model,
          data  = data_manager.test_data,

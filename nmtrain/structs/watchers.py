@@ -86,17 +86,19 @@ class Watcher(object):
         self.epoch_update.score[eval_key] = eval_value
     # Logging as needed
     if self.epoch_update.score["loss"] != 0 and self.epoch_update.score["ppl"] != 0:
-      ppl_str = "%.3f" % self.epoch_update.score["ppl"]
+      if self.epoch_update.score["loss"] <= 0:
+        ppl_str = "loss=%3.10f, " % self.epoch_update.score["loss"]
+      else:
+        ppl_str = "ppl=%3.3f, " % self.epoch_update.score["ppl"]
     else:
-      ppl_str = "-"
+      ppl_str = ""
     if score is not None:
-      score_str = " "
-      score_str += ", ".join(key + "=" + ("%4.3f" % value) for key, value in score.items())
+      score_str = ", ".join(key + "=" + ("%4.3f" % value) for key, value in score.items())
       score_str += ", "
     else:
       score_str = ""
-    log.info("[%d] %5s_ppl=%3s,%stime=%5.3f mins, wps=%5.3f" \
-              % (self.state.train_state.finished_epoch + 1, prefix,
+    log.info("%5s: [%d] %s%stime=%5.3f mins, wps=%5.3f" \
+              % (prefix.upper(), self.state.train_state.finished_epoch + 1,
                  ppl_str, score_str,
                  self.epoch_update.time / 60, wps))
     # Remove reference
