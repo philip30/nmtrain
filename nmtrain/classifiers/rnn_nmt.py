@@ -22,7 +22,8 @@ class RNN_NMT(object):
 
   def set_train(self, is_train):
     self.is_train = is_train
-    self.minrisk.set_train(is_train)
+    if hasattr(self, "minrisk"):
+      self.minrisk.set_train(is_train)
 
   def train_mle(self, model, src_batch, trg_batch, outputer=None):
     batch_loss  = 0
@@ -38,7 +39,7 @@ class RNN_NMT(object):
       model.update(y_t)
 
       # Truncated BPTT
-      if train and self.bptt_len > 0:
+      if self.is_train and self.bptt_len > 0:
         bptt_ctr += 1
         if bptt_ctr == self.config.bptt_len:
           self.bptt(batch_loss)
