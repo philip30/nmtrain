@@ -61,7 +61,7 @@ class NMTTrainer:
       optimizer.update()
 
     # Configure classfier
-    classifier.configure_learning(bptt, learning_config)
+    classifier.configure_learning(learning_config, bptt)
 
     # Before Training Describe the model
     nmtrain.log.info("\n", str(self.nmtrain_model.config))
@@ -71,7 +71,7 @@ class NMTTrainer:
     end_epoch   = learning_config.epoch
     self.nmtrain_model.state.record_start_epoch(self.nmtrain_model.config)
     for ep in range(start_epoch, end_epoch):
-      ep_arrangement = data.arrange(ep)
+      data.arrange(ep)
 
       # Training Iterations
       watcher.begin_train_epoch()
@@ -80,10 +80,13 @@ class NMTTrainer:
       for batch in data.train_data:
         for batch_retriever in self.unknown_trainer:
           src_batch, trg_batch = batch_retriever(batch)
-
           watcher.begin_batch()
           # Prepare for training
-          batch_loss = classifier.train(model, src_batch, trg_batch, outputer.train)
+          try:
+            batch_loss = classifier.train(model, src_batch, trg_batch, outputer.train)
+          except:
+            nmtrain.log.warning("Died at this batch_id:", batch.id)
+            raise
           # BPTT 
           bptt(batch_loss)
           # Generate summary of batch training and keep track of it

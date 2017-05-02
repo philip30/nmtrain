@@ -93,7 +93,7 @@ class Watcher(object):
     else:
       ppl_str = ""
     if score is not None:
-      score_str = ", ".join(key + "=" + ("%4.3f" % value) for key, value in score.items())
+      score_str = ", ".join(key + "=" + ("%4.3f" % value) for key, value in sorted(score.items()))
       score_str += ", "
     else:
       score_str = ""

@@ -20,7 +20,7 @@ class UnknownNormalTrainer(UnknownTrainer):
 
 class UnknownWordDropoutTrainer(UnknownTrainer):
   def __init__(self, corpus_divider=1):
-    assert(corpus_divider > 0 and type(corpus_divider) == int), "Invalid Gamma value."
+    assert(corpus_divider > 0), "Invalid Gamma value."
     self.src_freq_map = None
     self.trg_freq_map = None
     self.corpus_divider = corpus_divider
@@ -78,7 +78,7 @@ def from_config(config):
   if method == "word_dropout":
     return UnknownWordDropoutTrainer(corpus_divider = config.corpus_divider)
   elif method == "sentence_dropout":
-    return UnknownSentenceDropoutTrainer(dropout_ratio = config.dropout_ratio)
+    return UnknownSentenceDropoutTrainer(ratio = config.dropout_ratio)
   elif method == "normal":
     return UnknownNormalTrainer()
   else:

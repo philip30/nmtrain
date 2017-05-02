@@ -1,6 +1,7 @@
 beam: 8
 generation_limit: 80
 word_penalty: 0.5
+gpu: -1
 
 test_data {
   # REQUIRED

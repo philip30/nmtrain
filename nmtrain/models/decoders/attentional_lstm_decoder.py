@@ -52,7 +52,6 @@ class LSTMAttentionalDecoder(chainer.Chain):
 
     self.input_feeding = input_feeding
     self.dropouts      = dropouts
-    self.use_lexicon   = lexicon is not None
 
   def init(self, h, is_train):
     h, S, lexicon_matrix = h
@@ -70,7 +69,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     self.ht = self.context_project(concat((self.h, c), axis=1))
     # Calculate Word probability distribution
     y = self.affine_vocab(tanh(self.ht))
-    if self.use_lexicon:
+    if self.lexicon_matrix is not None:
       y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 
     return nmtrain.models.decoders.Output(y=y, a=a)

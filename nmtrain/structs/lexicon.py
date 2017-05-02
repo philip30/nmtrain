@@ -15,16 +15,12 @@ class Lexicon(object):
     if lexicon_file is not None:
       self.data = lexicon_from_file(lexicon_file, src_voc, trg_voc)
 
-  def init(self, src_data, xp):
+  def init(self, src_data):
     src_size, batch_size = src_data.shape
     lexicon_matrix = numpy.zeros((batch_size, src_size, self.trg_size), dtype=numpy.float32)
     for i in range(batch_size):
       for j in range(src_size):
         lexicon_matrix[i][j] = self.dense_probability(src_data[j][i])
-
-    # Convert to gpu / cpu array
-    if xp != numpy:
-      lexicon_matrix = xp.array(lexicon_matrix, dtype=numpy.float32)
 
     return lexicon_matrix
 

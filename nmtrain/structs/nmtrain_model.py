@@ -5,7 +5,6 @@ import os
 class NmtrainModel(object):
   def __init__(self, config):
     self.config = config
-    # Init Model
     if len(config.init_model) != 0 and os.path.exists(config.init_model):
       model_loader = nmtrain.serializers.TrainModelReader(self)
       model_loader.load(config)

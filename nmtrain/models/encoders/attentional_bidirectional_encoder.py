@@ -56,7 +56,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
 
     # If lexicon is provided
     if self.lexicon is not None:
-      lex_matrix = chainer.Variable(self.lexicon.init(src_data, self.xp), volatile=volatile)
+      lex_matrix = chainer.Variable(self.xp.array(self.lexicon.init(src_data), dtype=numpy.float32), volatile=volatile)
     else:
       lex_matrix = None
 

@@ -8,7 +8,7 @@ class RNN_NMT(object):
     self.bptt = None
     self.bptt_len = 0
 
-  def configure_learning(self, bptt_func, learning_config):
+  def configure_learning(self, learning_config, bptt_func = None):
     self.bptt          = bptt_func
     self.config        = learning_config
     self.learning_type = learning_config.learning.method
@@ -59,7 +59,7 @@ class RNN_NMT(object):
 
     samples   = None
     log_probs = None
-    for i, trg_word, in enumerate(trg_batch):
+    for i, trg_word in enumerate(trg_batch):
       output = model.decode()
       y_t    = model.xp.array(trg_word, dtype=numpy.int32)
       sample, log_prob = self.minrisk(output.y, y_t)
@@ -70,7 +70,7 @@ class RNN_NMT(object):
       else:
         samples = numpy.dstack((samples, sample))
         log_probs += log_prob
-      model.update(chainer.Variable(y_t, volatile=volatile))
+      model.update(chainer.functions.argmax(output.y, axis=1))
 
       if outputer: outputer(output)
     if outputer: outputer.end_collection()
@@ -94,9 +94,7 @@ class RNN_NMT(object):
 
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,
-              beam=1, word_penalty=0):
-    # Exponential distribution of word penalty
-    word_penalty = math.exp(word_penalty)
+              beam=1, word_penalty=1):
     # The beam used to represent state in beam search
     class BeamState:
       def __init__(self, id, model_state, log_prob, word, attention, word_prob, parent):
@@ -116,7 +114,7 @@ class RNN_NMT(object):
     # The beams
     beams = [BeamState(0, None, 0, None, None, None, None)]
     beam_prediction = []
-    worst_prob = 0
+    worst_prob = -float("inf")
     cur_id = 1
     # Start Prediction
     model.encode(src_sent)

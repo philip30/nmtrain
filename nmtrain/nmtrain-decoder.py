@@ -33,6 +33,8 @@ def main(args):
   watcher = nmtrain.structs.watchers.Watcher(model.nmtrain_state)
   # Classifier, that run the data and the model
   classifier    = nmtrain.classifiers.RNN_NMT()
+  classifier.configure_learning(model.config.learning_config)
+  classifier.set_train(False)
   # Load data
   log.info("Loading Data")
   data_manager.load_test(config.test_data, model)
@@ -60,7 +62,6 @@ def load_single_model(config):
 
 def load_models(config):
   models = config.model
-
   if len(models) == 1:
     model_config = nmtrain.test_config_pb.ModelConfig()
     model_config.init_model = models[0]
