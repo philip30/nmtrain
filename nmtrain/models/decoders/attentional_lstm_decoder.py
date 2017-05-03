@@ -68,7 +68,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Calculate hidden vector + context
     self.ht = self.context_project(concat((self.h, c), axis=1))
     # Calculate Word probability distribution
-    y = self.affine_vocab(tanh(self.ht))
+    y = self.affine_vocab(self.ht)
     if self.lexicon_matrix is not None:
       y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 

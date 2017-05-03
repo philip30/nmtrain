@@ -70,7 +70,7 @@ class RNN_NMT(object):
       else:
         samples = numpy.dstack((samples, sample))
         log_probs += log_prob
-      model.update(chainer.functions.argmax(output.y, axis=1))
+      model.update(chainer.Variable(y_t, volatile=volatile))
 
       if outputer: outputer(output)
     if outputer: outputer.end_collection()
