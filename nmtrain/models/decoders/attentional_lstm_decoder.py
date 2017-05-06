@@ -48,7 +48,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
       self.add_link("lexicon_model", lexicon_model)
 
     if input_feeding:
-      self.add_link("feeding_transform", chainer.links.Linear(H+E, E))
+      self.add_link("feeding_transform", chainer.links.Linear(H, E))
 
     self.input_feeding = input_feeding
     self.dropouts      = dropouts
@@ -68,7 +68,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Calculate hidden vector + context
     self.ht = self.context_project(concat((self.h, c), axis=1))
     # Calculate Word probability distribution
-    y = self.affine_vocab(self.ht)
+    y = self.affine_vocab(tanh(self.ht))
     if self.lexicon_matrix is not None:
       y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 
@@ -78,7 +78,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # embed_size + hidden size -> input feeding approach
     decoder_update = self.output_embed(next_word)
     if self.input_feeding:
-      decoder_update = self.feeding_transform(concat((self.ht, decoder_update), axis=1))
+      decoder_update = self.feeding_transform(self.ht) + decoder_update
     self.h = self.decoder(decoder_update, is_train)
     return decoder_update, self.h
 

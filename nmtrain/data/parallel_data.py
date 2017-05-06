@@ -32,14 +32,20 @@ class ParallelSentence(object):
     self.trg_sent = trg_sent
 
   def __len__(self):
-    if self.trg_sent is not None and self.src_sent is not None:
-      return int(math.ceil((len(self.src_sent) + len(self.trg_sent)) / 2))
-    elif self.trg_sent is not None:
-      return len(self.trg_sent)
+    if self.trg_sent is not None:
+      if self.src_sent is not None:
+        return (len(self.trg_sent) + len(self.src_sent)) // 2
+      else:
+        return len(self.trg_sent)
     elif self.src_sent is not None:
       return len(self.src_sent)
     else:
       return 0
+    
+  def __hash__(self):
+    src = len(self.src_sent) if self.src_sent is not None else -1
+    trg = len(self.trg_sent) if self.trg_sent is not None else -1
+    return hash((src, trg))
 
   def __iter__(self):
     yield self.src_sent

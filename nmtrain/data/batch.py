@@ -39,6 +39,7 @@ class BatchManager(object):
     partial_batch.data    = []
     partial_batch.length  = 0
     partial_batch.max_len = 0
+    partial_batch.hash    = None
 
     def new_batch():
       batch = Batch(batch_id = partial_batch.id,

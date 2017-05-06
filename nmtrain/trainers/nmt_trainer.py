@@ -127,11 +127,11 @@ class NMTTrainer:
           nmtrain.log.info("Decreasing lr by %f, now sgd lr: %f" % (learning_config.lr_decay.factor, optimizer.lr))
         elif optimizer.__class__.__name__ == "Adam":
           optimizer.alpha *= learning_config.lr_decay.factor
-          nmtrain.log.info("Decreasing alpha by %f, now adam lr: %f", (learning_config.lr_decay.factor, optimizer.alpha))
+          nmtrain.log.info("Decreasing alpha by %f, now adam lr: %f" % (learning_config.lr_decay.factor, optimizer.alpha))
 
       # Tell Chainer optimizer to increment the epoch
-      optimizer.new_epoch()
       state.new_epoch()
+      optimizer.new_epoch()
 
       # Save the model
       outputer.train.save_model(self.nmtrain_model)

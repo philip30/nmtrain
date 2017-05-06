@@ -94,7 +94,7 @@ class RNN_NMT(object):
 
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,
-              beam=1, word_penalty=1):
+              beam=1, word_penalty=0):
     # The beam used to represent state in beam search
     class BeamState:
       def __init__(self, id, model_state, log_prob, word, attention, word_prob, parent):

@@ -40,11 +40,11 @@ class NmtrainModel(object):
       nmtrain.log.info("Setting up optimizer...")
       self.optimizer.setup(self.chainer_model)
 
-      # Initializing model
-      nmtrain.log.info("Initializing weight uniformly [-0.1, 0.1]...")
-      initializer = chainer.initializers.Uniform(scale=0.1)
-      for name, array in sorted(self.chainer_model.namedparams()):
-        initializer(array.data)
+#      # Initializing model
+#      nmtrain.log.info("Initializing weight uniformly [-0.1, 0.1]...")
+#      initializer = chainer.initializers.Uniform(scale=0.1)
+#      for name, array in sorted(self.chainer_model.namedparams()):
+#        initializer(array.data)
 
     if hasattr(self, "optimizer"):
       self.optimizer.add_hook(chainer.optimizer.GradientClipping(self.config.learning_config.gradient_clipping))
@@ -72,12 +72,12 @@ def parse_optimizer(optimizer):
   param = optimizer.params
   # Select optimizer
   if opt == "adam":
-    return chainer.optimizers.Adam(alpha=param.adam.alpha,
-                                   beta1=param.adam.beta1,
-                                   beta2=param.adam.beta2,
-                                   eps=param.adam.eps)
+    return chainer.optimizers.Adam(alpha=float(param.adam.alpha),
+                                   beta1=float(param.adam.beta1),
+                                   beta2=float(param.adam.beta2),
+                                   eps=float(param.adam.eps))
   elif opt == "sgd":
-    return chainer.optimizers.SGD(lr=param.adam.lr)
+    return chainer.optimizers.SGD(lr=float(param.adam.lr))
   else:
     raise ValueError("Unrecognized optimizer:", opt)
 
