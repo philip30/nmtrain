@@ -41,4 +41,5 @@ message MRT {
   double sharpness = 2;
   string eval_type = 3;
   BLEU bleu = 4;
+  uint64 generation_limit = 5;
 }

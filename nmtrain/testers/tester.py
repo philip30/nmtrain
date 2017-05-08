@@ -29,7 +29,7 @@ class Tester(object):
       self.watcher.begin_batch()
       # Evaluating PPL with beam=1
       if eval_ppl and trg_sent is not None:
-        loss = self.classifier.train(model, src_sent, trg_sent)
+        loss = self.classifier.train(model, src_sent, trg_sent, self.eos_id)
       else:
         loss = None
       # Doing prediction if other score is wished

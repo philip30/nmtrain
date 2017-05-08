@@ -42,6 +42,8 @@ class NMTTrainer:
     data    = self.data_manager
     # Chainer optimizer
     optimizer = self.nmtrain_model.optimizer
+    # eos_id
+    eos_id = self.nmtrain_model.trg_vocab.eos_id()
 
     # Special case for word_dropout unknown trainer
     if self.unknown_trainer.__class__ == nmtrain.trainers.unknown_trainers.UnknownWordDropoutTrainer:
@@ -83,7 +85,7 @@ class NMTTrainer:
           watcher.begin_batch()
           # Prepare for training
           try:
-            batch_loss = classifier.train(model, src_batch, trg_batch, outputer.train)
+            batch_loss = classifier.train(model, src_batch, trg_batch, eos_id, outputer.train)
           except:
             nmtrain.log.warning("Died at this batch_id:", batch.id)
             raise

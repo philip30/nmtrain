@@ -25,7 +25,7 @@ class RNN_NMT(object):
     if hasattr(self, "minrisk"):
       self.minrisk.set_train(is_train)
 
-  def train_mle(self, model, src_batch, trg_batch, outputer=None):
+  def train_mle(self, model, src_batch, trg_batch, eos_id, outputer=None):
     batch_loss  = 0
     bptt_ctr    = 0
     volatile    = chainer.OFF if self.is_train else chainer.ON
@@ -49,48 +49,8 @@ class RNN_NMT(object):
     if outputer: outputer.end_collection()
     return batch_loss / len(trg_batch)
 
-  def train_mrt(self, model, src_batch, trg_batch, outputer=None):
-    loss = 0
-    bptt_ctr = 0
-    volatile = chainer.OFF if self.is_train else chainer.ON
-    model.encode(src_batch)
-
-    if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
-
-    samples   = None
-    log_probs = None
-    for i, trg_word in enumerate(trg_batch):
-      output = model.decode()
-      y_t    = model.xp.array(trg_word, dtype=numpy.int32)
-      sample, log_prob = self.minrisk(output.y, y_t)
-      sample = model.xp.expand_dims(sample, axis=2)
-      if samples is None:
-        samples = sample
-        log_probs = log_prob
-      else:
-        samples = numpy.dstack((samples, sample))
-        log_probs += log_prob
-      model.update(chainer.Variable(y_t, volatile=volatile))
-
-      if outputer: outputer(output)
-    if outputer: outputer.end_collection()
-
-    return self.minrisk.calculate_risk(samples, trg_batch, log_probs)
-
-  def generate(self, model, src_batch, eos_id, generation_limit=128):
-    model.encode(src_batch)
-    batch_size = src_batch.shape[1]
-
-    ret = []
-    for i in range(generation_limit):
-      output = model.decode()
-      words  = chainer.functions.argmax(output.y, axis=1)
-      embed, h = model.update(words)
-      words.to_cpu()
-      ret.append(embed)
-      if all(word == eos_id for word in words.data):
-        break
-    return ret
+  def train_mrt(self, model, src_batch, trg_batch, eos_id, outputer=None):
+    return self.minrisk(model, src_batch, trg_batch, eos_id, outputer, self.is_train)
 
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,

@@ -21,9 +21,9 @@ class Vocabulary(object):
     # Attributes
     self.check_rare = None
     self.frozen = False
-
     if add_unk:
       self.add_word(UNK, include_rare=True)
+
     if add_eos:
       self.add_word(EOS, include_rare=True)
 
@@ -38,10 +38,6 @@ class Vocabulary(object):
 
   def add_sentence(self, sentence, include_rare=False):
     return list(self.add_word(word, include_rare) for word in sentence)
-
-  def set_word(self, word, word_id):
-    self.word_to_id[word]    = word_id
-    self.id_to_word[word_id] = word
 
   def sentence(self, word_ids, append_eos = True):
     ret = []
