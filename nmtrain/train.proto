@@ -82,11 +82,12 @@ learning_config {
     after_iteration: 15 
   }
   learning {
-    method: "mrt"
+    method: "mle"
     mrt {
       sharpness: 0.005
       sampling_frequency: 100
       eval_type: "bleu"
+      generation_limit: 60
       bleu {
         ngram: 4
         smooth: 1
