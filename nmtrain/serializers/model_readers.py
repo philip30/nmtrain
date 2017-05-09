@@ -18,6 +18,7 @@ class TrainModelReader(object):
         assert_proto_equal(config_obj.data_config, from_config.data_config)
       assert_proto_equal(config_obj.bpe_config, from_config.bpe_config)
       self.flag_same_opt = config_obj.learning_config.optimizer == from_config.learning_config.optimizer
+      config_obj.MergeFrom(from_config)
       self.nmtrain_model.config.MergeFrom(config_obj)
     else:
       self.nmtrain_model.config = config_obj
