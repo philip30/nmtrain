@@ -6,7 +6,7 @@ from collections import defaultdict
 from nmtrain.evals import bleu
 from chainer.functions import copy, concat, expand_dims
 from chainer.functions import select_item, get_item, swapaxes
-from chainer.functions import transpose, where
+from chainer.functions import transpose, where, squeeze
 from chainer.functions import log, softmax, exp
 
 class MinimumRiskTraining(object):
@@ -30,7 +30,7 @@ class MinimumRiskTraining(object):
     batch_size = trg_batch.shape[1]
     volatile = chainer.OFF if is_train else chainer.ON
     unique = defaultdict(set)
-        
+
     sample_index  = numpy.zeros((self.num_sample, batch_size), dtype=bool)
     deltas, probs = [], []
     # Sampling
@@ -38,13 +38,21 @@ class MinimumRiskTraining(object):
       delta, prob = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id, is_train)
       deltas.append(delta)
       probs.append(prob * self.sharpness)
-    
-    # Calculate Risk
-    probs = softmax(concat(probs, axis=1))
-    deltas = chainer.Variable(model.xp.array(numpy.concatenate(deltas, axis=1), dtype=numpy.float32), volatile=volatile)
-    risk = probs * deltas
 
-    return chainer.functions.sum(risk) / (risk.shape[0] * risk.shape[1])
+    # Calculate Risk + remove duplication
+    risk = 0
+    probs = concat(probs, axis=1)
+    delta = numpy.concatenate(deltas, axis=1)
+    sample_index = sample_index.transpose()
+    for i in range(probs.shape[0]):
+      prob = expand_dims(get_item(probs, i), axis=1)
+      item = list(numpy.where(sample_index[i])[0])
+      unique_prob = get_item(prob, [item])
+      unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
+      valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32), volatile=volatile)
+      risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
+
+    return risk / batch_size
 
   def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id, is_train):
     batch_size  = trg_batch.shape[1]
@@ -88,16 +96,16 @@ class MinimumRiskTraining(object):
         sent = tuple(sampled_sent)
       # Check for duplication
       hash_value = hash(sent)
-      #if not hash_value in unique[i]:
-      #  unique[i].add(hash_value)
-      sample_index[i] = True
-      delta[i] = self.loss(sent, tuple(reference))
-      #else:
-      #  delta[i] = 1
+      if not hash_value in unique[i]:
+        unique[i].add(hash_value)
+        sample_index[i] = True
+        delta[i] = self.loss(sent, tuple(reference))
+      else:
+        delta[i] = float("inf")
 
     return numpy.expand_dims(delta, axis=1),\
            expand_dims(sample_prob, axis=1)
-    
+
   def sample_one(self, probs_var):
     probs = copy(probs_var, -1).data
     samples = numpy.zeros(len(probs))
