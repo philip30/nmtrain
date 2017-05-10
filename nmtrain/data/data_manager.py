@@ -90,9 +90,10 @@ class DataManager(object):
       self.random_ctr += 1
       # Put the longest target batch here
       if epoch == 0 or force_put_max:
+        nmtrain.log.info("Switching the longest trg batch first")
         max_stat = self.train_converter.max_trg_corpus
         current = self.train_data.batch_manager.batch_indexes
-        max_index = curren.index(max_stat[1])
+        max_index = current.index(max_stat[1])
         current[0], current[max_index] = current[max_index], current[0]
 
 
