@@ -6,7 +6,7 @@ from chainer.links import EmbedID
 from chainer.functions import squeeze
 from chainer.functions import batch_matmul
 from chainer.functions import tanh
-from chainer.functions import concat
+from chainer.functions import concat, forget
 from nmtrain.chner import StackLSTM
 from nmtrain.models import attentions
 from nmtrain.models import lexicons
@@ -66,9 +66,9 @@ class LSTMAttentionalDecoder(chainer.Chain):
     # Calculate context vector
     c = squeeze(batch_matmul(self.S, a, transa=True), axis=2)
     # Calculate hidden vector + context
-    self.ht = self.context_project(concat((self.h, c), axis=1))
+    self.ht = forget(self.context_project, concat((self.h, c), axis=1))
     # Calculate Word probability distribution
-    y = self.affine_vocab(tanh(self.ht))
+    y = forget(self.affine_vocab, forget(tanh, self.ht))
     if self.lexicon_matrix is not None:
       y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 
@@ -76,9 +76,9 @@ class LSTMAttentionalDecoder(chainer.Chain):
 
   def update(self, next_word, is_train):
     # embed_size + hidden size -> input feeding approach
-    decoder_update = self.output_embed(next_word)
+    decoder_update = forget(self.output_embed, next_word)
     if self.input_feeding:
-      decoder_update = self.feeding_transform(self.ht) + decoder_update
+      decoder_update = forget(self.feeding_transform, self.ht) + decoder_update
     self.h = self.decoder(decoder_update, is_train)
     return decoder_update, self.h
 

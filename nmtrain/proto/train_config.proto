@@ -21,6 +21,7 @@ message TrainingConfig {
   BPEConfig bpe_config = 10;
   TestConfig test_config = 11;
   LexiconConfig lexicon_config = 12;
+  HackConfig hack_config = 13;
 }
 
 message OutputConfig {
@@ -35,3 +36,6 @@ message LexiconConfig {
   string method = 3;
 }
 
+message HackConfig {
+  bool put_max_trg_first = 1;
+}

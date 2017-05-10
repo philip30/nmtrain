@@ -5,7 +5,7 @@ import math
 from collections import defaultdict
 from nmtrain.evals import bleu
 from chainer.functions import copy, concat, expand_dims
-from chainer.functions import select_item, get_item, swapaxes
+from chainer.functions import select_item, get_item, swapaxes, forget
 from chainer.functions import transpose, where, squeeze
 from chainer.functions import log, softmax, exp
 
@@ -48,7 +48,7 @@ class MinimumRiskTraining(object):
       prob = expand_dims(get_item(probs, i), axis=1)
       item = list(numpy.where(sample_index[i])[0])
       unique_prob = get_item(prob, [item])
-      unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
+      unique_prob = squeeze(forget(softmax, forget(transpose, unique_prob)), axis=0)
       valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32), volatile=volatile)
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
 
@@ -71,7 +71,7 @@ class MinimumRiskTraining(object):
       else:
         sample[j] = self.sample_one(y)
       next_word = chainer.Variable(model.xp.array(sample[j], dtype=numpy.int32), volatile=volatile)
-      prob = select_item(chainer.functions.log(y), next_word)
+      prob = select_item(forget(log, y), next_word)
       sample_prob += prob
 
       # check_for_end:

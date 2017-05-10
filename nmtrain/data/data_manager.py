@@ -29,8 +29,8 @@ class DataManager(object):
     filterer = nmtrain.data.preprocessor.FilterSentence(data_config.max_sent_length)
     # These converters will convert the string to ID and fill that in to the vocabulary
     # Or it will simply use the vocabulary
-    train_converter = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab, analyzer, include_rare)
-    test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab)
+    self.train_converter = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab, analyzer, include_rare)
+    self.test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab)
     # Retain some properties
     self.analyzer = analyzer
 
@@ -43,7 +43,7 @@ class DataManager(object):
                                    filterer         = filterer,
                                    sorter           = sorter,
                                    bpe_codec        = bpe_codec,
-                                   wordid_converter = train_converter)
+                                   wordid_converter = self.train_converter)
 
     # Loading Dev Data if available
     if corpus.dev_data.source and corpus.dev_data.target:
@@ -52,7 +52,7 @@ class DataManager(object):
                                    n_items          = 1,
                                    batch_manager    = nmtrain.data.BatchManager("sent"),
                                    bpe_codec        = bpe_codec,
-                                   wordid_converter = test_converter)
+                                   wordid_converter = self.test_converter)
 
     # Loading Test Data if available
     if corpus.test_data.source and corpus.test_data.target:
@@ -61,7 +61,7 @@ class DataManager(object):
                                     batch_manager    = nmtrain.data.BatchManager("sent"),
                                     n_items          = 1,
                                     bpe_codec        = bpe_codec,
-                                    wordid_converter = test_converter)
+                                    wordid_converter = self.test_converter)
 
     # random state for shuffling batch
     self.random = numpy.random.RandomState(seed = nmtrain_model.config.seed)
@@ -84,10 +84,17 @@ class DataManager(object):
     return self.test_data
 
   # Training data arrange + shuffle
-  def arrange(self, epoch):
+  def arrange(self, epoch, force_put_max=False):
     while self.random_ctr < epoch:
       self.random.shuffle(self.train_data.batch_manager.batch_indexes)
       self.random_ctr += 1
+      # Put the longest target batch here
+      if epoch == 0 or force_put_max:
+        max_stat = self.train_converter.max_trg_corpus
+        current = self.train_data.batch_manager.batch_indexes
+        max_index = curren.index(max_stat[1])
+        current[0], current[max_index] = current[max_index], current[0]
+
 
   @property
   def has_dev_data(self):

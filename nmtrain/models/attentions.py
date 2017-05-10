@@ -32,5 +32,5 @@ class MLPAttentionLayer(chainer.Chain):
     h = F.broadcast_to(F.expand_dims(h, axis=2), (batch_size, hidden_size, src_len))
     h = F.swapaxes(h, 1, 2)
     S = F.reshape(F.concat((S, h), axis=2), (batch_size * src_len, 2 * hidden_size))
-    a = F.softmax(F.reshape(self.second_layer(F.tanh(self.first_layer(S))), (batch_size, src_len)))
+    a = F.forget(F.softmax, F.reshape(F.forget(self.second_layer, F.tanh(F.forget(self.first_layer, S))), (batch_size, src_len)))
     return a

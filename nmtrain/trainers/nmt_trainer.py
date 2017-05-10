@@ -73,7 +73,7 @@ class NMTTrainer:
     end_epoch   = learning_config.epoch
     self.nmtrain_model.state.record_start_epoch(self.nmtrain_model.config)
     for ep in range(start_epoch, end_epoch):
-      data.arrange(ep)
+      data.arrange(ep, self.nmtrain_model.config.hack_config.put_max_trg_first)
 
       # Training Iterations
       watcher.begin_train_epoch()

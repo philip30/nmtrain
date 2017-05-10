@@ -6,6 +6,7 @@ class WordIdConverter(object):
     self.trg_vocab       = trg_vocab
     self.analyzer        = analyzer
     self.include_rare    = include_rare
+    self.max_trg_corpus  = (0, 0)
 
     if analyzer is not None:
       self.src_vocab.set_check_rare(analyzer.is_src_rare)
@@ -21,6 +22,8 @@ class WordIdConverter(object):
         src_max_len = max(len(src), src_max_len)
       if trg is not None:
         trg_max_len = max(len(trg), trg_max_len)
+        if trg_max_len > self.max_trg_corpus[0]:
+          self.max_trg_corpus = trg_max_len, finished_batch.id
 
     src_data = []
     trg_data = []
