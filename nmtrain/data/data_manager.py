@@ -33,6 +33,7 @@ class DataManager(object):
     self.test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab)
     # Retain some properties
     self.analyzer = analyzer
+    self.fresh_start = True
 
     # Loading Training Data
     self.train_data = ParallelData(src              = corpus.train_data.source,
@@ -89,11 +90,13 @@ class DataManager(object):
       self.random.shuffle(self.train_data.batch_manager.batch_indexes)
       self.random_ctr += 1
       # Put the longest target batch here
-      if epoch == 0 or force_put_max:
+      if self.random_ctr == epoch and force_put_max and self.fresh_start:
+        nmtrain.log.info("Switching the longest trg batch first")
         max_stat = self.train_converter.max_trg_corpus
         current = self.train_data.batch_manager.batch_indexes
-        max_index = curren.index(max_stat[1])
+        max_index = current.index(max_stat[1])
         current[0], current[max_index] = current[max_index], current[0]
+        self.fresh_start = False
 
 
   @property
