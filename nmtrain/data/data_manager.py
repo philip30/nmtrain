@@ -66,6 +66,7 @@ class DataManager(object):
     # random state for shuffling batch
     self.random = numpy.random.RandomState(seed = nmtrain_model.config.seed)
     self.random_ctr = -1
+    self.fresh_start = True
 
     # return the training data
     return self.train_data
@@ -84,18 +85,24 @@ class DataManager(object):
     return self.test_data
 
   # Training data arrange + shuffle
-  def arrange(self, epoch, force_put_max=False):
+  def arrange(self, epoch, hack_config):
     while self.random_ctr < epoch:
       self.random.shuffle(self.train_data.batch_manager.batch_indexes)
       self.random_ctr += 1
       # Put the longest target batch here
-      if epoch == 0 or force_put_max:
-        nmtrain.log.info("Switching the longest trg batch first")
-        max_stat = self.train_converter.max_trg_corpus
+      if self.random_ctr == epoch and self.fresh_start:
+        self.fresh_start = False
         current = self.train_data.batch_manager.batch_indexes
-        max_index = current.index(max_stat[1])
-        current[0], current[max_index] = current[max_index], current[0]
-
+        if hack_config.put_max_trg_first:
+          nmtrain.log.info("Switching the longest trg batch first")
+          max_stat = self.train_converter.max_trg_corpus
+          max_index = current.index(max_stat[1])
+          current[0], current[max_index] = current[max_index], current[0]
+        id_first = hack_config.put_batch_id_first
+        if id_first != 0:
+          nmtrain.log.info("Switching the batch id of %d first" % id_first)
+          index = current.index(id_first)
+          current[0], current[index] = current[index], current[0]
 
   @property
   def has_dev_data(self):

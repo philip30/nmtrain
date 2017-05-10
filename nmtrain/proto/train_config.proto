@@ -38,4 +38,5 @@ message LexiconConfig {
 
 message HackConfig {
   bool put_max_trg_first = 1;
+  uint64 put_batch_id_first = 2;
 }
