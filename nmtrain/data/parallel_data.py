@@ -34,7 +34,7 @@ class ParallelSentence(object):
   def __len__(self):
     if self.trg_sent is not None:
       if self.src_sent is not None:
-        return (len(self.trg_sent) + len(self.src_sent)) // 2
+        return max(len(self.trg_sent), len(self.src_sent))
       else:
         return len(self.trg_sent)
     elif self.src_sent is not None:

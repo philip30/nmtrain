@@ -82,11 +82,12 @@ def parse_optimizer(optimizer):
     raise ValueError("Unrecognized optimizer:", opt)
 
 def load_bpe_codec(config):
-  if hasattr(config, "bpe_config") and \
-      config.bpe_config.src_codec and \
-      config.bpe_config.trg_codec:
-    return  nmtrain.third_party.bpe.BPE(config.bpe_config.src_codec), \
-            nmtrain.third_party.bpe.BPE(config.bpe_config.trg_codec)
+  if config.src_codec and \
+     config.trg_codec:
+    nmtrain.log.info("Loading src_codec:", config.src_codec)
+    nmtrain.log.info("Loading trg_codec:", config.trg_codec)
+    return  nmtrain.third_party.bpe.BPE(config.src_codec), \
+            nmtrain.third_party.bpe.BPE(config.trg_codec)
   else:
     return None, None
 

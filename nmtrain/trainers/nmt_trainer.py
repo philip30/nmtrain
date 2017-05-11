@@ -20,6 +20,8 @@ class NMTTrainer:
     nmtrain.log.info("Loading Finished.")
     # Finalize the model, according to the data
     self.nmtrain_model.finalize_model()
+    nmtrain.log.info("SRC VOCAB:", len(self.nmtrain_model.src_vocab))
+    nmtrain.log.info("TRG VOCAB:", len(self.nmtrain_model.trg_vocab))
 
   def __call__(self, classifier):
     state           = self.nmtrain_model.state
@@ -87,7 +89,7 @@ class NMTTrainer:
           try:
             batch_loss = classifier.train(model, src_batch, trg_batch, eos_id, outputer.train)
           except:
-            nmtrain.log.warning("Died at this batch_id:", batch.id)
+            nmtrain.log.warning("Died at this batch_id:", batch.id, "with shape:", src_batch.shape, trg_batch.shape)
             raise
           # BPTT 
           bptt(batch_loss)
