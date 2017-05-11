@@ -69,6 +69,8 @@ def merge_bpe(word_vector, attention_matrix, normalize=False):
       prediction.append(word)
       if attention_matrix is not None:
         attention.append(attention_matrix[i])
+  if attention_matrix is not None:
+    assert(len(prediction) == len(attention))
   # Normalizing attention matrix
   if attention_matrix is not None:
     for i, attn_vector in enumerate(attention):

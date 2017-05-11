@@ -30,5 +30,6 @@ class TrainReporter(object):
       self.stream.flush()
 
       if self.write_attention:
+        src = [self.src_vocab.word(src_id) for src_id in src]
         self.attention_writer(src, out, attention[i])
 

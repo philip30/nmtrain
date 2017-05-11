@@ -13,8 +13,7 @@ class AttentionWriter(object):
 
     if id is not None:
       print(str(id) + ".", file=self.stream)
-
-    src_sent = [self.src_vocab.word(src_word) for src_word in src]
+    src_sent = src
     trg_sent = [" "] + [self.trg_vocab.word(out_word) for out_word in out]
 
     table = []

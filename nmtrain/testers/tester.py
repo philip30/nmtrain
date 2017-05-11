@@ -40,7 +40,7 @@ class Tester(object):
                                                  gen_limit    = self.config.generation_limit,
                                                  beam         = self.config.beam)
         self.post_processor(predict_output, batch)
-        outputer(src_sent, predict_output, id=batch.id+1)
+        outputer(batch.data[0].src_sent.bpe_merge, predict_output, id=batch.id+1)
       else:
         predict_output = None
       self.watcher.record_updates(loss     = loss.data,
