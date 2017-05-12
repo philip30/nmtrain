@@ -57,6 +57,7 @@ class NMTTrainer:
       """ Backpropagation through time """
       if math.isnan(float(batch_loss.data)):
         nmtrain.log.warning("Loss is NaN, skipping update.")
+        batch_loss.unchain_backward()
         return
 
       model.cleargrads()

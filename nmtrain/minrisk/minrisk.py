@@ -51,7 +51,7 @@ class MinimumRiskTraining(object):
       unique_prob = squeeze(forget(softmax, forget(transpose, unique_prob)), axis=0)
       valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32), volatile=volatile)
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
-    return risk / batch_size
+    return risk / probs.shape[0]
 
   def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id, is_train):
     batch_size  = trg_batch.shape[1]

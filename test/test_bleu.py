@@ -18,6 +18,12 @@ class TestBLEU(unittest.TestCase):
     exp_bleu = math.exp(math.log((3/5) * (2/5) * (1/4) * (1/3))/4)
     act_bleu = bleu.calculate_bleu_corpus(self.hyp, self.ref, ngram=4, smooth=1).score
     self.assertEqual(act_bleu, exp_bleu)
+  
+  def test_bleu_1gram_fast(self):
+    exp_bleu = 4.0 / 6.0
+    act_bleu = bleu.calculate_bleu_sentence_fast(tuple(self.hyp[0]), tuple(self.ref[0]), ngram=1, smooth=1)
+    self.assertEqual(act_bleu, exp_bleu)
+
 
 if __name__ == '__main__':
   unittest.main()

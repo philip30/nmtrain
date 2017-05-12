@@ -30,12 +30,14 @@ def calculate_bleu_sentence_fast(hypothesis, reference, ngram=4, smooth=1):
       tp += min(word_count, ref_stat.get(word, 0))
     denom = sum(hyp_stat.values())
     log_precision += math.log((tp + smooth) / (denom + smooth))
-  if len(reference) != 0:
-    log_bp = 1 - (len(hypothesis) / len(reference))
+  len_hyp = len(hypothesis)
+  len_ref = len(reference)
+  if len(reference) != 0 and len_hyp < len_ref:
+    log_bp = 1 - (len_ref / len_hyp)
   else:
     log_bp = 0
+  assert(log_precision <= 0)
   score =  math.exp(log_precision / ngram + log_bp)
-
   return score
 
 class BLEU(object):
