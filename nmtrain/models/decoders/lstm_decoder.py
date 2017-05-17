@@ -16,7 +16,6 @@ class LSTMDecoder(chainer.Chain):
     self.add_link("decoder", StackLSTM(E, H, D, dropouts.stack_lstm))
     self.add_link("affine_vocab", Linear(H, out_size))
     self.add_link("output_embed", EmbedID(out_size, E))
-    self.add_link("state_init", Linear(H, E))
     # Attributes
     self.dropouts = dropouts
 
@@ -25,8 +24,8 @@ class LSTMDecoder(chainer.Chain):
     return nmtrain.models.decoders.Output(y=y)
 
   def init(self, h, is_train):
-    self.decoder.reset_state()
-    self.h = self.decoder(self.state_init(h), is_train)
+    self.h = h
+    self.decoder.reset_state(h)
 
   def update(self, next_word, is_train):
     self.h = self.decoder(self.output_embed(next_word), is_train)

@@ -26,8 +26,8 @@ class BidirectionalEncoder(chainer.Chain):
     embed_dropout = lambda link: dropout(link, ratio=self.dropouts.encode_embed, train=is_train)
     volatile = chainer.OFF if is_train else chainer.ON
     # Reset both encoders
-    self.encode_forward.reset_state()
-    self.encode_backward.reset_state()
+    self.encode_forward.reset_state(None)
+    self.encode_backward.reset_state(None)
 
     # Perform encoding
     src_sent = self.xp.array(src_data, dtype=numpy.int32)

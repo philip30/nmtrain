@@ -17,15 +17,17 @@ class StackLSTM(chainer.ChainList):
         size = out_size
       lstm.append(chainer.links.StatelessLSTM(size, out_size))
 
-    # None array for quick reset
-    self.none_arr = tuple([None for _ in range(self.depth)])
-
     # Pass it to the super connection
     super(StackLSTM, self).__init__(*lstm)
 
-  def reset_state(self):
-    self.h = self.none_arr
-    self.c = self.none_arr
+  def reset_state(self, h):
+    self.h = [None for _ in range(self.depth)]
+    self.c = [None for _ in range(self.depth)]
+
+    if h is not None:
+      for i in range(self.depth):
+        self.c[i] = h
+        self.h[i] = chainer.functions.tanh(h)
 
   def set_state(self, h, c):
     self.h = h

@@ -25,7 +25,6 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
     self.add_link("encode_forward", StackLSTM(E, H, lstm_depth, dropouts.stack_lstm))
     self.add_link("encode_backward", StackLSTM(E, H, lstm_depth, dropouts.stack_lstm))
     self.add_link("encode_project", Linear(2 * H, H))
-    self.add_link("encode_init", Linear(H, E))
     # Attributes
     self.dropouts = dropouts
     self.lexicon  = lexicon
@@ -35,8 +34,8 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
     encode_dropout = lambda link: dropout(link, ratio=self.dropouts.encode, train=is_train)
     volatile = chainer.OFF if is_train else chainer.ON
     # Reset both encoders
-    self.encode_forward.reset_state()
-    self.encode_backward.reset_state()
+    self.encode_forward.reset_state(None)
+    self.encode_backward.reset_state(None)
 
     # Perform encoding
     fe, be = [], []
@@ -51,8 +50,6 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
       h = encode_dropout(forget(self.encode_project, concat((fe[j], be[-1-j]), axis=1)))
       S.append(expand_dims(h, axis=2))
     S = swapaxes(concat(S, axis=2), 1, 2)
-
-    h = encode_dropout(self.encode_init(h))
 
     # If lexicon is provided
     if self.lexicon is not None:
