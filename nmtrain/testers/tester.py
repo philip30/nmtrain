@@ -43,7 +43,8 @@ class Tester(object):
         outputer(batch.data[0].src_sent.bpe_merge, predict_output, id=batch.id+1)
       else:
         predict_output = None
-      self.watcher.record_updates(loss     = loss.data,
+      loss = loss.data if loss is not None else 0
+      self.watcher.record_updates(loss     = loss,
                                   score    = self.evaluator.assess_sentence_level(predict_output, batch),
                                   batch_id = batch.id,
                                   trg_shape = trg_sent.shape)

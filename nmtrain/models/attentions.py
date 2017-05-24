@@ -15,7 +15,7 @@ class GeneralAttentionLayer(chainer.Chain):
   def __call__(self, S, h):
     batch_size, src_len, hidden_size = S.data.shape
     S = self.inner_weight(F.reshape(S, (batch_size * src_len, hidden_size)))
-    S = F.reshape(S, (batch_size, src_len, hidden_size))
+    S = F.tanh(F.reshape(S, (batch_size, src_len, hidden_size)))
     a = F.softmax(F.squeeze(F.batch_matmul(S, h), axis = 2))
     return a
 
