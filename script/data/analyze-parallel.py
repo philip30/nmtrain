@@ -7,8 +7,8 @@ from collections import defaultdict
 from tabulate import tabulate
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--src", required=True)
-parser.add_argument("--trg", required=True)
+parser.add_argument("src")
+parser.add_argument("trg")
 args = parser.parse_args()
 
 def analyze(corpus_file_dir):
