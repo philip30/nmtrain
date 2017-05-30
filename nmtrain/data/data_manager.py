@@ -33,7 +33,6 @@ class DataManager(object):
     self.test_converter  = nmtrain.data.postprocessor.WordIdConverter(src_vocab, trg_vocab)
     # Retain some properties
     self.analyzer = analyzer
-
     # Loading Training Data
     self.train_data = ParallelData(src              = corpus.train_data.source,
                                    trg              = corpus.train_data.target,

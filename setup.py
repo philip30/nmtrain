@@ -11,7 +11,7 @@ install_requires = [
 ]
 
 setup(
-  name='Chainn',
+  name='nmtrain',
   version='1.0.0',
   description='Neural Machine Translation toolkit',
   author='Philip Arthur',

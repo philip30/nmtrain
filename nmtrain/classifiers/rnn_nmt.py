@@ -52,6 +52,18 @@ class RNN_NMT(object):
   def train_mrt(self, model, src_batch, trg_batch, eos_id, outputer=None):
     return self.minrisk(model, src_batch, trg_batch, eos_id, outputer, self.is_train)
 
+  def generate(self, model, src_batch, eos_id, gen_limit=100):
+    embeddings = []
+    model.encode(src_batch)
+    for i in range(gen_limit):
+      output = model.decode()
+      word   = chainer.functions.argmax(output.y, axis=1)
+      embed, h = model.update(word)
+      embeddings.append(chainer.functions.expand_dims(embed, axis=2))
+      if all(word.data == eos_id):
+        break
+    return embeddings
+
   def predict(self, model, src_sent, eos_id, gen_limit=50,
               store_probabilities=False,
               beam=1, word_penalty=0):

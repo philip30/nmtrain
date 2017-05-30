@@ -1,6 +1,7 @@
 import nmtrain.structs.vocabulary
 import nmtrain.structs.nmtrain_model
 import nmtrain.structs.nmtrain_state
+import nmtrain.structs.seqgan_model
 import nmtrain.structs.watchers
 import nmtrain.structs.lexicon
 

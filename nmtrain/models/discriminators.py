@@ -1,23 +1,38 @@
 import chainer
-import chainer.functions as F
 import numpy
-
 import nmtrain
+import math
 
-class RNNTargetDiscriminator(chainer.Chain):
-  def __init__(self, embed_size, hidden_size, dropout_ratio):
-    super(RNNTargetDiscriminator, self).__init__()
-    self.add_link("hidden", nmtrain.chner.StackLSTM(embed_size, hidden_size, 1, dropout_ratio))
-    self.add_link("assess", chainer.links.Linear(hidden_size, 2))
+from chainer.functions import sigmoid
+from chainer.functions import max_pooling_2d
 
-  def __call__(self, embeddings, train=True):
+class Conv2DTargetDiscriminator(chainer.Chain):
+  def __init__(self, hidden_units, dropout, embedding_size, generation_limit):
+    super(Conv2DTargetDiscriminator, self).__init__()
+    # Init all the links
+    self.add_link("conv1", chainer.links.Convolution2D(hidden_units.input_channel,
+                                                       hidden_units.output_channel,
+                                                       (hidden_units.filter_size.x, hidden_units.filter_size.y)))
+    # Calculate perceptron layer size manually
+    h0 = 1 + (embedding_size - hidden_units.filter_size.x)
+    w0 = 1 + (generation_limit - hidden_units.filter_size.y)
+    h0 = math.ceil(1 + (h0 - hidden_units.max_pool_size.x) / hidden_units.max_pool_size.x)
+    w0 = math.ceil(1 + (w0 - hidden_units.max_pool_size.y) / hidden_units.max_pool_size.y)
+    mid_size = int(h0 * w0 * hidden_units.output_channel)
+    self.add_link("percept", chainer.links.Linear(mid_size, 2))
+    # Holding some dropout / size information
+    self.max_pool_size = (hidden_units.max_pool_size.x, hidden_units.max_pool_size.y)
+    self.dropout = dropout
+
+  def __call__(self, embeddings, is_train=True):
     # Generator
-    self.hidden.reset_state()
-    for embed in embeddings:
-      if not train:
-        embed.volatile = "on"
-      else:
-        embed.volatile = "off"
-      state = self.hidden(embed)
-    return self.assess(F.tanh(state))
+    if not is_train:
+      embeddings.volatile = "on"
+      embeddings.unchain_backward()
+    else:
+      embeddings.volatile = "off"
+    h1 = chainer.functions.tanh(self.conv1(embeddings))
+    h1 = max_pooling_2d(h1, self.max_pool_size)
+    h1 = chainer.functions.dropout(h1, ratio=self.dropout.percept_layer, train=is_train)
+    return self.percept(h1)
 

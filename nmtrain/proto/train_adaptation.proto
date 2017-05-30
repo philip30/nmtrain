@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+import "adaptation.proto";
+import "data.proto";
+
+message TrainAdaptationConfig {
+  string init_model = 1;
+  string discriminator_pretrained = 2;
+  Discriminator discriminator = 3;
+  AdaptationLearning learning_config = 4;
+  AdaptationCorpus corpus = 5;
+  uint32 gpu = 6;
+  int64 seed = 7;
+  DataConfig data_config = 8;
+  string init_seqgan_model = 9;
+  string model_out = 10;
+  DataConfig mrt_data_config = 11;
+}
+

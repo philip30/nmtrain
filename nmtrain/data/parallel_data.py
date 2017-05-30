@@ -41,7 +41,7 @@ class ParallelSentence(object):
       return len(self.src_sent)
     else:
       return 0
-    
+
   def __hash__(self):
     src = len(self.src_sent) if self.src_sent is not None else -1
     trg = len(self.trg_sent) if self.trg_sent is not None else -1
@@ -89,9 +89,10 @@ class ParallelData(object):
 
     src_codec, trg_codec = (None, None) if bpe_codec is None else bpe_codec
     src_data, trg_data = None, None
-    if src is not None:
+
+    if src is not None and src:
       src_data = load_data(src, src_codec)
-    if trg is not None:
+    if trg is not None and trg:
       trg_data = load_data(trg, trg_codec)
     # They need to be equal, otherwise they are not parallel data
     if src_data is not None and trg_data is not None:

@@ -10,15 +10,18 @@ from chainer.functions import transpose, where, squeeze
 from chainer.functions import log, softmax, exp
 
 class MinimumRiskTraining(object):
-  def __init__(self, minrisk_config):
+  def __init__(self, minrisk_config, discriminator_loss=None):
     self.num_sample = minrisk_config.sampling_frequency
     self.generation_limit = minrisk_config.generation_limit
-    self.sharpness  = minrisk_config.sharpness
+    self.sharpness = minrisk_config.sharpness
+    self.eval_type = minrisk_config.eval_type
     if minrisk_config.eval_type == "bleu":
       self.loss = lambda sample, y_t: \
                     -bleu.calculate_bleu_sentence_fast(sample, y_t,
                                                        ngram  = minrisk_config.bleu.ngram,
                                                        smooth = minrisk_config.bleu.smooth)
+    elif minrisk_config.eval_type == "discriminator":
+      self.loss = discriminator_loss
     else:
       raise ValueError("Unimplemented eval type for min-risk:", minrisk_config.eval_type)
 
@@ -84,23 +87,31 @@ class MinimumRiskTraining(object):
       else:
         model.update(next_word)
 
-    # Calculate Risk   
     delta = numpy.zeros(batch_size)
-    for i, (sampled_sent, reference) in enumerate(zip(sample.transpose(), trg_batch.transpose())):
-      # Cut the sent to first non zero
-      idx  = numpy.where(sampled_sent == eos_id)[0]
-      if len(idx) > 0:
-        sent = tuple(sampled_sent[:idx[0] + 1])
-      else:
-        sent = tuple(sampled_sent)
-      # Check for duplication
-      hash_value = hash(sent)
-      if not hash_value in unique[i]:
-        unique[i].add(hash_value)
-        sample_index[i] = True
-        delta[i] = self.loss(sent, tuple(reference))
-      else:
-        delta[i] = float("inf")
+    if self.eval_type == "discriminator":
+      delta = self.loss(sample.transpose())
+      for i, sentence in enumerate(trg_batch.transpose()):
+        hash_value = tuple(sentence)
+        if not hash_value in unique[i]:
+          unique[i].add(hash_value)
+          sample_index[i] = True
+    else:
+      # Calculate Risk
+      for i, (sampled_sent, reference) in enumerate(zip(sample.transpose(), trg_batch.transpose())):
+        # Cut the sent to first non zero
+        idx  = numpy.where(sampled_sent == eos_id)[0]
+        if len(idx) > 0:
+          sent = tuple(sampled_sent[:idx[0] + 1])
+        else:
+          sent = tuple(sampled_sent)
+        # Check for duplication
+        hash_value = hash(sent)
+        if not hash_value in unique[i]:
+          unique[i].add(hash_value)
+          sample_index[i] = True
+          delta[i] = self.loss(sent, tuple(reference))
+        else:
+          delta[i] = float("inf")
 
     return numpy.expand_dims(delta, axis=1),\
            expand_dims(sample_prob, axis=1)

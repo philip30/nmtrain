@@ -4,6 +4,7 @@ import os
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "protobuf.zip")
 importer = zipimport.zipimporter(path)
+algebra_pb = importer.load_module("algebra_pb2")
 corpus_pb = importer.load_module("corpus_pb2")
 data_pb = importer.load_module("data_pb2")
 update_pb = importer.load_module("updates_pb2")
@@ -19,6 +20,10 @@ train_config_pb = importer.load_module("train_config_pb2")
 dictionary_pb = importer.load_module("dictionaries_pb2")
 state_pb = importer.load_module("state_pb2")
 
+# Adaptation
+adaptation_pb = importer.load_module("adaptation_pb2")
+adaptation_config_pb = importer.load_module("train_adaptation_pb2")
+
 # Loading Rest of the modules
 import nmtrain.data
 import nmtrain.minrisk
@@ -32,7 +37,7 @@ import nmtrain.serializers
 import nmtrain.models
 import nmtrain.outputers
 import nmtrain.testers
-
+import nmtrain.trainers
 
 from nmtrain.structs.vocabulary import Vocabulary
 from nmtrain.structs.nmtrain_model import NmtrainModel

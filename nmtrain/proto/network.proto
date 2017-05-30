@@ -13,3 +13,4 @@ message HiddenUnit {
   uint32 embed = 2;
   uint32 attention = 3;
 }
+

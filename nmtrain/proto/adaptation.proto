@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+import "corpus.proto";
+import "optimizer.proto";
+import "algebra.proto";
+import "learning.proto";
+
+message Discriminator {
+  message HiddenUnits {
+    uint32 input_channel = 1;
+    uint32 output_channel = 2;
+    Matrix filter_size = 3;
+    Matrix max_pool_size = 4;
+  }
+  HiddenUnits hidden_units = 1;
+}
+
+message AdaptationLearning {
+  message Dropout {
+    double percept_layer = 1;
+  }
+  Optimizer optimizer = 1;
+  Dropout dropout = 2;
+  int32 generation_limit = 3;
+  int32 pretrain_epoch = 4;
+  int32 seqgan_epoch = 5;
+  Learning learning = 6;
+}
+
+message AdaptationCorpus {
+  // Note that in_domain_src should be filled by src only and 
+  // in_domain_trg should be filled by trg only
+  // ParallelData placeholder is just for convenient usage of existing code
+  Corpus in_domain_src = 1;
+  Corpus in_domain_trg = 2;
+}
+

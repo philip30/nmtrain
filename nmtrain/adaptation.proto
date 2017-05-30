@@ -1,0 +1,84 @@
+# This protobuf is used to configure the train-adaptation
+
+gpu: -1
+seed: 17
+
+init_model: ""
+model_out: ""
+
+# Currently this is not used
+# discriminator_pretrained: ""
+
+discriminator {
+  hidden_units {
+    input_channel: 1
+    output_channel: 50
+    filter_size {
+      x: 3
+      y: 3
+    }
+    max_pool_size {
+      x: 2
+      y: 2
+    }
+  }
+}
+
+learning_config {
+  optimizer {
+    type: "adam"
+    params {
+      adam {
+        alpha: 0.001
+        beta1: 0.9
+        beta2: 0.999
+        eps: 0.00000001
+      }
+    }
+  }
+  dropout {
+    percept_layer: 0.2
+  }
+  generation_limit: 50
+  learning {
+    method: "mrt"
+    mrt {
+      sharpness: 0.05
+      sampling_frequency: 8
+      generation_limit: 50
+      eval_type: "discriminator"
+    }
+  }
+  pretrain_epoch: 3
+  seqgan_epoch: 3
+}
+
+corpus {
+  in_domain_src {
+    train_data {
+      source: ""
+      target: ""    
+    }
+  }
+  # Source should not be provided
+  in_domain_trg {
+    train_data {
+      target: ""
+    }
+  }
+}
+
+data_config {
+  batch: 1024
+  batch_strategy: "word"
+  max_sent_length: 50
+  sort_method: "lentrg"
+}
+
+mrt_data_config {
+  batch: 128
+  batch_strategy: "word"
+  max_sent_length: 50
+  sort_method: "lentrg"
+}
+
