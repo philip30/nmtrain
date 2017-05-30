@@ -21,10 +21,12 @@ message AdaptationLearning {
   }
   Optimizer optimizer = 1;
   Dropout dropout = 2;
-  int32 generation_limit = 3;
-  int32 pretrain_epoch = 4;
-  int32 seqgan_epoch = 5;
+  uint32 generation_limit = 3;
+  uint32 pretrain_epoch = 4;
+  uint32 seqgan_epoch = 5;
   Learning learning = 6;
+  uint32 generator_epoch = 7;
+  uint32 discriminator_epoch = 8;
 }
 
 message AdaptationCorpus {

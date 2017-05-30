@@ -51,6 +51,8 @@ learning_config {
   }
   pretrain_epoch: 3
   seqgan_epoch: 3
+  discriminator_epoch: 1
+  generator_epoch: 1
 }
 
 corpus {
@@ -58,6 +60,10 @@ corpus {
     train_data {
       source: ""
       target: ""    
+    }
+    test_data {
+      source: ""
+      target: ""
     }
   }
   # Source should not be provided
@@ -82,3 +88,24 @@ mrt_data_config {
   sort_method: "lentrg"
 }
 
+test_config {
+  beam: 1
+  generation_limit: 80
+  word_penalty: 0.5
+  evaluation {
+    bleu {
+      annotation: "bleu"
+      ngram: 4
+      smooth: 0
+    }
+    eval_ppl: true
+  }
+}
+
+# Output-files
+output_config {
+  test {
+    output_prefix: ""
+    generate_attention: true
+  }
+}

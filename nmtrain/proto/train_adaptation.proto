@@ -2,6 +2,8 @@ syntax = "proto3";
 
 import "adaptation.proto";
 import "data.proto";
+import "output.proto";
+import "test_config.proto";
 
 message TrainAdaptationConfig {
   string init_model = 1;
@@ -15,5 +17,10 @@ message TrainAdaptationConfig {
   string init_seqgan_model = 9;
   string model_out = 10;
   DataConfig mrt_data_config = 11;
+  AdaptationOutputConfig output_config = 12;
+  TestConfig test_config = 13;
 }
 
+message AdaptationOutputConfig {
+  TestOutput test = 1;
+}

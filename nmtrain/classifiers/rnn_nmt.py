@@ -7,6 +7,7 @@ class RNN_NMT(object):
   def __init__(self):
     self.bptt = None
     self.bptt_len = 0
+    self.train = self.train_mle
 
   def configure_learning(self, learning_config, bptt_func = None):
     self.bptt          = bptt_func

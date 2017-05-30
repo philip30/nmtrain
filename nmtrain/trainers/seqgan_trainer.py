@@ -62,34 +62,48 @@ class SequenceGANTrainer(object):
     classifier.minrisk = nmtrain.minrisk.minrisk.MinimumRiskTraining(learning_config.learning.mrt,
                                                                      discriminator_loss)
     self.serializer   = TrainModelWriter(self.config.model_out, False)
+    outputer = nmtrain.outputers.Outputer(self.model.src_vocab, self.model.trg_vocab)
+    outputer.register_outputer("test", self.config.output_config.test)
+    watcher = nmtrain.structs.watchers.Watcher(nmtrain.structs.nmtrain_state.NmtrainState())
+    tester = nmtrain.testers.tester.Tester(watcher, classifier, self.model, outputer, self.config.test_config)
 
     #1. Pretrain the discriminator
     nmtrain.log.info("Pretraining discriminator for %d epochs" % learning_config.pretrain_epoch)
     self.train_discriminator(classifier, total_epoch=learning_config.pretrain_epoch)
 
     #2. Adversarial Training
-    for _ in range(learning_config.seqgan_epoch):
-      self.train_generator(classifier, 1)
-      self.train_discriminator(classifier, 1)
+    for i in range(learning_config.seqgan_epoch):
+      watcher.begin_train_epoch()
+      self.train_generator(classifier, learning_config.generator_epoch)
+      self.train_discriminator(classifier, learning_config.disriminator_epoch)
+      watcher.end_train_epoch()
 
+      if self.idomain_src.has_test_data:
+        outputer.test.begin_collection(i)
+        tester(model    = self.generator,
+               data     = self.idomain_src.test_data,
+               mode     = nmtrain.testers.TEST,
+               outputer = outputer.test)
+        outputer.test.end_collection()
       #3. Saving Model
       self.serializer.save(self.model)
 
   def train_generator(self, classifier, total_epoch):
     if total_epoch == 0: return None
     classifier.set_train(True)
+    self.generator.set_train(True)
     total_loss = 0
     for epoch in range(total_epoch):
       epoch_loss = 0
       trained = 0
-      for batch in self.minrisk_data.train_data:
+      for i, batch in enumerate(self.minrisk_data.train_data):
         src_batch, trg_batch = batch.normal_data
         loss = classifier.train_mrt(self.generator, src_batch, trg_batch, self.eos_id) / len(batch)
         self.generator_bptt(loss)
         trained += trg_batch.shape[1]
         nmtrain.log.info("[%d] Generator, Trained:%5d, loss=%5.3f" % (epoch+1, trained, loss.data))
         epoch_loss += loss
-      epoch_loss /= len(self.minrisk_data.train_data)
+      epoch_loss /= i
       nmtrain.log.info("[%d] Generator Epoch summary: loss=%.3f" % (epoch+1, epoch_loss.data))
 
   def train_discriminator(self, classifier, total_epoch):
