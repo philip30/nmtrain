@@ -84,12 +84,12 @@ class DataManager(object):
     return self.test_data
 
   # Training data arrange + shuffle
-  def arrange(self, epoch, hack_config):
+  def arrange(self, epoch, hack_config=None):
     while self.random_ctr < epoch:
       self.random.shuffle(self.train_data.batch_manager.batch_indexes)
       self.random_ctr += 1
       # Put the longest target batch here
-      if self.random_ctr == epoch and self.fresh_start:
+      if self.random_ctr == epoch and self.fresh_start and hack_config is not None:
         self.fresh_start = False
         current = self.train_data.batch_manager.batch_indexes
         if hack_config.put_max_trg_first:

@@ -25,6 +25,7 @@ adaptation_pb = importer.load_module("adaptation_pb2")
 adaptation_config_pb = importer.load_module("train_adaptation_pb2")
 
 # Loading Rest of the modules
+import nmtrain.debug
 import nmtrain.data
 import nmtrain.minrisk
 import nmtrain.structs

@@ -23,6 +23,8 @@ class SequenceGANTrainer(object):
     # Vocabularies
     self.model.src_vocab.set_frozen(True)
     self.model.trg_vocab.set_frozen(True)
+    # Init debug
+    nmtrain.debug.init(self.model.src_vocab, self.model.trg_vocab)
 
     # Note:
     # The vocabulary has been frozen here
@@ -74,8 +76,8 @@ class SequenceGANTrainer(object):
     #2. Adversarial Training
     for i in range(learning_config.seqgan_epoch):
       watcher.begin_train_epoch()
-      self.train_generator(classifier, learning_config.generator_epoch)
-      self.train_discriminator(classifier, learning_config.disriminator_epoch)
+      self.train_generator(classifier, learning_config.generator_epoch, i)
+      self.train_discriminator(classifier, learning_config.discriminator_epoch)
       watcher.end_train_epoch()
 
       if self.idomain_src.has_test_data:
@@ -88,18 +90,24 @@ class SequenceGANTrainer(object):
       #3. Saving Model
       self.serializer.save(self.model)
 
-  def train_generator(self, classifier, total_epoch):
+  def train_generator(self, classifier, total_epoch, seqgan_epoch):
     if total_epoch == 0: return None
     classifier.set_train(True)
     self.generator.set_train(True)
     total_loss = 0
     for epoch in range(total_epoch):
+      self.minrisk_data.arrange(total_epoch * seqgan_epoch + epoch)
       epoch_loss = 0
       trained = 0
       for i, batch in enumerate(self.minrisk_data.train_data):
         src_batch, trg_batch = batch.normal_data
-        loss = classifier.train_mrt(self.generator, src_batch, trg_batch, self.eos_id) / len(batch)
-        self.generator_bptt(loss)
+        try:
+          loss = classifier.train_mrt(self.generator, src_batch, trg_batch, self.eos_id, self.model.trg_vocab) / len(batch)
+          self.generator_bptt(loss)
+        except:
+          nmtrain.log.warning("Died at this batch_id:", batch.id, "with shape:", src_batch.shape, trg_batch.shape)
+          raise
+
         trained += trg_batch.shape[1]
         nmtrain.log.info("[%d] Generator, Trained:%5d, loss=%5.3f" % (epoch+1, trained, loss.data))
         epoch_loss += loss
@@ -116,6 +124,7 @@ class SequenceGANTrainer(object):
     # a vector label of size B.
     def to_embed_vector(sample, is_negative):
       src_batch, trg_batch = sample
+      trg_batch = self.generator.xp.array(trg_batch, dtype=numpy.int32)
       label = 0 if is_negative else 1
       if is_negative:
         trg_embedding = classifier.generate(self.generator,
@@ -123,7 +132,7 @@ class SequenceGANTrainer(object):
                                              self.eos_id,
                                              gen_limit=gen_limit)
       else:
-        trg_embedding = [expand_dims(self.target_embedding(word), axis=2) for word in trg_batch]
+          trg_embedding = [expand_dims(self.target_embedding(word), axis=2) for word in trg_batch[:gen_limit]]
       trg_embedding = concat(trg_embedding, axis=2)
       # padding
       shape = trg_embedding.shape
@@ -203,7 +212,8 @@ class DiscriminatorLoss(object):
     self.gen_limit = gen_limit
 
   def __call__(self, sample):
-    trg_embedding = [expand_dims(self.target_embed(word), axis=2) for word in sample]
+    sample = self.discriminator.xp.array(sample, dtype=numpy.int32)
+    trg_embedding = [expand_dims(self.target_embed(word), axis=2) for word in sample.transpose()]
     trg_embedding = concat(trg_embedding, axis=2)
     # padding
     shape = trg_embedding.shape
@@ -211,6 +221,7 @@ class DiscriminatorLoss(object):
     trg_embedding = concat((trg_embedding, pad), axis=2)
     trg_embedding = expand_dims(trg_embedding, axis=1)
     prob = self.discriminator(trg_embedding, is_train=False)
-    prob = chainer.functions.softmax(prob).data
-    return -prob.transpose()[1]
+    prob = chainer.functions.softmax(prob)
+    prob.to_cpu()
+    return -prob.data.transpose()[1]
 

@@ -1,5 +1,6 @@
 import chainer
 import numpy
+import nmtrain
 import math
 
 from collections import defaultdict
@@ -15,6 +16,7 @@ class MinimumRiskTraining(object):
     self.generation_limit = minrisk_config.generation_limit
     self.sharpness = minrisk_config.sharpness
     self.eval_type = minrisk_config.eval_type
+    self.is_discriminator = minrisk_config.eval_type == "discriminator"
     if minrisk_config.eval_type == "bleu":
       self.loss = lambda sample, y_t: \
                     -bleu.calculate_bleu_sentence_fast(sample, y_t,
@@ -51,7 +53,7 @@ class MinimumRiskTraining(object):
       prob = expand_dims(get_item(probs, i), axis=1)
       item = list(numpy.where(sample_index[i])[0])
       unique_prob = get_item(prob, [item])
-      unique_prob = squeeze(forget(softmax, forget(transpose, unique_prob)), axis=0)
+      unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
       valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32), volatile=volatile)
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
     return risk / probs.shape[0]
@@ -59,7 +61,11 @@ class MinimumRiskTraining(object):
   def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id, is_train):
     batch_size  = trg_batch.shape[1]
     sample_prob = 0
-    sample      = numpy.zeros((self.generation_limit, batch_size), dtype=numpy.int32)
+    if self.is_discriminator:
+        # Ones is for the eos
+        sample = numpy.ones((self.generation_limit, batch_size), dtype=numpy.int32)
+    else:
+        sample = numpy.zeros((self.generation_limit, batch_size), dtype=numpy.int32)
     end_flag    = None
     volatile = chainer.OFF if is_train else chainer.ON
 
@@ -71,9 +77,9 @@ class MinimumRiskTraining(object):
       if sample_num == 0:
         sample[j] = trg_batch[j]
       else:
-        sample[j] = self.sample_one(y)
+        sample[j] = self.sample_one(y, sample[j-1] if j != 0 else numpy.zeros(len(sample[j])))
       next_word = chainer.Variable(model.xp.array(sample[j], dtype=numpy.int32), volatile=volatile)
-      prob = select_item(forget(log, y), next_word)
+      prob = select_item(log(y), next_word)
       sample_prob += prob
 
       # check_for_end:
@@ -86,11 +92,10 @@ class MinimumRiskTraining(object):
         break
       else:
         model.update(next_word)
-
     delta = numpy.zeros(batch_size)
-    if self.eval_type == "discriminator":
+    if self.is_discriminator:
       delta = self.loss(sample.transpose())
-      for i, sentence in enumerate(trg_batch.transpose()):
+      for i, sentence in enumerate(sample.transpose()):
         hash_value = tuple(sentence)
         if not hash_value in unique[i]:
           unique[i].add(hash_value)
@@ -116,10 +121,16 @@ class MinimumRiskTraining(object):
     return numpy.expand_dims(delta, axis=1),\
            expand_dims(sample_prob, axis=1)
 
-  def sample_one(self, probs_var):
+  def sample_one(self, probs_var, last_sample):
     probs = copy(probs_var, -1).data
-    samples = numpy.zeros(len(probs))
+    if self.is_discriminator:
+      samples = numpy.ones(len(probs))
+    else:
+      samples = numpy.zeros(len(probs))
     for i, prob in enumerate(probs):
-      samples[i] = numpy.random.choice(len(prob), p=prob)
+      if last_sample[i] == 1:
+        samples[i] == 1
+      else:
+        samples[i] = numpy.random.choice(len(prob), p=prob)
     return samples
 
