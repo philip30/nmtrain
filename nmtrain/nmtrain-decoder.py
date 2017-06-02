@@ -34,7 +34,6 @@ def main(args):
   # Classifier, that run the data and the model
   classifier    = nmtrain.classifiers.RNN_NMT()
   classifier.configure_learning(model.config.learning_config)
-  classifier.set_train(False)
   # Load data
   log.info("Loading Data")
   data_manager.load_test(config.test_data, model)

@@ -51,10 +51,6 @@ class EnsembleLinearInterpolateNMT(object):
       states.append(model.chainer_model.state())
     return states
 
-  def set_train(self, value):
-    for model in self.models:
-      model.chainer_model.set_train(value)
-
   def __getattr__(self, key):
     if key in self.__dict__:
       return self.__dict__[key]

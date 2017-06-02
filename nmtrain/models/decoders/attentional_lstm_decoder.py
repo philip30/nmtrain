@@ -38,29 +38,32 @@ class LSTMAttentionalDecoder(chainer.Chain):
     E = hidden_units.embed
     H = hidden_units.stack_lstm
     D = lstm_depth
-    self.add_link("decoder", StackLSTM(E, H, D, dropouts.stack_lstm))
-    self.add_link("context_project", Linear(2 * H, H))
-    self.add_link("affine_vocab", Linear(H, out_size))
-    self.add_link("output_embed", EmbedID(out_size, E))
-    self.add_link("attention", attention)
-
-    if lexicon is not None:
-      self.add_link("lexicon_model", lexicon_model)
-
-    if input_feeding:
-      self.add_link("feeding_transform", chainer.links.Linear(H+E, E))
-
     self.input_feeding = input_feeding
     self.dropouts      = dropouts
 
-  def init(self, h, is_train):
+    ### Chainer Registration
+    with self.init_scope():
+      self.decoder = StackLSTM(E, H, D, dropouts.stack_lstm)
+      self.context_project = Linear(2 * H, H)
+      self.affine_vocab = Linear(H, out_size)
+      self.output_embed = EmbedID(out_size, E)
+      self.attention = attention
+
+      if lexicon is not None:
+        self.lexicon_model = lexicon_model
+
+      if input_feeding:
+        self.feeding_transform = chainer.links.Linear(H+E, E)
+    ### End Chainer Registration
+
+  def init(self, h):
     h, S, lexicon_matrix = h
     self.decoder.reset_state(h)
     self.h = h
     self.S = S
     self.lexicon_matrix = lexicon_matrix
 
-  def __call__(self, is_train):
+  def __call__(self):
     # Calculate Attention vector
     a = self.attention(self.S, self.h)
     # Calculate context vector
@@ -74,12 +77,12 @@ class LSTMAttentionalDecoder(chainer.Chain):
 
     return nmtrain.models.decoders.Output(y=y, a=a)
 
-  def update(self, next_word, is_train):
+  def update(self, next_word):
     # embed_size + hidden size -> input feeding approach
     decoder_update = self.output_embed(next_word)
     if self.input_feeding:
       decoder_update = self.feeding_transform(concat((self.ht, decoder_update), axis=1))
-    self.h = self.decoder(decoder_update, is_train)
+    self.h = self.decoder(decoder_update)
     return decoder_update, self.h
 
   def set_state(self, state):

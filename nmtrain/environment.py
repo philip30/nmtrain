@@ -4,6 +4,9 @@ import numpy
 import nmtrain
 import random
 
+if chainer.cuda.available:
+  import cupy
+
 # Environment Variables
 verbosity = 0
 gpu = -1
@@ -21,16 +24,15 @@ def init(args):
 # Environment Functions
 def init_gpu(gpu_num):
   global gpu
-  if hasattr(chainer.cuda, "cupy"):
-    if gpu_num >= 0:
-      gpu = gpu_num
-      chainer.cuda.get_device(gpu_num).use()
+  if chainer.cuda.available and gpu_num >= 0:
+    gpu = gpu_num
+    chainer.cuda.get_device(gpu_num).use()
   return gpu_num
 
 def init_random(seed):
   if seed != 0:
-    if hasattr(chainer.cuda, "cupy"):
-      chainer.cuda.cupy.random.seed(seed)
+    if chainer.cuda.available:
+      cupy.random.seed(seed)
     numpy.random.seed(seed)
     random.seed(seed)
 

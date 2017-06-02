@@ -1,4 +1,5 @@
 import nmtrain
+import chainer
 
 from nmtrain.evals import evaluator
 from nmtrain.testers.post_processor import TestPostProcessor
@@ -15,10 +16,13 @@ class Tester(object):
     self.post_processor = TestPostProcessor(model.src_vocab, model.trg_vocab, config.post_process)
     self.config = config
 
-  def __call__(self, model, data, mode, outputer):
+  def __call__(self, *args, **kwargs):
+    with chainer.no_backprop_mode():
+      with chainer.using_config('train', False):
+        self.test(*args, **kwargs)
+
+  def test(self, model, data, mode, outputer):
     self.epoch(mode, "begin")
-    model.set_train(False)
-    self.classifier.set_train(False)
     self.evaluator.reset()
     ### Variables
     eval_ppl  = self.config.evaluation.eval_ppl

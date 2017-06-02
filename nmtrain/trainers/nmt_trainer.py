@@ -80,8 +80,6 @@ class NMTTrainer:
 
       # Training Iterations
       watcher.begin_train_epoch()
-      model.set_train(True)
-      classifier.set_train(True)
       for batch in data.train_data:
         for batch_retriever in self.unknown_trainer:
           src_batch, trg_batch = batch_retriever(batch)

@@ -27,20 +27,16 @@ class MinimumRiskTraining(object):
     else:
       raise ValueError("Unimplemented eval type for min-risk:", minrisk_config.eval_type)
 
-  def set_train(self, is_train):
-    self.is_train = is_train
-
-  def __call__(self, model, src_batch, trg_batch, eos_id, outputer=None, is_train=True):
-    h = model.encoder(src_batch, is_train)
+  def __call__(self, model, src_batch, trg_batch, eos_id, outputer=None):
+    h = model.encoder(src_batch)
     batch_size = trg_batch.shape[1]
-    volatile = chainer.OFF if is_train else chainer.ON
     unique = defaultdict(set)
 
     sample_index  = numpy.zeros((self.num_sample, batch_size), dtype=bool)
     deltas, probs = [], []
     # Sampling
     for i in range(self.num_sample):
-      delta, prob = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id, is_train)
+      delta, prob = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id)
       deltas.append(delta)
       probs.append(prob * self.sharpness)
 
@@ -54,11 +50,11 @@ class MinimumRiskTraining(object):
       item = list(numpy.where(sample_index[i])[0])
       unique_prob = get_item(prob, [item])
       unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
-      valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32), volatile=volatile)
+      valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32))
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
     return risk / probs.shape[0]
 
-  def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id, is_train):
+  def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id):
     batch_size  = trg_batch.shape[1]
     sample_prob = 0
     if self.is_discriminator:
@@ -67,10 +63,9 @@ class MinimumRiskTraining(object):
     else:
         sample = numpy.zeros((self.generation_limit, batch_size), dtype=numpy.int32)
     end_flag    = None
-    volatile = chainer.OFF if is_train else chainer.ON
 
     # Generate sample sentence
-    model.decoder.init(h, is_train)
+    model.decoder.init(h)
     for j in range(self.generation_limit):
       output = model.decode()
       y = softmax(output.y)
@@ -78,7 +73,7 @@ class MinimumRiskTraining(object):
         sample[j] = trg_batch[j]
       else:
         sample[j] = self.sample_one(y, sample[j-1] if j != 0 else numpy.zeros(len(sample[j])))
-      next_word = chainer.Variable(model.xp.array(sample[j], dtype=numpy.int32), volatile=volatile)
+      next_word = chainer.Variable(model.xp.array(sample[j], dtype=numpy.int32))
       prob = select_item(log(y), next_word)
       sample_prob += prob
 

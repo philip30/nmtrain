@@ -4,7 +4,7 @@ import sys
 sys.path.append("./nmtrain")
 
 install_requires = [
-  'Chainer>=1.18',
+  'Chainer>=2.0.0',
   'numpy>=1.9.0',
   'tabulate>=0.7.7',
   'protobuf>=3.1.0'

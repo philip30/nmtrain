@@ -21,26 +21,20 @@ class RNN_NMT(object):
       nmtrain.log.info("Setting learning to maximum likelihood training")
       self.train = self.train_mle
 
-  def set_train(self, is_train):
-    self.is_train = is_train
-    if hasattr(self, "minrisk"):
-      self.minrisk.set_train(is_train)
-
   def train_mle(self, model, src_batch, trg_batch, eos_id, outputer=None):
     batch_loss  = 0
     bptt_ctr    = 0
-    volatile    = chainer.OFF if self.is_train else chainer.ON
     model.encode(src_batch)
 
     if outputer: outputer.begin_collection(src=src_batch, ref=trg_batch)
     for i, trg_word in enumerate(trg_batch):
-      y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32), volatile=volatile)
+      y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32))
       output = model.decode()
       batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
       model.update(y_t)
 
       # Truncated BPTT
-      if self.is_train and self.bptt_len > 0:
+      if hasattr(self, "bptt") and self.bptt is not None and self.bptt_len > 0:
         bptt_ctr += 1
         if bptt_ctr == self.config.bptt_len:
           self.bptt(batch_loss)
@@ -51,7 +45,7 @@ class RNN_NMT(object):
     return batch_loss / len(trg_batch)
 
   def train_mrt(self, model, src_batch, trg_batch, eos_id, outputer=None):
-    return self.minrisk(model, src_batch, trg_batch, eos_id, outputer, self.is_train)
+    return self.minrisk(model, src_batch, trg_batch, eos_id, outputer)
 
   def generate(self, model, src_batch, eos_id, gen_limit=100):
     embeddings = []
@@ -104,7 +98,7 @@ class RNN_NMT(object):
         else:
           if state.word is not None:
             model.set_state(state.model_state)
-            word_var = chainer.Variable(model.xp.array([state.word], dtype=numpy.int32), volatile=chainer.ON)
+            word_var = chainer.Variable(model.xp.array([state.word], dtype=numpy.int32))
             model.update(word_var)
 
           # Produce the output
