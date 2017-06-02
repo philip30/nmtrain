@@ -8,6 +8,7 @@ import nmtrain
 from chainer.functions import expand_dims
 from chainer.functions import concat
 from chainer.functions import broadcast_to
+from chainer.functions import softmax, softmax_cross_entropy
 from nmtrain.serializers import TrainModelWriter
 
 class SequenceGANTrainer(object):
@@ -44,23 +45,18 @@ class SequenceGANTrainer(object):
     nmtrain.log.info("TRG VOCAB:", len(self.model.trg_vocab))
 
     # Generate Positive + negative examples
-    positive_samples = []
-    negative_samples = []
+    self.samples = []
     ### Generating Negative Samples 
     for i, batch in enumerate(self.idomain_src.train_data):
-      negative_samples.append(batch.normal_data)
+      self.samples.append((batch.normal_data, False))
     ### Generating Positive Samples
     for i, batch in enumerate(self.idomain_trg.train_data):
-      positive_samples.append(batch.normal_data)
-    self.samples = []
-    for pos_s, neg_s in itertools.zip_longest(positive_samples, negative_samples, fillvalue=None):
-      self.samples.append((pos_s, neg_s))
+      self.samples.append((batch.normal_data, True))
 
   def __call__(self, classifier):
     # Configuring Minimum Risk Training with discriminator
     learning_config = self.config.learning_config
-    discriminator_loss = DiscriminatorLoss(self.discriminator, self.target_embedding,
-                                           self.eos_embed(), self.config.learning_config.generation_limit)
+    discriminator_loss = DiscriminatorLoss(self.discriminator, self.target_embedding)
     classifier.minrisk = nmtrain.minrisk.minrisk.MinimumRiskTraining(learning_config.learning.mrt,
                                                                      discriminator_loss)
     self.serializer   = TrainModelWriter(self.config.model_out, False)
@@ -75,10 +71,8 @@ class SequenceGANTrainer(object):
 
     #2. Adversarial Training
     for i in range(learning_config.seqgan_epoch):
-      watcher.begin_train_epoch()
       self.train_generator(classifier, learning_config.generator_epoch, i)
       self.train_discriminator(classifier, learning_config.discriminator_epoch)
-      watcher.end_train_epoch()
 
       if self.idomain_src.has_test_data:
         outputer.test.begin_collection(i)
@@ -90,10 +84,12 @@ class SequenceGANTrainer(object):
       #3. Saving Model
       self.serializer.save(self.model)
 
+      watcher.new_epoch()
+
   def train_generator(self, classifier, total_epoch, seqgan_epoch):
+    self.generator.enable_update()
+    self.discriminator.disable_update()
     if total_epoch == 0: return None
-    classifier.set_train(True)
-    self.generator.set_train(True)
     total_loss = 0
     for epoch in range(total_epoch):
       self.minrisk_data.arrange(total_epoch * seqgan_epoch + epoch)
@@ -115,33 +111,30 @@ class SequenceGANTrainer(object):
       nmtrain.log.info("[%d] Generator Epoch summary: loss=%.3f" % (epoch+1, epoch_loss.data))
 
   def train_discriminator(self, classifier, total_epoch):
+    self.discriminator.enable_update()
+    self.generator.disable_update()
     if total_epoch == 0: return None
-    classifier.set_train(False)
-    gen_limit = self.config.learning_config.generation_limit
+    gen_limit = self.config.learning_config.learning.mrt.generation_limit
     samples = self.samples
 
     # Produce an embedding of size (B, E, |F|) and 
     # a vector label of size B.
-    def to_embed_vector(sample, is_negative):
+    def to_embed_vector(sample, is_positive):
       src_batch, trg_batch = sample
       trg_batch = self.generator.xp.array(trg_batch, dtype=numpy.int32)
-      label = 0 if is_negative else 1
-      if is_negative:
-        trg_embedding = classifier.generate(self.generator,
-                                             src_batch,
-                                             self.eos_id,
-                                             gen_limit=gen_limit)
+      label = 1 if is_positive else 0
+      if is_positive:
+        trg_embedding = [expand_dims(self.target_embedding(word), axis=2) for word in trg_batch]
       else:
-          trg_embedding = [expand_dims(self.target_embedding(word), axis=2) for word in trg_batch[:gen_limit]]
+        with chainer.using_config('train', False):
+          with chainer.no_backprop_mode():
+            trg_embedding = classifier.generate(self.generator,
+                                                src_batch,
+                                                self.eos_id,
+                                                gen_limit=gen_limit)
       trg_embedding = concat(trg_embedding, axis=2)
-      # padding
-      shape = trg_embedding.shape
-      pad = broadcast_to(self.eos_embed(), (shape[0], shape[1], gen_limit-shape[2]))
-      trg_embedding = concat((trg_embedding, pad), axis=2)
-      trg_embedding = expand_dims(trg_embedding, axis=1)
       # Ground Truth label
-      batch_size = trg_embedding.shape[0]
-      ground_truth = self.create_label(batch_size, label)
+      ground_truth = self.create_label(trg_embedding.shape[0], label)
       return trg_embedding, ground_truth
 
     # Begin Discriminator Training
@@ -153,26 +146,16 @@ class SequenceGANTrainer(object):
       # Train the positive sample and negative sample at once.
       # Putting them on the same batch together make the system more
       # adapt to distinguish between which one is positive and which one is negative.
-      for pos_s, neg_s in samples:
-        trg_embeddings = []
-        labels = []
-        if pos_s is not None:
-          embed, gt = to_embed_vector(pos_s, False)
-          trg_embeddings.append(embed)
-          labels.append(gt)
-        if neg_s is not None:
-          embed, gt = to_embed_vector(neg_s, True)
-          trg_embeddings.append(embed)
-          labels.append(gt)
-        trg_embedding = concat(trg_embeddings, axis=0)
-        ground_truth = concat(labels, axis=0)
+      for sample, is_positive in samples:
+        embed, ground_truth = to_embed_vector(sample, is_positive)
+        embed = expand_dims(embed, axis=1)
         # Discriminate the target
-        output = self.discriminator(trg_embedding)
+        output = self.discriminator(embed)
         # Calculate Loss
-        loss = chainer.functions.softmax_cross_entropy(output, ground_truth) / trg_embedding.shape[0]
+        loss = softmax_cross_entropy(output, ground_truth) / embed.shape[0]
         self.discriminator_bptt(loss)
-        trained += trg_embedding.shape[0]
-        nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1, trained, loss.data)) 
+        trained += embed.shape[0]
+        nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1, trained, loss.data))
         epoch_loss += loss
       epoch_loss /= len(samples)
       total_loss += epoch_loss.data
@@ -183,14 +166,6 @@ class SequenceGANTrainer(object):
   @functools.lru_cache(maxsize=2)
   def create_label(self, size, label):
     return self.model.seqgan_model.xp.array([label for _ in range(size)], dtype= numpy.int32)
-
-  @functools.lru_cache(maxsize=1)
-  def eos_embed(self):
-    eos_embed = self.target_embedding(
-                chainer.Variable(self.model.seqgan_model.xp.array([self.model.trg_vocab.eos_id()], dtype=numpy.int32)))
-    eos_embed = chainer.functions.expand_dims(eos_embed, axis=2)
-    eos_embed.volatile = chainer.ON
-    return eos_embed
 
   def generator_bptt(self, loss):
     self.generator.cleargrads()
@@ -205,23 +180,22 @@ class SequenceGANTrainer(object):
     self.model.dis_opt.update()
 
 class DiscriminatorLoss(object):
-  def __init__(self, discriminator, target_embed, eos_embed, gen_limit):
+  def __init__(self, discriminator, target_embed):
     self.discriminator = discriminator
     self.target_embed = target_embed
-    self.eos_embed = eos_embed
-    self.gen_limit = gen_limit
 
   def __call__(self, sample):
+    with chainer.using_config('train', False):
+      with chainer.no_backprop_mode():
+        return self.calculate_loss(sample)
+
+  def calculate_loss(self, sample):
     sample = self.discriminator.xp.array(sample, dtype=numpy.int32)
     trg_embedding = [expand_dims(self.target_embed(word), axis=2) for word in sample.transpose()]
-    trg_embedding = concat(trg_embedding, axis=2)
-    # padding
-    shape = trg_embedding.shape
-    pad = broadcast_to(self.eos_embed, (shape[0], shape[1], self.gen_limit-shape[2]))
-    trg_embedding = concat((trg_embedding, pad), axis=2)
-    trg_embedding = expand_dims(trg_embedding, axis=1)
-    prob = self.discriminator(trg_embedding, is_train=False)
-    prob = chainer.functions.softmax(prob)
+    trg_embedding = expand_dims(concat(trg_embedding, axis=2), axis=1)
+    # Discriminator
+    prob = self.discriminator(trg_embedding)
+    prob = softmax(prob)
     prob.to_cpu()
     return -prob.data.transpose()[1]
 

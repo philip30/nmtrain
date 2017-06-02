@@ -4,7 +4,7 @@ import nmtrain
 from chainer.links import EmbedID
 from chainer.links import Linear
 from chainer.functions import dropout
-from nmtrain.chner import StackLSTM
+from nmtrain.components import StackLSTM
 
 class LSTMDecoder(chainer.Chain):
   def __init__(self, out_size, hidden_units, dropouts, lstm_depth):

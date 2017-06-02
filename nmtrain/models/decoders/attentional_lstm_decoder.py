@@ -7,7 +7,7 @@ from chainer.functions import squeeze
 from chainer.functions import batch_matmul
 from chainer.functions import tanh
 from chainer.functions import concat, forget
-from nmtrain.chner import StackLSTM
+from nmtrain.components import StackLSTM
 from nmtrain.models import attentions
 from nmtrain.models import lexicons
 

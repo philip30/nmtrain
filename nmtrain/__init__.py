@@ -32,7 +32,7 @@ import nmtrain.structs
 import nmtrain.environment
 import nmtrain.third_party
 import nmtrain.log
-import nmtrain.chner
+import nmtrain.components
 import nmtrain.util
 import nmtrain.serializers
 import nmtrain.models

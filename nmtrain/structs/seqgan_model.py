@@ -21,8 +21,6 @@ class NmtrainSeqGANModel(NmtrainModel):
       self.dis_opt.setup(self.seqgan_model)
 
     # SeqGAN optimizer
-    self.gen_opt.use_cleargrads()
-    self.dis_opt.use_cleargrads()
     self.gen_opt.add_hook(chainer.optimizer.GradientClipping(self.config.learning_config.gradient_clipping))
     self.dis_opt.add_hook(chainer.optimizer.GradientClipping(self.config.learning_config.gradient_clipping))
 
@@ -36,7 +34,6 @@ class NmtrainSeqGANModel(NmtrainModel):
     super(NmtrainSeqGANModel, self).describe()
 
 def from_spec(nmt_config, network_config, learning_config):
-  embed = nmt_config.network_config.hidden_units.embed
-  generation_limit = learning_config.generation_limit
-  return discriminators.Conv2DTargetDiscriminator(network_config.hidden_units, learning_config.dropout, embed, generation_limit)
+  embedding_size = nmt_config.network_config.hidden_units.embed
+  return discriminators.Conv2DTargetDiscriminator(network_config.hidden_units, learning_config.dropout, embedding_size)
 

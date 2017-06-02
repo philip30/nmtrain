@@ -17,9 +17,6 @@ class NmtrainModel(object):
       self.lexicon       = None
       self.bpe_codec     = load_bpe_codec(config.bpe_config)
 
-    if hasattr(self, "optimizer"):
-      self.optimizer.use_cleargrads()
-
   def finalize_model(self):
     if self.lexicon is None and self.config.lexicon_config.path:
       nmtrain.log.info("Constructing lexicon...")

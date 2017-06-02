@@ -51,6 +51,11 @@ class Watcher(object):
     # Remove reference
     self.batch_update = None
 
+  def update_epoch(self, time_taken, trained_word, trained_sent):
+    self.epoch_update.time += time_taken
+    self.epoch_update.trained_words += trained_word
+    self.epoch_update.trained_sentence += trained_sent
+
   def record_updates(self, loss, batch_id, trg_shape, score = None):
     time_taken = time.time() - self.batch_update.time
     trained_word = trg_shape[0] * trg_shape[1]
@@ -61,9 +66,7 @@ class Watcher(object):
     self.batch_update.trained_words = trained_word
     self.batch_update.trained_sentence = trained_sent
     # Epoch Updates
-    self.epoch_update.time += time_taken
-    self.epoch_update.trained_words += trained_word
-    self.epoch_update.trained_sentence += trained_sent
+    self.update_epoch(time_taken, trained_word, trained_sent)
 
     if loss is not None:
       ppl = math.exp(float(loss))
@@ -77,7 +80,11 @@ class Watcher(object):
         self.epoch_update.score[eval_key] = eval_value
 
   def end_epoch(self, prefix, score=None):
-    wps = self.epoch_update.trained_words / self.epoch_update.time
+    if self.epoch_update.time != 0:
+      wps = self.epoch_update.trained_words / self.epoch_update.time
+      wps_str = "%5.3f" % wps
+    else:
+      wps_str = "-"
     if self.epoch_update.batch_updates:
       self.epoch_update.score["loss"] /= len(self.epoch_update.batch_updates)
       self.epoch_update.score["ppl"]  /= len(self.epoch_update.batch_updates)

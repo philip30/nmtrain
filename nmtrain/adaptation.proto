@@ -11,16 +11,8 @@ model_out: ""
 
 discriminator {
   hidden_units {
-    input_channel: 1
-    output_channel: 50
-    filter_size {
-      x: 3
-      y: 3
-    }
-    max_pool_size {
-      x: 2
-      y: 2
-    }
+    feature_size: 256
+    ngram: 3
   }
 }
 
@@ -39,7 +31,6 @@ learning_config {
   dropout {
     percept_layer: 0.2
   }
-  generation_limit: 50
   learning {
     method: "mrt"
     mrt {

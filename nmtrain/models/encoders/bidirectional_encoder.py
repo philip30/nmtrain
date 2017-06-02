@@ -6,7 +6,7 @@ from chainer.links import EmbedID
 from chainer.links import Linear
 from chainer.functions import dropout
 from chainer.functions import concat
-from nmtrain.chner import StackLSTM
+from nmtrain.components import StackLSTM
 
 class BidirectionalEncoder(chainer.Chain):
   def __init__(self, in_size, hidden_units, dropouts, lstm_depth):

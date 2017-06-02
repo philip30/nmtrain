@@ -12,7 +12,7 @@ from chainer.functions import squeeze
 from chainer.functions import swapaxes
 from chainer.functions import concat
 from chainer.functions import tanh
-from nmtrain.chner import StackLSTM
+from nmtrain.components import StackLSTM
 
 class BidirectionalAttentionalEncoder(chainer.Chain):
   def __init__(self, in_size, hidden_units, dropouts, lstm_depth, input_feeding=True, lexicon=None):

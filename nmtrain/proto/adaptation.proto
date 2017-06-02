@@ -2,15 +2,12 @@ syntax = "proto3";
 
 import "corpus.proto";
 import "optimizer.proto";
-import "algebra.proto";
 import "learning.proto";
 
 message Discriminator {
   message HiddenUnits {
-    uint32 input_channel = 1;
-    uint32 output_channel = 2;
-    Matrix filter_size = 3;
-    Matrix max_pool_size = 4;
+    uint32 ngram = 1;
+    uint32 feature_size = 2;
   }
   HiddenUnits hidden_units = 1;
 }
@@ -21,12 +18,11 @@ message AdaptationLearning {
   }
   Optimizer optimizer = 1;
   Dropout dropout = 2;
-  uint32 generation_limit = 3;
-  uint32 pretrain_epoch = 4;
-  uint32 seqgan_epoch = 5;
-  Learning learning = 6;
-  uint32 generator_epoch = 7;
-  uint32 discriminator_epoch = 8;
+  uint32 pretrain_epoch = 3;
+  uint32 seqgan_epoch = 4;
+  Learning learning = 5;
+  uint32 generator_epoch = 6;
+  uint32 discriminator_epoch = 7;
 }
 
 message AdaptationCorpus {
