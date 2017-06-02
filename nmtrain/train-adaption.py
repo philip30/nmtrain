@@ -13,7 +13,7 @@ def main(args):
   # Initiation
   config = nmtrain.util.open_proto_str(args.config, nmtrain.adaptation_config_pb.TrainAdaptationConfig())
   sanity_check(config)
-  nmtrain.environment.init(config)
+  nmtrain.environment.init(config, args)
   # Training
   trainer = nmtrain.trainers.SequenceGANTrainer(config)
   trainer(nmtrain.classifiers.RNN_NMT())
