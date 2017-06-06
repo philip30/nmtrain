@@ -107,6 +107,7 @@ data_config {
   trg_max_vocab: -1
   unk_cut: 0 
   sort_method: "lentrg"
+  max_item_in_batch: 200
   unknown_training {
     method: "normal"
     dropout_ratio: 0.0

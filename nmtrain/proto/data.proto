@@ -10,6 +10,7 @@ message DataConfig {
   string batch_strategy = 7;
   UnknownTraining unknown_training = 8;
   BPEConfig bpe_config = 9;
+  uint32 max_item_in_batch = 10;
 }
 
 message UnknownTraining {

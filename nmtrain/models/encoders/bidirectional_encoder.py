@@ -31,7 +31,7 @@ class BidirectionalEncoder(chainer.Chain):
     self.encode_backward.reset_state(None)
 
     # Perform encoding
-    src_sent = self.xp.array(src_data, dtype=numpy.int32)
+    src_sent = self.xp.asarray(src_data, dtype=numpy.int32)
     for j in range(len(src_sent)):
       fe = self.encode_forward(embed_dropout(self.embed(chainer.Variable(src_sent[j]))))
       be = self.encode_backward(embed_dropout(self.embed(chainer.Variable(src_sent[-j-1]))))

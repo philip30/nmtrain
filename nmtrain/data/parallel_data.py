@@ -71,7 +71,9 @@ def data_generator(src_data, trg_data):
 # Represent ParallelCorpus
 class ParallelData(object):
   def __init__(self, src, trg, batch_manager,
-               wordid_converter=None, n_items=1, analyzer=None, filterer=None,
+               wordid_converter=None, n_items=1,
+               max_item=0,
+               analyzer=None, filterer=None,
                sorter=None, bpe_codec=None):
     # The information about the location of its data
     self.src_path      = src
@@ -114,7 +116,7 @@ class ParallelData(object):
       analyzer(data)
 
     # Load the data with batch manager
-    self.batch_manager.load(data, n_items=n_items, postprocessor=wordid_converter)
+    self.batch_manager.load(data, n_items=n_items, max_item=max_item, postprocessor=wordid_converter)
 
   def __iter__(self):
     for batch in self.batch_manager:

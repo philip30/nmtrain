@@ -31,7 +31,7 @@ class BatchManager(object):
 
   # stream  : data stream
   # n_items : number of items in batch
-  def load(self, stream, n_items=1, postprocessor=None):
+  def load(self, stream, n_items=1, max_item=0, postprocessor=None):
     assert(n_items >= 1)
 
     partial_batch = lambda: None
@@ -63,7 +63,8 @@ class BatchManager(object):
     # Creating batch
     for i, data in enumerate(stream):
       length = length_assess(data)
-      if length + partial_batch.length > n_items and partial_batch.length != 0:
+      if (length + partial_batch.length > n_items and partial_batch.length != 0) or \
+         (max_item > 0 and len(partial_batch.data) >= max_item):
         new_batch()
       partial_batch.data.append(data)
       partial_batch.length += length

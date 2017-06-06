@@ -50,7 +50,7 @@ class MinimumRiskTraining(object):
       item = list(numpy.where(sample_index[i])[0])
       unique_prob = get_item(prob, [item])
       unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
-      valid_delta = chainer.Variable(model.xp.array(delta[i][item], dtype=numpy.float32))
+      valid_delta = chainer.Variable(model.xp.asarray(delta[i][item], dtype=numpy.float32))
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
     return risk / probs.shape[0]
 

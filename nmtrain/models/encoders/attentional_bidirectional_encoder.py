@@ -38,7 +38,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
 
     # Perform encoding
     fe, be = [], []
-    src_input = self.xp.array(src_data, dtype=numpy.int32)
+    src_input = self.xp.asarray(src_data, dtype=numpy.int32)
     for j in range(len(src_input)):
       fe.append(self.encode_forward(embed_dropout(self.embed(chainer.Variable(src_input[j])))))
       be.append(self.encode_backward(embed_dropout(self.embed(chainer.Variable(src_input[-j-1])))))
@@ -52,7 +52,7 @@ class BidirectionalAttentionalEncoder(chainer.Chain):
 
     # If lexicon is provided
     if self.lexicon is not None:
-      lex_matrix = chainer.Variable(self.xp.array(self.lexicon.init(src_data), dtype=numpy.float32))
+      lex_matrix = chainer.Variable(self.xp.asarray(self.lexicon.init(src_data), dtype=numpy.float32))
     else:
       lex_matrix = None
 

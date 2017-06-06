@@ -30,9 +30,6 @@ def init_gpu(gpu_num):
   if chainer.cuda.available and gpu_num >= 0:
     gpu = gpu_num
     chainer.cuda.get_device(gpu_num).use()
-  if chainer.cuda.cudnn_enabled:
-    chainer.config.use_cudnn = True
-    chainer.config.cudnn_deterministic = True
   return gpu_num
 
 def init_random(seed):

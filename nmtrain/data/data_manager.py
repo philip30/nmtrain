@@ -38,6 +38,7 @@ class DataManager(object):
                                    trg              = corpus.train_data.target,
                                    batch_manager    = nmtrain.data.BatchManager(data_config.batch_strategy),
                                    n_items          = data_config.batch,
+                                   max_item         = data_config.max_item_in_batch,
                                    analyzer         = analyzer,
                                    filterer         = filterer,
                                    sorter           = sorter,

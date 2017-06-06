@@ -70,6 +70,7 @@ data_config {
   batch_strategy: "word"
   max_sent_length: 50
   sort_method: "lentrg"
+  max_item_in_batch: 256
 }
 
 mrt_data_config {
@@ -77,6 +78,7 @@ mrt_data_config {
   batch_strategy: "word"
   max_sent_length: 50
   sort_method: "lentrg"
+  max_item_in_batch: 256
 }
 
 test_config {
