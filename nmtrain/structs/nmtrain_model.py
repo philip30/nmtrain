@@ -8,6 +8,8 @@ class NmtrainModel(object):
     if len(config.init_model) != 0 and os.path.exists(config.init_model):
       model_loader = nmtrain.serializers.TrainModelReader(self)
       model_loader.load(config)
+      self.src_vocab.set_frozen(True)
+      self.trg_vocab.set_frozen(True)
     else:
       self.src_vocab = nmtrain.Vocabulary(True, True)
       self.trg_vocab = nmtrain.Vocabulary(True, True)

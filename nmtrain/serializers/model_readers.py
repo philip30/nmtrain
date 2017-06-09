@@ -14,8 +14,8 @@ class TrainModelReader(object):
       assert_proto_equal(config_obj.seed, from_config.seed)
       assert_proto_equal(config_obj.corpus.train_data, from_config.corpus.train_data)
       assert_proto_equal(config_obj.network_config, from_config.network_config)
-      if from_config.learning_config.learning.method == config_obj.learning_config.learning.method:
-        assert_proto_equal(config_obj.data_config, from_config.data_config)
+      #if from_config.learning_config.learning.method == config_obj.learning_config.learning.method:
+      #  assert_proto_equal(config_obj.data_config, from_config.data_config)
       assert_proto_equal(config_obj.bpe_config, from_config.bpe_config)
       self.flag_same_opt = config_obj.learning_config.optimizer == from_config.learning_config.optimizer
       config_obj.MergeFrom(from_config)
