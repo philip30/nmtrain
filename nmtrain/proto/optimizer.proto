@@ -8,7 +8,7 @@ message Parameters {
     double eps = 4;
   }
   message SGD {
-    double LR = 1;
+    double lr = 1;
   }
   Adam adam = 1;
   SGD sgd = 2;

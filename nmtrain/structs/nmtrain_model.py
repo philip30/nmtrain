@@ -76,7 +76,7 @@ def parse_optimizer(optimizer):
                                    beta2=float(param.adam.beta2),
                                    eps=float(param.adam.eps))
   elif opt == "sgd":
-    return chainer.optimizers.SGD(lr=float(param.adam.lr))
+    return chainer.optimizers.SGD(lr=float(param.sgd.lr))
   else:
     raise ValueError("Unrecognized optimizer:", opt)
 

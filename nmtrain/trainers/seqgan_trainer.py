@@ -89,7 +89,7 @@ class SequenceGANTrainer(object):
     #2. Adversarial Training
     for i in range(learning_config.seqgan_epoch):
       self.train_generator(classifier, learning_config.generator_epoch, i)
-      self.train_discriminator(classifier, learning_config.discriminator_epoch)
+      self.train_discriminator(classifier, learning_config.discriminator_epoch, i)
 
       if self.idomain_src.has_test_data:
         self.outputer.test.begin_collection(i+1)
@@ -102,7 +102,7 @@ class SequenceGANTrainer(object):
       self.serializer.save(self.model)
       watcher.new_epoch()
 
-  def train_generator(self, classifier, total_epoch, seqgan_epoch):
+  def train_generator(self, classifier, total_epoch, seqgan_epoch=0):
     self.generator.enable_update()
     self.discriminator.disable_update()
     if total_epoch == 0: return None
@@ -125,12 +125,12 @@ class SequenceGANTrainer(object):
             raise
 
         trained += trg_batch.shape[1]
-        nmtrain.log.info("[%d] Generator, Trained:%5d, loss=%5.3f" % (epoch+1, trained, loss.data))
+        nmtrain.log.info("[%d] Generator, Trained:%5d, loss=%5.3f" % (epoch+1+seqgan_epoch, trained, loss.data))
         epoch_loss += loss
       epoch_loss /= i
-      nmtrain.log.info("[%d] Generator Epoch summary: loss=%.3f" % (epoch+1, epoch_loss.data))
+      nmtrain.log.info("[%d] Generator Epoch summary: loss=%.3f" % (epoch+1+seqgan_epoch, epoch_loss.data))
 
-  def train_discriminator(self, classifier, total_epoch):
+  def train_discriminator(self, classifier, total_epoch, seqgan_epoch=0):
     self.discriminator.enable_update()
     self.generator.disable_update()
     if total_epoch == 0: return None
@@ -182,11 +182,11 @@ class SequenceGANTrainer(object):
         loss = softmax_cross_entropy(output, ground_truth) / embed.shape[0]
         self.discriminator_bptt(loss)
         trained += embed.shape[0]
-        nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1, trained, loss.data))
+        nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1 + seqgan_epoch, trained, loss.data))
         epoch_loss += loss
       epoch_loss /= len(samples)
       total_loss += epoch_loss.data
-      nmtrain.log.info("[%d] Discriminator Epoch Summary: loss=%.3f" % (epoch+1, epoch_loss.data))
+      nmtrain.log.info("[%d] Discriminator Epoch Summary: loss=%.3f" % (epoch+1+seqgan_epoch, epoch_loss.data))
 
     return total_loss / total_epoch
 
