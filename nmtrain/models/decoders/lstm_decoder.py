@@ -22,7 +22,7 @@ class LSTMDecoder(chainer.Chain):
 
   def __call__(self):
     y =  self.affine_vocab(chainer.functions.tanh(self.h))
-    return nmtrain.models.decoders.Output(y=y)
+    return nmtrain.data.Data(y=y)
 
   def init(self, h):
     self.h = h

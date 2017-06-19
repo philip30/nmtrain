@@ -4,6 +4,7 @@ import "adaptation.proto";
 import "data.proto";
 import "output.proto";
 import "test_config.proto";
+import "hack_config.proto";
 
 message TrainAdaptationConfig {
   string init_model = 1;
@@ -19,8 +20,11 @@ message TrainAdaptationConfig {
   DataConfig mrt_data_config = 11;
   AdaptationOutputConfig output_config = 12;
   TestConfig test_config = 13;
+  HackConfig hack_config = 14;
+  bool pretest = 15;
 }
 
 message AdaptationOutputConfig {
+  TrainOutput train = 2;
   TestOutput test = 1;
 }

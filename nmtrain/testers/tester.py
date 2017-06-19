@@ -22,6 +22,7 @@ class Tester(object):
         self.test(*args, **kwargs)
 
   def test(self, model, data, mode, outputer):
+    nmtrain.log.info("Begin Testing")
     self.epoch(mode, "begin")
     self.evaluator.reset()
     ### Variables

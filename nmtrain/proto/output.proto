@@ -5,6 +5,7 @@ message TrainOutput {
     bool generate = 1;
     string path = 2;
     bool attention = 3;
+    string type = 4;
   }
   string model_out = 1;
   bool save_models = 2;

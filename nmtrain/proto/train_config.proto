@@ -6,6 +6,7 @@ import "output.proto";
 import "test_config.proto";
 import "learning.proto";
 import "network.proto";
+import "hack_config.proto";
 
 message TrainingConfig {
   uint64 seed = 1;
@@ -34,9 +35,4 @@ message LexiconConfig {
   string path = 1;
   double alpha = 2;
   string method = 3;
-}
-
-message HackConfig {
-  bool put_max_trg_first = 1;
-  uint64 put_batch_id_first = 2;
 }

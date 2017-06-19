@@ -5,6 +5,7 @@ import os
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "protobuf.zip")
 importer = zipimport.zipimporter(path)
 algebra_pb = importer.load_module("algebra_pb2")
+hack_pb = importer.load_module("hack_config_pb2")
 corpus_pb = importer.load_module("corpus_pb2")
 data_pb = importer.load_module("data_pb2")
 update_pb = importer.load_module("updates_pb2")

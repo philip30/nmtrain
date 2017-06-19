@@ -58,21 +58,29 @@ class SequenceGANTrainer(object):
     with chainer.no_backprop_mode():
       self.eos_embed = expand_dims(expand_dims(self.target_embedding(self.discriminator.xp.asarray([self.eos_id])), axis=0), axis=3)
 
+    ### Others
+    discriminator_loss = DiscriminatorLoss(self.discriminator, self.target_embedding, self.pad)
+    # Minrisk to train the generator
+    self.minrisk = nmtrain.minrisk.minrisk.MinimumRiskTraining(config.learning_config.learning.mrt, discriminator_loss)
+    # Serializer
+    self.serializer = TrainModelWriter(self.config.model_out, False)
+    # Outputer
+    self.outputer = nmtrain.outputers.Outputer(self.model.src_vocab, self.model.trg_vocab)
+    self.outputer.register_outputer("train", self.config.output_config.train)
+    self.outputer.register_outputer("test", self.config.output_config.test)
+
   def __call__(self, classifier):
     # Configuring Minimum Risk Training with discriminator
     learning_config = self.config.learning_config
-    discriminator_loss = DiscriminatorLoss(self.discriminator, self.target_embedding, self.pad)
-    classifier.minrisk = nmtrain.minrisk.minrisk.MinimumRiskTraining(learning_config.learning.mrt,
-                                                                     discriminator_loss)
-    self.serializer   = TrainModelWriter(self.config.model_out, False)
-    outputer = nmtrain.outputers.Outputer(self.model.src_vocab, self.model.trg_vocab)
-    outputer.register_outputer("test", self.config.output_config.test)
+    classifier.minrisk = self.minrisk
     watcher = nmtrain.structs.watchers.Watcher(nmtrain.structs.nmtrain_state.NmtrainState())
-    tester = nmtrain.testers.tester.Tester(watcher, classifier, self.model, outputer, self.config.test_config)
+    tester = nmtrain.testers.tester.Tester(watcher, classifier, self.model, self.outputer, self.config.test_config)
 
-    outputer.test.begin_collection(0)
-    tester(model = self.generator, data=self.idomain_src.test_data, mode= nmtrain.testers.TEST, outputer = outputer.test)
-    outputer.test.end_collection()
+
+    if self.config.pretest:
+      self.outputer.test.begin_collection(0)
+      tester(model = self.generator, data=self.idomain_src.test_data, mode= nmtrain.testers.TEST, outputer = self.outputer.test)
+      self.outputer.test.end_collection()
 
     #1. Pretrain the discriminator
     nmtrain.log.info("Pretraining discriminator for %d epochs" % learning_config.pretrain_epoch)
@@ -84,15 +92,14 @@ class SequenceGANTrainer(object):
       self.train_discriminator(classifier, learning_config.discriminator_epoch)
 
       if self.idomain_src.has_test_data:
-        outputer.test.begin_collection(i+1)
+        self.outputer.test.begin_collection(i+1)
         tester(model    = self.generator,
                data     = self.idomain_src.test_data,
                mode     = nmtrain.testers.TEST,
-               outputer = outputer.test)
-        outputer.test.end_collection()
+               outputer = self.outputer.test)
+        self.outputer.test.end_collection()
       #3. Saving Model
       self.serializer.save(self.model)
-
       watcher.new_epoch()
 
   def train_generator(self, classifier, total_epoch, seqgan_epoch):
@@ -107,11 +114,15 @@ class SequenceGANTrainer(object):
       for i, batch in enumerate(self.minrisk_data.train_data):
         src_batch, trg_batch = batch.normal_data
         try:
-          loss = classifier.train_mrt(self.generator, src_batch, trg_batch, self.eos_id, self.model.trg_vocab) / len(batch)
+          loss = classifier.train_mrt(self.generator, src_batch, None,
+                                      self.eos_id, self.outputer.train) / len(batch)
           self.generator_bptt(loss)
         except:
           nmtrain.log.warning("Died at this batch_id:", batch.id, "with shape:", src_batch.shape, trg_batch.shape)
-          continue
+          if self.config.hack_config.skip_training_exception:
+            continue
+          else:
+            raise
 
         trained += trg_batch.shape[1]
         nmtrain.log.info("[%d] Generator, Trained:%5d, loss=%5.3f" % (epoch+1, trained, loss.data))
@@ -158,13 +169,15 @@ class SequenceGANTrainer(object):
       for sample, is_positive in samples:
         embed, ground_truth = to_embed_vector(sample, is_positive)
         embed = self.pad(expand_dims(embed, axis=1))
+        self.outputer.train.begin_collection((sample, is_positive))
         # Discriminate the target
         try:
           output = self.discriminator(embed)
+          self.outputer.train(nmtrain.data.Data(disc_out=output))
         except:
           nmtrain.log.warning("Died at batch with shape:", sample[1].shape, " embed size:", embed.shape, is_positive)
           raise
-
+        self.outputer.train.end_collection()
         # Calculate Loss
         loss = softmax_cross_entropy(output, ground_truth) / embed.shape[0]
         self.discriminator_bptt(loss)
@@ -180,8 +193,6 @@ class SequenceGANTrainer(object):
   def pad(self, trg_embed):
     if self.ngram > trg_embed.shape[3]:
       with chainer.no_backprop_mode():
-        print(trg_embed.shape)
-        print(self.eos_embed.shape)
         pad = broadcast_to(self.eos_embed, (trg_embed.shape[0], trg_embed.shape[1], trg_embed.shape[2],
                                                     self.ngram - trg_embed.shape[3]))
         return concat((trg_embed, pad), axis=3)

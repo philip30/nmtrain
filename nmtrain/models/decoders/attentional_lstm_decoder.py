@@ -75,7 +75,7 @@ class LSTMAttentionalDecoder(chainer.Chain):
     if self.lexicon_matrix is not None:
       y = self.lexicon_model(y, a, self.ht, self.lexicon_matrix)
 
-    return nmtrain.models.decoders.Output(y=y, a=a)
+    return nmtrain.data.Data(y=y, a=a)
 
   def update(self, next_word):
     # embed_size + hidden size -> input feeding approach

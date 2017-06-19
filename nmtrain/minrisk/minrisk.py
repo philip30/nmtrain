@@ -29,51 +29,66 @@ class MinimumRiskTraining(object):
 
   def __call__(self, model, src_batch, trg_batch, eos_id, outputer=None):
     h = model.encoder(src_batch)
-    batch_size = trg_batch.shape[1]
+    batch_size = src_batch.shape[1]
     unique = defaultdict(set)
 
-    sample_index  = numpy.zeros((self.num_sample, batch_size), dtype=bool)
-    deltas, probs = [], []
+    sample_index = numpy.zeros((self.num_sample, batch_size), dtype=bool)
+    probs = []
+    deltas = numpy.zeros((self.num_sample, batch_size), dtype=numpy.float32)
+    # Note that ones represent discriminator
+    samples = []
     # Sampling
     for i in range(self.num_sample):
-      delta, prob = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id)
-      deltas.append(delta)
+      prob, sample = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id, batch_size, deltas[i])
       probs.append(prob * self.sharpness)
+      samples.append(sample)
 
     # Calculate Risk + remove duplication
     risk = 0
     probs = concat(probs, axis=1)
-    delta = numpy.concatenate(deltas, axis=1)
     sample_index = sample_index.transpose()
+    deltas = deltas.transpose()
+    if outputer:
+      outputer.begin_collection(src=src_batch, ref=trg_batch)
+
     for i in range(probs.shape[0]):
       prob = expand_dims(get_item(probs, i), axis=1)
       item = list(numpy.where(sample_index[i])[0])
       unique_prob = get_item(prob, [item])
       unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
-      valid_delta = chainer.Variable(model.xp.asarray(delta[i][item], dtype=numpy.float32))
+      valid_delta = model.xp.asarray(deltas[i][item], dtype=numpy.float32)
+
+      if outputer:
+        outputer(nmtrain.data.Data(minrisk_prob=unique_prob, minrisk_delta=valid_delta, minrisk_item=item))
+
       risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
+
+    if outputer:
+      outputer(nmtrain.data.Data(minrisk_sample=samples))
+      outputer.end_collection()
+
     return risk / probs.shape[0]
 
-  def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id):
-    batch_size  = trg_batch.shape[1]
+  def sample(self, sample_num, trg_batch, sample_index, model, h, unique, eos_id, batch_size, delta):
     sample_prob = 0
-    if self.is_discriminator:
-        # Ones is for the eos
-        sample = numpy.ones((self.generation_limit, batch_size), dtype=numpy.int32)
-    else:
-        sample = numpy.zeros((self.generation_limit, batch_size), dtype=numpy.int32)
     end_flag    = None
+    flag = None
 
+    sample = []
     # Generate sample sentence
     model.decoder.init(h)
     for j in range(self.generation_limit):
       output = model.decode()
       y = softmax(output.y)
-      if sample_num == 0:
-        sample[j] = trg_batch[j]
+      if sample_num == 0 and trg_batch is not None:
+        sample.append(trg_batch[j])
       else:
-        sample[j] = self.sample_one(y, sample[j-1] if j != 0 else numpy.zeros(len(sample[j])))
-      next_word = chainer.Variable(model.xp.array(sample[j], dtype=numpy.int32))
+        if len(sample) > 1:
+          last_sample = sample[-1]
+        else:
+          last_sample = None
+        sample.append(self.sample_one(y, flag, eos_id))
+      next_word = model.xp.array(sample[j], dtype=numpy.int32)
       prob = select_item(log(y), next_word)
       sample_prob += prob
 
@@ -87,10 +102,10 @@ class MinimumRiskTraining(object):
         break
       else:
         model.update(next_word)
-    delta = numpy.zeros(batch_size)
+    sample = numpy.array(sample, dtype=int).transpose()
     if self.is_discriminator:
-      delta = self.loss(sample.transpose())
-      for i, sentence in enumerate(sample.transpose()):
+      delta[:] = self.loss(sample)
+      for i, sentence in enumerate(sample):
         hash_value = tuple(sentence)
         if not hash_value in unique[i]:
           unique[i].add(hash_value)
@@ -113,19 +128,16 @@ class MinimumRiskTraining(object):
         else:
           delta[i] = float("inf")
 
-    return numpy.expand_dims(delta, axis=1),\
-           expand_dims(sample_prob, axis=1)
+    return expand_dims(sample_prob, axis=1), sample
 
-  def sample_one(self, probs_var, last_sample):
+  def sample_one(self, probs_var, flag, eos_id):
     probs = copy(probs_var, -1).data
-    if self.is_discriminator:
-      samples = numpy.ones(len(probs))
-    else:
-      samples = numpy.zeros(len(probs))
+    samples = numpy.zeros(len(probs), dtype=int)
+    eos_index = list(numpy.where(flag))
     for i, prob in enumerate(probs):
-      if last_sample[i] == 1:
-        samples[i] == 1
-      else:
-        samples[i] = numpy.random.choice(len(prob), p=prob)
+      samples[i] = numpy.random.choice(len(prob), p=prob)
+
+      if len(eos_index) != 0:
+        samples[eos_index] = eos_id
     return samples
 

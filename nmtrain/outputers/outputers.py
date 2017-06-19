@@ -35,13 +35,13 @@ class TrainOutputer(object):
     if config.report.generate:
       self.reporter = TrainReporter(add_stream(config.report.path, self.streams),
                                     config.report.attention,
-                                    src_vocab, trg_vocab)
+                                    src_vocab, trg_vocab, config.report.type)
     self.serializer      = TrainModelWriter(config.model_out, config.save_models)
     self.model_out       = config.model_out
     self.save_models     = config.save_models
     self.generate_report = config.report.generate
 
-  def begin_collection(self, src, ref):
+  def begin_collection(self, src=None, ref=None):
     self.buffer = defaultdict(list)
     self.src_batch = src
     self.ref_batch = ref
@@ -59,11 +59,20 @@ class TrainOutputer(object):
     if len(self.streams) != 0:
       self.collect_output(output, "y")
       self.collect_output(output, "a")
+      self.collect_output(output, "minrisk_sample")
+      self.collect_output(output, "minrisk_delta")
+      self.collect_output(output, "minrisk_prob")
+      self.collect_output(output, "minrisk_item")
+      self.collect_output(output, "disc_out")
 
   def collect_output(self, output, key):
     if hasattr(output, key):
-      targeted = chainer.functions.copy(getattr(output, key), -1)
-      self.buffer[key].append(targeted.data)
+      output = getattr(output,key)
+      try:
+        output = chainer.functions.copy(output, -1).data
+      except:
+        pass
+      self.buffer[key].append(output)
 
   def close(self):
     close_file_streams(self.streams)

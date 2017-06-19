@@ -11,7 +11,7 @@ import nmtrain.trainers
 """ Arguments """
 parser = argparse.ArgumentParser("NMT model trainer")
 parser.add_argument("-c", "--config", required=True, type=str, help="The training configuration file")
-parser.add_argument("--debug", action="store_true", "Run NMTrain in debug mode")
+parser.add_argument("--debug", action="store_true", help="Run NMTrain in debug mode")
 args = parser.parse_args()
 
 def main(args):
