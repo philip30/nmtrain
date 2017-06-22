@@ -46,18 +46,25 @@ class TrainReporter(object):
 
   def train_mrt_reporter(self, src_batch, ref_batch, output):
     if "disc_out" in output:
-      (src_batch, trg_batch), label = src_batch
-      trg_batch = trg_batch.transpose()
-      with chainer.no_backprop_mode():
-        output = chainer.functions.argmax(output["disc_out"][0], axis=1).data
+      trg_batch, ground_truth = src_batch
 
-      print("Label =", label, file=self.stream)
-      label = 1 if label else 0
-      true = 0
-      for item, disc_out, in zip(trg_batch, output):
-        print("%5s %s" % (disc_out, self.trg_vocab.raw_sentence(item)) , file=self.stream)
-        true += 1 if label == disc_out else 0
-      print("Prec = %f" % (true / len(trg_batch)), file=self.stream)
+      with chainer.no_backprop_mode():
+        output = chainer.functions.argmax(output["disc_out"][0], axis=1)
+        output.to_cpu()
+        output = output.data
+
+      tp = 0
+      for trg_sent, label, prediction in zip(trg_batch, ground_truth.data, output):
+        if label == prediction:
+          tp += 1
+          score = "C"
+        else:
+          score = "W"
+
+        sign = "+" if label == 1 else "-"
+
+        print("  %s %s [%d -> %d] {0:<68}".format(self.trg_vocab.sentence(trg_sent)) % (sign, score, label, prediction), file=self.stream)
+      print("Prec = %f" % (tp / len(trg_batch)), file=self.stream)
 
     if "minrisk_sample" in output:
       minrisk_sample = output["minrisk_sample"][0]
@@ -70,12 +77,12 @@ class TrainReporter(object):
       if ref_batch is not None:
         ref_batch = ref_batch.transpose()
       for i, (src, item, delta, prob) in enumerate(zip(src_batch, minrisk_item, minrisk_delta, minrisk_prob)):
-        print("SRC:", self.src_vocab.raw_sentence(src), file=self.stream)
+        print("SRC:", self.src_vocab.sentence(src), file=self.stream)
         if ref_batch is not None:
-          print("REF:", self.trg_vocab.raw_sentence(ref_batch[i]), file=self.stream)
+          print("REF:", self.trg_vocab.sentence(ref_batch[i]), file=self.stream)
 
         for j, (index, p_i, d_i) in enumerate(zip(item, prob, delta)):
           print(" s#%d prob=%.4f delta=%.4f: %s" % \
-                (j, p_i, d_i, self.trg_vocab.raw_sentence(minrisk_sample[index][i])), file=self.stream)
+                (j, p_i, d_i, self.trg_vocab.sentence(minrisk_sample[index][i])), file=self.stream)
 
     self.stream.flush()

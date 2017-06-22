@@ -68,6 +68,18 @@ def data_generator(src_data, trg_data):
   else:
     raise ValueError("Both of src_data and trg_data is None??")
 
+corpus_collection = {}
+def load_data(data, codec):
+  global corpus_collection
+  if data not in corpus_collection:
+    preprocessor = nmtrain.data.preprocessor.NMTDataPreprocessor()
+    corpus = []
+    with open(data) as data_file:
+      for line_number, line in enumerate(data_file):
+        corpus.append(preprocessor(SingleSentence(line_number, line), codec))
+    corpus_collection[data] = corpus
+  return corpus_collection[data]
+
 # Represent ParallelCorpus
 class ParallelData(object):
   def __init__(self, src, trg, batch_manager,
@@ -80,15 +92,7 @@ class ParallelData(object):
     self.trg_path      = trg
     self.batch_manager = batch_manager
 
-    ### Begin Loading data
-    preprocessor = nmtrain.data.preprocessor.NMTDataPreprocessor()
-    def load_data(data, codec):
-      corpus = []
-      with open(data) as data_file:
-        for line_number, line in enumerate(data_file):
-          corpus.append(preprocessor(SingleSentence(line_number, line), codec))
-      return corpus
-
+    ### Begin Loading data 
     src_codec, trg_codec = (None, None) if bpe_codec is None else bpe_codec
     src_data, trg_data = None, None
 

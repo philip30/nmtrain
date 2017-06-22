@@ -27,6 +27,10 @@ class SequenceGANTrainer(object):
     # Init debug
     nmtrain.debug.init(self.model.src_vocab, self.model.trg_vocab)
 
+    nmtrain.log.info("Setting number items in data_config to 1")
+    self.discriminator_batch_size = config.data_config.batch
+    config.data_config.batch = 1
+
     # Note:
     # The vocabulary has been frozen here
     nmtrain.log.info("Loading data...")
@@ -43,15 +47,6 @@ class SequenceGANTrainer(object):
     self.model.finalize_model()
     nmtrain.log.info("SRC VOCAB:", len(self.model.src_vocab))
     nmtrain.log.info("TRG VOCAB:", len(self.model.trg_vocab))
-
-    # Generate Positive + negative examples
-    self.samples = []
-    ### Generating Negative Samples 
-    for i, batch in enumerate(self.idomain_src.train_data):
-      self.samples.append((batch.normal_data, False))
-    ### Generating Positive Samples
-    for i, batch in enumerate(self.idomain_trg.train_data):
-      self.samples.append((batch.normal_data, True))
 
     # EOS embed
     self.ngram = self.config.discriminator.hidden_units.ngram
@@ -131,51 +126,94 @@ class SequenceGANTrainer(object):
       nmtrain.log.info("[%d] Generator Epoch summary: loss=%.3f" % (epoch+1+seqgan_epoch, epoch_loss.data))
 
   def train_discriminator(self, classifier, total_epoch, seqgan_epoch=0):
+    if total_epoch == 0:
+      return None
+
+    nmtrain.log.info("Updating Discriminator, disable update for Generator")
     self.discriminator.enable_update()
     self.generator.disable_update()
-    if total_epoch == 0: return None
-    gen_limit = self.config.learning_config.learning.mrt.generation_limit
-    samples = self.samples
 
-    # Produce an embedding of size (B, E, |F|) and 
-    # a vector label of size B.
-    def to_embed_vector(sample, is_positive):
-      src_batch, trg_batch = sample
-      trg_batch = self.generator.xp.asarray(trg_batch, dtype=numpy.int32)
-      label = 1 if is_positive else 0
-      if is_positive:
-        trg_embedding = [expand_dims(self.target_embedding(word), axis=2) for word in trg_batch]
-      else:
-        with chainer.using_config('train', False):
-          with chainer.no_backprop_mode():
-            trg_embedding = classifier.generate(self.generator,
-                                                src_batch,
-                                                self.eos_id,
-                                                gen_limit=gen_limit)
-      trg_embedding = concat(trg_embedding, axis=2)
-      # Ground Truth label
-      ground_truth = self.create_label(trg_embedding.shape[0], label)
-      return trg_embedding, ground_truth
+    # Data point to hold embeddings, label, and word
+    class DataPoint:
+      def __init__(self, embed, label, word):
+        self.embed = embed
+        self.label = label
+        self.word = word
+
+      def __iter__(self):
+        return iter([self.embed, self.label, self.word])
+
+      def __len__(self):
+        return self.embed.shape[1]
+
+    # Generating Embeddings Samples
+    with chainer.using_config('train', False):
+      with chainer.no_backprop_mode():
+        nmtrain.log.info("Generating Embeddings for both positive and negative samples")
+        embeddings = []
+
+        def list_to_embed(words):
+          lst = concat(list(map(lambda word: self.target_embedding(word), trg_batch)), axis=0).transpose()
+          lst.to_cpu()
+          return lst
+
+        for batch in self.idomain_src.train_data:
+          src_batch, trg_batch = batch.normal_data
+          predict_output = classifier.predict(self.generator, src_batch,
+                                              eos_id = self.eos_id,
+                                              gen_limit = self.config.test_config.generation_limit,
+                                              beam = self.config.test_config.beam)
+          embeddings.append(DataPoint(list_to_embed(predict_output.prediction), 0, predict_output.prediction))
+        for batch in self.idomain_trg.train_data:
+          src_batch, trg_batch = batch.normal_data
+          embeddings.append(DataPoint(list_to_embed(trg_batch), 1, trg_batch))
+        # Shuffle them
+        numpy.random.shuffle(embeddings)
+        embeddings = sorted(embeddings, key=lambda x: x.embed.shape[1])
+
+        # Batch them together
+        eos_embed = self.target_embedding(self.generator.xp.asarray([self.eos_id])).transpose()
+        eos_embed.to_cpu()
+        def discriminator_post_process(batch):
+          max_length = max(item.embed.shape[1] for item in batch)
+          embeds, labels, words = [], [], []
+          for embed, label, word in batch:
+            deficit = max_length - embed.shape[1]
+
+            if deficit > 0:
+              embed = concat((embed, broadcast_to(eos_embed, (embed.shape[0], deficit))), axis=1)
+
+            embeds.append(expand_dims(embed, axis=0))
+            labels.append(expand_dims(numpy.asarray([label], dtype=numpy.int32), axis=0))
+            words.append(word)
+
+          batch.data = (concat(embeds, axis=0), concat(labels, axis=0), words)
+
+        # Batch Manager
+        batch_manager = nmtrain.data.BatchManager(strategy=self.config.data_config.batch_strategy)
+        batch_manager.load(embeddings,
+                           n_items = self.discriminator_batch_size,
+                           postprocessor = discriminator_post_process)
 
     # Begin Discriminator Training
     total_loss = 0
     for epoch in range(total_epoch):
-      numpy.random.shuffle(samples)
+      batch_manager.shuffle(numpy.random)
       epoch_loss = 0
       trained = 0
       # Train the positive sample and negative sample at once.
       # Putting them on the same batch together make the system more
       # adapt to distinguish between which one is positive and which one is negative.
-      for sample, is_positive in samples:
-        embed, ground_truth = to_embed_vector(sample, is_positive)
+      for batch in batch_manager:
+        embed, ground_truth, words = batch.data
         embed = self.pad(expand_dims(embed, axis=1))
-        self.outputer.train.begin_collection((sample, is_positive))
+        self.outputer.train.begin_collection((words, ground_truth))
         # Discriminate the target
         try:
           output = self.discriminator(embed)
           self.outputer.train(nmtrain.data.Data(disc_out=output))
         except:
-          nmtrain.log.warning("Died at batch with shape:", sample[1].shape, " embed size:", embed.shape, is_positive)
+          nmtrain.log.warning("Died at batch with embed shape: ", embed.shape)
           raise
         self.outputer.train.end_collection()
         # Calculate Loss
@@ -184,9 +222,9 @@ class SequenceGANTrainer(object):
         trained += embed.shape[0]
         nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1 + seqgan_epoch, trained, loss.data))
         epoch_loss += loss
-      epoch_loss /= len(samples)
+      epoch_loss /= len(batch_manager)
       total_loss += epoch_loss.data
-      nmtrain.log.info("[%d] Discriminator Epoch Summary: loss=%.3f" % (epoch+1+seqgan_epoch, epoch_loss.data))
+      nmtrain.log.info("[%d] Discriminator Epoch Summary: loss=%.3f" % (epoch + 1 + seqgan_epoch, epoch_loss.data))
 
     return total_loss / total_epoch
 
@@ -198,10 +236,6 @@ class SequenceGANTrainer(object):
         return concat((trg_embed, pad), axis=3)
     else:
       return trg_embed
-
-  @functools.lru_cache(maxsize=2)
-  def create_label(self, size, label):
-    return self.model.seqgan_model.xp.asarray([label for _ in range(size)], dtype= numpy.int32)
 
   def generator_bptt(self, loss):
     self.generator.cleargrads()
