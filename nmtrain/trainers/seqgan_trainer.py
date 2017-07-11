@@ -153,7 +153,7 @@ class SequenceGANTrainer(object):
         embeddings = []
 
         def list_to_embed(words):
-          lst = concat(list(map(lambda word: self.target_embedding(word), trg_batch)), axis=0).transpose()
+          lst = concat(list(map(lambda word: self.target_embedding(self.generator.xp.asarray(word)), trg_batch)), axis=0).transpose()
           lst.to_cpu()
           return lst
 
@@ -187,7 +187,7 @@ class SequenceGANTrainer(object):
             labels.append(expand_dims(numpy.asarray([label], dtype=numpy.int32), axis=0))
             words.append(word)
 
-          batch.data = (concat(embeds, axis=0), concat(labels, axis=0), words)
+          batch.data = (concat(embeds, axis=0).data, squeeze(concat(labels, axis=0), axis=1).data, words)
 
         # Batch Manager
         batch_manager = nmtrain.data.BatchManager(strategy=self.config.data_config.batch_strategy)
@@ -206,8 +206,10 @@ class SequenceGANTrainer(object):
       # adapt to distinguish between which one is positive and which one is negative.
       for batch in batch_manager:
         embed, ground_truth, words = batch.data
-        embed = self.pad(expand_dims(embed, axis=1))
         self.outputer.train.begin_collection((words, ground_truth))
+        embed = self.discriminator.xp.asarray(embed)
+        ground_truth = self.discriminator.xp.array(ground_truth)
+        embed = self.pad(expand_dims(embed, axis=1))
         # Discriminate the target
         try:
           output = self.discriminator(embed)
@@ -215,14 +217,14 @@ class SequenceGANTrainer(object):
         except:
           nmtrain.log.warning("Died at batch with embed shape: ", embed.shape)
           raise
-        self.outputer.train.end_collection()
+        
         # Calculate Loss
-        loss = softmax_cross_entropy(output, ground_truth) / embed.shape[0]
+        loss = softmax_cross_entropy(output, ground_truth)
         self.discriminator_bptt(loss)
         trained += embed.shape[0]
         nmtrain.log.info("[%d] Discriminator, Trained: %5d, loss=%5.3f" % (epoch + 1 + seqgan_epoch, trained, loss.data))
-        epoch_loss += loss
-      epoch_loss /= len(batch_manager)
+        epoch_loss += loss / embed.shape[0]
+        self.outputer.train.end_collection()
       total_loss += epoch_loss.data
       nmtrain.log.info("[%d] Discriminator Epoch Summary: loss=%.3f" % (epoch + 1 + seqgan_epoch, epoch_loss.data))
 

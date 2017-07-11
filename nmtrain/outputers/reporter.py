@@ -49,12 +49,12 @@ class TrainReporter(object):
       trg_batch, ground_truth = src_batch
 
       with chainer.no_backprop_mode():
-        output = chainer.functions.argmax(output["disc_out"][0], axis=1)
-        output.to_cpu()
-        output = output.data
+        out = chainer.functions.argmax(output["disc_out"][0], axis=1)
+        out.to_cpu()
+        out = out.data
 
       tp = 0
-      for trg_sent, label, prediction in zip(trg_batch, ground_truth.data, output):
+      for trg_sent, label, prediction in zip(trg_batch, ground_truth, out):
         if label == prediction:
           tp += 1
           score = "C"
@@ -63,7 +63,8 @@ class TrainReporter(object):
 
         sign = "+" if label == 1 else "-"
 
-        print("  %s %s [%d -> %d] {0:<68}".format(self.trg_vocab.sentence(trg_sent)) % (sign, score, label, prediction), file=self.stream)
+        sent = self.trg_vocab.sentence(trg_sent)
+        print("  %s %s [%d -> %d] %s" % (sign, score, label, prediction, sent), file=self.stream)
       print("Prec = %f" % (tp / len(trg_batch)), file=self.stream)
 
     if "minrisk_sample" in output:
