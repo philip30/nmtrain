@@ -42,7 +42,7 @@ class MinimumRiskTraining(object):
       prob, sample = self.sample(i, trg_batch, sample_index[i], model, h, unique, eos_id, batch_size, deltas[i])
       probs.append(prob * self.sharpness)
       samples.append(sample)
-
+    
     # Calculate Risk + remove duplication
     risk = 0
     probs = concat(probs, axis=1)
@@ -57,11 +57,10 @@ class MinimumRiskTraining(object):
       unique_prob = get_item(prob, [item])
       unique_prob = squeeze(softmax(transpose(unique_prob)), axis=0)
       valid_delta = model.xp.asarray(deltas[i][item], dtype=numpy.float32)
-
       if outputer:
         outputer(nmtrain.data.Data(minrisk_prob=unique_prob, minrisk_delta=valid_delta, minrisk_item=item))
 
-      risk += chainer.functions.sum(unique_prob * valid_delta) / len(item)
+      risk += chainer.functions.sum(unique_prob * valid_delta) / unique_prob.shape[0]
 
     if outputer:
       outputer(nmtrain.data.Data(minrisk_sample=samples))
@@ -112,7 +111,7 @@ class MinimumRiskTraining(object):
           sample_index[i] = True
     else:
       # Calculate Risk
-      for i, (sampled_sent, reference) in enumerate(zip(sample.transpose(), trg_batch.transpose())):
+      for i, (sampled_sent, reference) in enumerate(zip(sample, trg_batch.transpose())):
         # Cut the sent to first non zero
         idx  = numpy.where(sampled_sent == eos_id)[0]
         if len(idx) > 0:

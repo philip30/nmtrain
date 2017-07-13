@@ -34,7 +34,7 @@ learning_config {
   learning {
     method: "mrt"
     mrt {
-      sharpness: 0.05
+      sharpness: 0.005
       sampling_frequency: 8
       generation_limit: 50
       eval_type: "discriminator"
