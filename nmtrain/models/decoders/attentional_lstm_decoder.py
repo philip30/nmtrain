@@ -58,7 +58,9 @@ class LSTMAttentionalDecoder(chainer.Chain):
 
   def init(self, h):
     h, S, lexicon_matrix = h
-    self.decoder.reset_state(h)
+    ## TODO(parthur): Just for experiment
+    #self.decoder.reset_state(h)
+    self.decoder.reset_state(None)
     self.h = h
     self.S = S
     self.lexicon_matrix = lexicon_matrix
