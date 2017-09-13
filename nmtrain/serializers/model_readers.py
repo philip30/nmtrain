@@ -12,7 +12,7 @@ class TrainModelReader(object):
   def load_config(self, config_obj, from_config):
     if type(from_config) == nmtrain.train_config_pb.TrainingConfig:
       assert_proto_equal(config_obj.seed, from_config.seed)
-      assert_proto_equal(config_obj.corpus.train_data, from_config.corpus.train_data)
+      #assert_proto_equal(config_obj.corpus.train_data, from_config.corpus.train_data)
       assert_proto_equal(config_obj.network_config, from_config.network_config)
       #if from_config.learning_config.learning.method == config_obj.learning_config.learning.method:
       #  assert_proto_equal(config_obj.data_config, from_config.data_config)
