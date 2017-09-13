@@ -93,7 +93,7 @@ class NMTTrainer:
           # BPTT 
           bptt(batch_loss)
           # Generate summary of batch training and keep track of it
-          watcher.end_batch(loss=batch_loss.data,
+          watcher.end_batch(loss=batch_loss.data / (trg_batch.shape[0] * trg_batch.shape[1]),
                             src_shape=src_batch.shape,
                             trg_shape=trg_batch.shape,
                             batch_id=batch.id)
