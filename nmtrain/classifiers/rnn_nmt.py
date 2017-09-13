@@ -30,7 +30,7 @@ class RNN_NMT(object):
     for i, trg_word in enumerate(trg_batch):
       y_t = chainer.Variable(model.xp.array(trg_word, dtype=numpy.int32))
       output = model.decode()
-      batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t)
+      batch_loss += chainer.functions.softmax_cross_entropy(output.y, y_t, reduce='no')
       model.update(y_t)
 
       # Truncated BPTT
@@ -42,7 +42,7 @@ class RNN_NMT(object):
 
       if outputer: outputer(output)
     if outputer: outputer.end_collection()
-    return batch_loss / len(trg_batch)
+    return chainer.functions.sum(batch_loss)
 
   def train_mrt(self, model, src_batch, trg_batch, eos_id, outputer=None):
     return self.minrisk(model, src_batch, trg_batch, eos_id, outputer)
